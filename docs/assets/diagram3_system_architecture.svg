@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 950 420" width="100%" height="100%" style="background:#0b1329; border-radius:12px; font-family:'Segoe UI', Inter, sans-serif;">
+  <defs>
+    <filter id="shadow3" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <text x="475" y="28" text-anchor="middle" fill="#f8fafc" font-size="15" font-weight="700">NIRMAAN: FULL TECHNICAL ARCHITECTURE DECOMPOSITION</text>
+
+  <!-- LAYER 1: PRESENTATION -->
+  <rect x="25" y="45" width="900" height="70" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+  <text x="45" y="65" fill="#38bdf8" font-size="10" font-weight="700">PRESENTATION &amp; INVESTIGATION CANVAS (Next.js 14 / React + Cytoscape.js)</text>
+  
+  <rect x="45" y="73" width="190" height="32" rx="5" fill="#0f172a" stroke="#475569"/>
+  <text x="140" y="93" fill="#e2e8f0" font-size="10" font-weight="600" text-anchor="middle">Multi-Chain Search &amp; Auto-Detect</text>
+
+  <rect x="255" y="73" width="220" height="32" rx="5" fill="#0f172a" stroke="#38bdf8"/>
+  <text x="365" y="93" fill="#38bdf8" font-size="10" font-weight="600" text-anchor="middle">Cytoscape Canvas (Dagre &amp; CoSE)</text>
+
+  <rect x="495" y="73" width="190" height="32" rx="5" fill="#0f172a" stroke="#475569"/>
+  <text x="590" y="93" fill="#e2e8f0" font-size="10" font-weight="600" text-anchor="middle">Entity &amp; Risk Inspector Pane</text>
+
+  <rect x="705" y="73" width="200" height="32" rx="5" fill="#047857" stroke="#10b981"/>
+  <text x="805" y="93" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle">1-Click BNSS Notice Modal</text>
+
+  <!-- LAYER 2: API GATEWAY & RATE LIMITER -->
+  <rect x="25" y="125" width="900" height="65" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+  <text x="45" y="145" fill="#a855f7" font-size="10" font-weight="700">API GATEWAY &amp; TRAFFIC ORCHESTRATION (FastAPI 3.12+ Async Engine)</text>
+  
+  <rect x="45" y="152" width="240" height="30" rx="5" fill="#0f172a"/>
+  <text x="165" y="171" fill="#cbd5e1" font-size="9.5" text-anchor="middle">Async REST Endpoints (/api/v1/trace)</text>
+
+  <rect x="305" y="152" width="280" height="30" rx="5" fill="#0f172a" stroke="#a855f7"/>
+  <text x="445" y="171" fill="#c084fc" font-size="9.5" text-anchor="middle">Redis Token-Bucket Rate Limiter (No 429s)</text>
+
+  <rect x="605" y="152" width="300" height="30" rx="5" fill="#0f172a"/>
+  <text x="755" y="171" fill="#cbd5e1" font-size="9.5" text-anchor="middle">Local SQLite / Memory Trace Cache</text>
+
+  <!-- LAYER 3: CORE GRAPH & FORENSIC HEURISTICS -->
+  <rect x="25" y="200" width="900" height="85" rx="8" fill="#111827" stroke="#1f2937" stroke-width="1.5"/>
+  <text x="45" y="220" fill="#10b981" font-size="10" font-weight="700">FORENSIC ENGINE &amp; HEURISTIC GRAPH CORE</text>
+
+  <rect x="45" y="228" width="200" height="48" rx="6" fill="#1f2937" stroke="#374151"/>
+  <text x="145" y="248" fill="#38bdf8" font-size="10" font-weight="700" text-anchor="middle">NetworkX MultiDiGraph</text>
+  <text x="145" y="264" fill="#94a3b8" font-size="9" text-anchor="middle">Bounded BFS &amp; Value Pruning</text>
+
+  <rect x="265" y="228" width="220" height="48" rx="6" fill="#1f2937" stroke="#10b981"/>
+  <text x="375" y="248" fill="#34d399" font-size="10" font-weight="700" text-anchor="middle">Sweep Heuristic Engine</text>
+  <text x="375" y="264" fill="#94a3b8" font-size="9" text-anchor="middle">Parent Gas Link + Token Sweep</text>
+
+  <rect x="505" y="228" width="190" height="48" rx="6" fill="#1f2937" stroke="#374151"/>
+  <text x="600" y="248" fill="#f59e0b" font-size="10" font-weight="700" text-anchor="middle">Peeling Chain Classifier</text>
+  <text x="600" y="264" fill="#94a3b8" font-size="9" text-anchor="middle">90/10 Ratio + Virgin Address</text>
+
+  <rect x="715" y="228" width="190" height="48" rx="6" fill="#1f2937" stroke="#374151"/>
+  <text x="810" y="248" fill="#cbd5e1" font-size="10" font-weight="700" text-anchor="middle">Curated VASP Directory</text>
+  <text x="810" y="264" fill="#94a3b8" font-size="9" text-anchor="middle">500+ Hot Wallets &amp; Nodal Desks</text>
+
+  <!-- LAYER 4: MULTI-CHAIN DATA INGESTION -->
+  <rect x="25" y="295" width="440" height="105" rx="8" fill="#1e293b" stroke="#334155"/>
+  <text x="45" y="315" fill="#f59e0b" font-size="10" font-weight="700">MULTI-CHAIN CRAWLER WORKERS</text>
+
+  <rect x="45" y="325" width="185" height="30" rx="5" fill="#0f172a"/>
+  <text x="137" y="344" fill="#fde68a" font-size="9.5" text-anchor="middle">TronGrid / Tronscan (TRC-20)</text>
+
+  <rect x="245" y="325" width="200" height="30" rx="5" fill="#0f172a"/>
+  <text x="345" y="344" fill="#e2e8f0" font-size="9.5" text-anchor="middle">Etherscan / BscScan V2 APIs</text>
+
+  <rect x="45" y="362" width="185" height="30" rx="5" fill="#0f172a"/>
+  <text x="137" y="381" fill="#e2e8f0" font-size="9.5" text-anchor="middle">Blockstream / Mempool (BTC)</text>
+
+  <rect x="245" y="362" width="200" height="30" rx="5" fill="#0f172a"/>
+  <text x="345" y="381" fill="#cbd5e1" font-size="9.5" text-anchor="middle">Direct RPC Archive Fallbacks</text>
+
+  <!-- LAYER 5: STATUTORY COMPLIANCE & LEGAL DOSSIER -->
+  <rect x="485" y="295" width="440" height="105" rx="8" fill="#1e293b" stroke="#047857"/>
+  <text x="505" y="315" fill="#34d399" font-size="10" font-weight="700">EVIDENTIARY COMPLIANCE &amp; LEGAL DOSSIER ENGINE</text>
+
+  <rect x="505" y="325" width="195" height="30" rx="5" fill="#064e3b"/>
+  <text x="602" y="344" fill="#a7f3d0" font-size="9.5" font-weight="700" text-anchor="middle">Section 94 BNSS Notice Gen</text>
+
+  <rect x="715" y="325" width="190" height="30" rx="5" fill="#064e3b"/>
+  <text x="810" y="344" fill="#a7f3d0" font-size="9.5" font-weight="700" text-anchor="middle">Section 63 BSA Certificate</text>
+
+  <rect x="505" y="362" width="195" height="30" rx="5" fill="#0f172a"/>
+  <text x="602" y="381" fill="#cbd5e1" font-size="9.5" text-anchor="middle">Headless PDF Builder (WeasyPrint)</text>
+
+  <rect x="715" y="362" width="190" height="30" rx="5" fill="#0f172a"/>
+  <text x="810" y="381" fill="#cbd5e1" font-size="9.5" text-anchor="middle">SHA-256 Cryptographic Seal</text>
+</svg>

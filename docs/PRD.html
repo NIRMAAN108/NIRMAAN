@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NIRMAAN - Product Requirements Document (PRD)</title>
+  
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+  
+  @page {
+    size: A4;
+    margin: 20mm 16mm 20mm 16mm;
+    @bottom-right {
+      content: counter(page);
+      font-size: 9pt;
+      color: #64748b;
+      font-family: 'Inter', sans-serif;
+    }
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    line-height: 1.6;
+    font-size: 10.5pt;
+    background: #ffffff;
+    margin: 0;
+    padding: 0;
+  }
+
+  .document-container {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 10px 20px;
+  }
+
+  /* Header Badge Banner */
+  .gov-badge {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #0f766e;
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+  }
+  .gov-badge .title {
+    font-size: 9pt;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #0f766e;
+    text-transform: uppercase;
+  }
+  .gov-badge .sih-tag {
+    background: #0f172a;
+    color: #ffffff;
+    font-size: 8pt;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+
+  /* Headings */
+  h1 {
+    font-size: 20pt;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+    margin-top: 15px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 8px;
+  }
+  h2 {
+    font-size: 14pt;
+    font-weight: 700;
+    color: #0f766e;
+    margin-top: 24px;
+    margin-bottom: 10px;
+    border-bottom: 1px dashed #cbd5e1;
+    padding-bottom: 4px;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 11.5pt;
+    font-weight: 700;
+    color: #1e293b;
+    margin-top: 16px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+  }
+  h4 {
+    font-size: 10.5pt;
+    font-weight: 600;
+    color: #475569;
+    margin-top: 12px;
+    margin-bottom: 4px;
+  }
+
+  p {
+    margin-top: 0;
+    margin-bottom: 10px;
+    text-align: justify;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 18px 0;
+    font-size: 9pt;
+    page-break-inside: avoid;
+  }
+  th {
+    background: #0f172a;
+    color: #ffffff;
+    font-weight: 600;
+    text-align: left;
+    padding: 8px 10px;
+    border: 1px solid #0f172a;
+    text-transform: uppercase;
+    font-size: 8pt;
+    letter-spacing: 0.5px;
+  }
+  td {
+    padding: 7px 10px;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td {
+    background: #f8fafc;
+  }
+
+  /* Code & Pre */
+  code {
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 8.5pt;
+    background: #f1f5f9;
+    color: #0f766e;
+    padding: 2px 5px;
+    border-radius: 4px;
+  }
+  pre {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 12px 14px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 8pt;
+    line-height: 1.45;
+    margin: 12px 0 16px 0;
+    page-break-inside: avoid;
+    border-left: 4px solid #0d9488;
+  }
+  pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+  }
+
+  /* Blockquotes & Callouts */
+  blockquote {
+    border-left: 4px solid #0f766e;
+    background: #f0fdfa;
+    color: #134e4a;
+    margin: 12px 0;
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 9.5pt;
+  }
+
+  /* Image Containers for Graphs */
+  .graph-container {
+    margin: 16px 0 20px 0;
+    text-align: center;
+    page-break-inside: avoid;
+  }
+  .graph-container img, .graph-container svg {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+  }
+  .graph-caption {
+    font-size: 8.5pt;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 6px;
+  }
+
+  /* Cover Page Styles */
+  .cover-page {
+    text-align: center;
+    padding: 60px 20px 40px 20px;
+    page-break-after: always;
+  }
+  .cover-title {
+    font-size: 26pt;
+    font-weight: 900;
+    color: #0f172a;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+  .cover-subtitle {
+    font-size: 13pt;
+    font-weight: 600;
+    color: #0f766e;
+    margin-bottom: 24px;
+  }
+  .cover-desc {
+    font-size: 11pt;
+    color: #475569;
+    max-width: 650px;
+    margin: 0 auto 30px auto;
+    line-height: 1.6;
+  }
+  .cover-meta {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    display: inline-block;
+    text-align: left;
+    margin-top: 20px;
+    font-size: 9pt;
+  }
+  .cover-meta table td {
+    border: none;
+    padding: 4px 10px;
+    background: transparent;
+  }
+
+  /* Page Break Utilities */
+  .page-break {
+    page-break-after: always;
+  }
+</style>
+
+</head>
+<body>
+  <div class="document-container">
+    <div class="gov-badge">
+      <span class="title">Ministry of Home Affairs (MHA) &bull; I4C &bull; PRODUCT REQUIREMENTS DOCUMENT</span>
+      <span class="sih-tag">SIH26183</span>
+    </div>
+    <h1>PRODUCT REQUIREMENTS DOCUMENT (PRD)</h1>
+<p><strong>Project Codename:</strong> NIRMAAN / ChainTrace AI<br />
+<strong>SIH Problem Statement:</strong> SIH26183 — <em>Real-Time Identification of Fraud-Linked Cryptocurrency Exchanges from Victim-Reported Suspect Wallet Addresses through Automated Blockchain Analytics</em><br />
+<strong>Issuing Authority:</strong> Ministry of Home Affairs (MHA) / Indian Cybercrime Coordination Centre (I4C)<br />
+<strong>Document Version:</strong> 1.0.0<br />
+<strong>Status:</strong> Approved for Scaffolding &amp; Prototyping  </p>
+<hr />
+<h2>1. Executive Summary &amp; Product Vision</h2>
+<h3>1.1 Product Vision</h3>
+<p>To empower frontline Indian law enforcement officers (LEAs), cyber crime police stations (CCPS), and the national 1930/NCRP network with a <strong>sovereign, automated, real-time blockchain tracing and VASP attribution engine</strong> that intercepts illicit cryptocurrency flows during the critical <strong>"Golden Hour"</strong> and auto-generates court-admissible statutory notices under the <strong>Bharatiya Nagarik Suraksha Sanhita (BNSS), 2023</strong>.</p>
+<h3>1.2 The Problem Statement</h3>
+<p>Indian citizens lost <strong>₹22,845 Crore</strong> to cyber fraud in 2024. Over <strong>35% of high-value illicit proceeds</strong> (task scams, digital arrest scams, fake trading apps) are rapidly layered through P2P transactions into <strong>Tether (USDT)</strong> on Tron (TRC-20) and EVM chains. While the 1930 / CFCFRMS system effectively freezes Layer-1/Layer-2 bank accounts, the trail goes dark once fiat converts to crypto. </p>
+<p>Current foreign forensic solutions (Chainalysis Reactor, TRM Labs) cost <strong>₹45–₹70 Lakhs/seat/year</strong>, require weeks of manual training, and demand 30–60 minutes of manual graph expansion per case. NIRMAAN automates the entire investigative pipeline: <strong>from victim wallet input to destination exchange identification and statutory Section 94 BNSS notice dispatch in under 10 seconds</strong>.</p>
+<hr />
+<h2>2. Target User Personas &amp; User Journeys</h2>
+<pre><code>+───────────────────────────────────────────────────────────────────────────────────────────────────+
+| USER PERSONA MATRIX                                                                               |
++──────────────────────────┬─────────────────────────────────────┬──────────────────────────────────┤
+| Persona                  | Role &amp; Environment                  | Primary Goal                     |
++──────────────────────────┼─────────────────────────────────────┼──────────────────────────────────┤
+| Sub-Inspector (IO)       | District Cyber Police Station;      | Needs instant attribution of     |
+|                          | high case volume; zero Web3 skills. | suspect wallet &amp; pre-filled notice|
++──────────────────────────┼─────────────────────────────────────┼──────────────────────────────────┤
+| I4C Nodal Officer        | MHA Central Operations; oversees    | Automated syndicate clustering &amp; |
+|                          | 1930 &amp; national suspect registry.   | cross-district linkage analysis. |
++──────────────────────────┼─────────────────────────────────────┼──────────────────────────────────┤
+| VASP Compliance Officer  | Indian &amp; offshore exchanges         | Automated ingestion of verified  |
+|                          | (CoinDCX, Binance, WazirX).         | statutory preservation notices.  |
++──────────────────────────┼─────────────────────────────────────┼──────────────────────────────────┤
+| Bank Cyber Risk Manager  | Commercial Banks (SBI, HDFC);       | Early warning on P2P mule cashout|
+|                          | monitors high-velocity UPI exits.   | before police lien freeze orders.|
++──────────────────────────┴─────────────────────────────────────┴──────────────────────────────────┤
+</code></pre>
+<h3>2.1 Primary User Journey: The 60-Second Field Investigation</h3>
+<div class="graph-container">
+  <img src="./assets/diagram4_sequence_investigation.svg" alt="60-Second Investigation Sequence Diagram" />
+  <div class="graph-caption">Figure 1.1: The 60-Second Field Investigation Lifecycle: From Citizen Complaint to VASP Asset Freeze</div>
+</div>
+
+<hr />
+<h2>3. Product Scope &amp; Functional Requirements</h2>
+<h3>3.1 Functional Requirements Matrix</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">ID</th>
+<th style="text-align: left;">Module</th>
+<th style="text-align: left;">Feature Description</th>
+<th style="text-align: left;">Priority</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>FR-01</strong></td>
+<td style="text-align: left;">Multi-Chain Ingestion</td>
+<td style="text-align: left;">Auto-detect address format (Tron Base58 <code>T...</code>, EVM Hex <code>0x...</code>, Bitcoin Bech32/Base58 <code>bc1...</code>/<code>1...</code>) and route to correct crawler.</td>
+<td style="text-align: left;"><strong>P0 (Must Have)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>FR-02</strong></td>
+<td style="text-align: left;">Automated BFS Traversal</td>
+<td style="text-align: left;">Multi-hop transaction crawler traversing up to 5 hops with dynamic value pruning ($&gt; \$20$ USD threshold) and timestamp clipping.</td>
+<td style="text-align: left;"><strong>P0 (Must Have)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>FR-03</strong></td>
+<td style="text-align: left;">Deposit Sweep Heuristic</td>
+<td style="text-align: left;">Deterministic identification of unlabelled user deposit addresses via parent gas-funding + sweep pattern on EVM &amp; Tron Stake 2.0 energy delegations.</td>
+<td style="text-align: left;"><strong>P0 (Must Have)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>FR-04</strong></td>
+<td style="text-align: left;">VASP Directory &amp; Matching</td>
+<td style="text-align: left;">In-memory lookup matching resolved nodes against curated directory of 500+ global &amp; Indian FIU-registered exchange hot wallets.</td>
+<td style="text-align: left;"><strong>P0 (Must Have)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>FR-05</strong></td>
+<td style="text-align: left;">Interactive Visualizer</td>
+<td style="text-align: left;">Interactive Cytoscape.js canvas rendering: (1) Dagre linear fund flow view, (2) CoSE entity clustering view, with color-coded nodes.</td>
+<td style="text-align: left;"><strong>P0 (Must Have)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>FR-06</strong></td>
+<td style="text-align: left;">Legal Dossier Generator</td>
+<td style="text-align: left;">One-click export of court-admissible PDF dossier containing transaction ledger, graph snapshot, Section 94 BNSS notice, and Section 63 BSA certificate.</td>
+<td style="text-align: left;"><strong>P0 (Must Have)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>FR-07</strong></td>
+<td style="text-align: left;">Peeling Chain Detector</td>
+<td style="text-align: left;">Automated identification of UTXO / account-based peel chains (asymmetric 90/10 splits rolling into virgin change addresses).</td>
+<td style="text-align: left;"><strong>P1 (Should Have)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>FR-08</strong></td>
+<td style="text-align: left;">Mixer / Bridge Detection</td>
+<td style="text-align: left;">Flags interactions with Tornado Cash, FixedFloat, ChangeNOW, Thorchain, and known cross-chain bridges.</td>
+<td style="text-align: left;"><strong>P1 (Should Have)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>FR-09</strong></td>
+<td style="text-align: left;">Case Management Vault</td>
+<td style="text-align: left;">SQLite / Postgres case repository tracking FIR number, IO details, victim loss, notes, and timestamped audit logs.</td>
+<td style="text-align: left;"><strong>P1 (Should Have)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>FR-10</strong></td>
+<td style="text-align: left;">Dynamic API Rate Limiter</td>
+<td style="text-align: left;">Redis-backed token bucket preventing HTTP 429 throttling across TronGrid and Etherscan APIs.</td>
+<td style="text-align: left;"><strong>P1 (Should Have)</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>4. Non-Functional Requirements (NFRs)</h2>
+<ul>
+<li><strong>Performance &amp; Latency:</strong></li>
+<li>Multi-hop trace latency $\le 5.0\text{ seconds}$ for up to 4 hops on Tron TRC-20 and EVM chains.</li>
+<li>Graph rendering time $\le 500\text{ ms}$ for graphs containing up to 2,500 nodes.</li>
+<li><strong>Accuracy &amp; Attribution Confidence:</strong></li>
+<li>False positive rate for VASP attribution $\le 1.0\%$.</li>
+<li>Deposit sweep heuristics must achieve $\ge 98.0\%$ precision by validating parent gas/energy linkages.</li>
+<li><strong>Security &amp; Sovereign Compliance:</strong></li>
+<li>Zero citizen PII transmitted to public blockchain explorers.</li>
+<li>System architecture must be deployable on MeitY-empanelled cloud or on-premise State Data Centres (SDCs).</li>
+<li><strong>Legal Admissibility:</strong></li>
+<li>All generated forensic reports must produce a <strong>cryptographic SHA-256 hash</strong> of raw transaction ledgers, fulfilling Section 63(4)(c) of the Bharatiya Sakshya Adhiniyam, 2023.</li>
+</ul>
+<hr />
+<h2>5. Success Metrics &amp; Key Performance Indicators (KPIs)</h2>
+<ol>
+<li><strong>Mean Time to Attribution (MTTA):</strong> Reduced from <strong>14 days</strong> (manual/legacy) to <strong>$&lt; 10\text{ seconds}$</strong>.</li>
+<li><strong>Investigation Cost per Station:</strong> Reduced from <strong>₹50 Lakhs/seat/year</strong> (Chainalysis) to <strong>$&lt; ₹3 Lakhs/year</strong> per cyber station bundle.</li>
+<li><strong>Legal Notice Turnaround Time:</strong> Decreased from <strong>72 hours</strong> of manual paperwork to <strong>under 2 minutes</strong>.</li>
+<li><strong>VASP Trace Completion Rate:</strong> Successful resolution of $&gt; 85\%$ of victim-reported USDT scam flows into identifiable exchange endpoints.</li>
+</ol>
+  </div>
+</body>
+</html>

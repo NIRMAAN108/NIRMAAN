@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 950 360" width="100%" height="100%" style="background:#0f172a; border-radius:12px; font-family:'Segoe UI', Inter, sans-serif;">
+  <defs>
+    <marker id="arrSeq" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8" />
+    </marker>
+    <marker id="arrGreenSeq" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#10b981" />
+    </marker>
+  </defs>
+
+  <text x="475" y="30" text-anchor="middle" fill="#f8fafc" font-size="15" font-weight="700">THE 60-SECOND FORENSIC LIFECYCLE: FROM COMPLAINT TO VASP FREEZE</text>
+  <text x="475" y="50" text-anchor="middle" fill="#64748b" font-size="11.5">Frontline Police Interaction vs Automated Backend Graph Attribution</text>
+
+  <!-- Lifelines -->
+  <!-- Entity 1: Victim -->
+  <rect x="50" y="70" width="120" height="35" rx="6" fill="#ef4444"/>
+  <text x="110" y="92" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">Citizen / Victim</text>
+  <line x1="110" y1="105" x2="110" y2="330" stroke="#334155" stroke-width="2" stroke-dasharray="4,4"/>
+
+  <!-- Entity 2: Police IO -->
+  <rect x="250" y="70" width="130" height="35" rx="6" fill="#3b82f6"/>
+  <text x="315" y="92" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">Cyber Police (IO)</text>
+  <line x1="315" y1="105" x2="315" y2="330" stroke="#334155" stroke-width="2" stroke-dasharray="4,4"/>
+
+  <!-- Entity 3: NIRMAAN Platform -->
+  <rect x="470" y="70" width="160" height="35" rx="6" fill="#0d9488"/>
+  <text x="550" y="92" fill="#ffffff" font-size="11.5" font-weight="800" text-anchor="middle">NIRMAAN Engine</text>
+  <line x1="550" y1="105" x2="550" y2="330" stroke="#334155" stroke-width="2" stroke-dasharray="4,4"/>
+
+  <!-- Entity 4: VASP / Exchange -->
+  <rect x="740" y="70" width="150" height="35" rx="6" fill="#10b981"/>
+  <text x="815" y="92" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">Target Exchange (VASP)</text>
+  <line x1="815" y1="105" x2="815" y2="330" stroke="#334155" stroke-width="2" stroke-dasharray="4,4"/>
+
+  <!-- Message 1 -->
+  <line x1="110" y1="130" x2="315" y2="130" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrSeq)"/>
+  <text x="210" y="122" fill="#e2e8f0" font-size="10" font-weight="600" text-anchor="middle">1. Reports Scam Wallet &amp; TxID (1930 / FIR)</text>
+
+  <!-- Message 2 -->
+  <line x1="315" y1="170" x2="550" y2="170" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrSeq)"/>
+  <text x="430" y="162" fill="#e2e8f0" font-size="10" font-weight="600" text-anchor="middle">2. Pastes address; clicks "Auto-Trace"</text>
+
+  <!-- Self processing NIRMAAN -->
+  <rect x="540" y="195" width="20" height="40" fill="#0f766e" rx="3"/>
+  <text x="565" y="212" fill="#5eead4" font-size="10" font-weight="700">3. Traverses 4 hops &amp; detects sweep in 3.8s</text>
+  <text x="565" y="226" fill="#99f6e4" font-size="9">Attributed to Binance Hot Wallet 3 (TQ8z...)</text>
+
+  <!-- Message 4 -->
+  <line x1="550" y1="250" x2="315" y2="250" stroke="#10b981" stroke-width="2" marker-end="url(#arrGreenSeq)"/>
+  <text x="430" y="244" fill="#a7f3d0" font-size="10" font-weight="700" text-anchor="middle">4. Displays interactive graph + Pre-filled Sec 94 BNSS Notice</text>
+
+  <!-- Message 5 -->
+  <line x1="315" y1="290" x2="815" y2="290" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#arrSeq)"/>
+  <text x="565" y="282" fill="#fde68a" font-size="10.5" font-weight="700" text-anchor="middle">5. Dispatches Sec 94 Notice + Sec 63 BSA Digital Cert (PDF)</text>
+
+  <!-- Message 6 -->
+  <line x1="815" y1="320" x2="315" y2="320" stroke="#10b981" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrGreenSeq)"/>
+  <text x="565" y="314" fill="#34d399" font-size="10" font-weight="600" text-anchor="middle">6. Account Frozen; KYC &amp; Telemetry Released to Police</text>
+</svg>

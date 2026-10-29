@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NIRMAAN - Master Project Dossier (SIH26183)</title>
+  
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+  
+  @page {
+    size: A4;
+    margin: 20mm 16mm 20mm 16mm;
+    @bottom-right {
+      content: counter(page);
+      font-size: 9pt;
+      color: #64748b;
+      font-family: 'Inter', sans-serif;
+    }
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    line-height: 1.6;
+    font-size: 10.5pt;
+    background: #ffffff;
+    margin: 0;
+    padding: 0;
+  }
+
+  .document-container {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 10px 20px;
+  }
+
+  /* Header Badge Banner */
+  .gov-badge {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #0f766e;
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+  }
+  .gov-badge .title {
+    font-size: 9pt;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #0f766e;
+    text-transform: uppercase;
+  }
+  .gov-badge .sih-tag {
+    background: #0f172a;
+    color: #ffffff;
+    font-size: 8pt;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+
+  /* Headings */
+  h1 {
+    font-size: 20pt;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+    margin-top: 15px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 8px;
+  }
+  h2 {
+    font-size: 14pt;
+    font-weight: 700;
+    color: #0f766e;
+    margin-top: 24px;
+    margin-bottom: 10px;
+    border-bottom: 1px dashed #cbd5e1;
+    padding-bottom: 4px;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 11.5pt;
+    font-weight: 700;
+    color: #1e293b;
+    margin-top: 16px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+  }
+  h4 {
+    font-size: 10.5pt;
+    font-weight: 600;
+    color: #475569;
+    margin-top: 12px;
+    margin-bottom: 4px;
+  }
+
+  p {
+    margin-top: 0;
+    margin-bottom: 10px;
+    text-align: justify;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 18px 0;
+    font-size: 9pt;
+    page-break-inside: avoid;
+  }
+  th {
+    background: #0f172a;
+    color: #ffffff;
+    font-weight: 600;
+    text-align: left;
+    padding: 8px 10px;
+    border: 1px solid #0f172a;
+    text-transform: uppercase;
+    font-size: 8pt;
+    letter-spacing: 0.5px;
+  }
+  td {
+    padding: 7px 10px;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td {
+    background: #f8fafc;
+  }
+
+  /* Code & Pre */
+  code {
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 8.5pt;
+    background: #f1f5f9;
+    color: #0f766e;
+    padding: 2px 5px;
+    border-radius: 4px;
+  }
+  pre {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 12px 14px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 8pt;
+    line-height: 1.45;
+    margin: 12px 0 16px 0;
+    page-break-inside: avoid;
+    border-left: 4px solid #0d9488;
+  }
+  pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+  }
+
+  /* Blockquotes & Callouts */
+  blockquote {
+    border-left: 4px solid #0f766e;
+    background: #f0fdfa;
+    color: #134e4a;
+    margin: 12px 0;
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 9.5pt;
+  }
+
+  /* Image Containers for Graphs */
+  .graph-container {
+    margin: 16px 0 20px 0;
+    text-align: center;
+    page-break-inside: avoid;
+  }
+  .graph-container img, .graph-container svg {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+  }
+  .graph-caption {
+    font-size: 8.5pt;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 6px;
+  }
+
+  /* Cover Page Styles */
+  .cover-page {
+    text-align: center;
+    padding: 60px 20px 40px 20px;
+    page-break-after: always;
+  }
+  .cover-title {
+    font-size: 26pt;
+    font-weight: 900;
+    color: #0f172a;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+  .cover-subtitle {
+    font-size: 13pt;
+    font-weight: 600;
+    color: #0f766e;
+    margin-bottom: 24px;
+  }
+  .cover-desc {
+    font-size: 11pt;
+    color: #475569;
+    max-width: 650px;
+    margin: 0 auto 30px auto;
+    line-height: 1.6;
+  }
+  .cover-meta {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    display: inline-block;
+    text-align: left;
+    margin-top: 20px;
+    font-size: 9pt;
+  }
+  .cover-meta table td {
+    border: none;
+    padding: 4px 10px;
+    background: transparent;
+  }
+
+  /* Page Break Utilities */
+  .page-break {
+    page-break-after: always;
+  }
+</style>
+
+</head>
+<body>
+  <div class="document-container">
+    
+<div class="cover-page">
+  <div style="font-size: 11pt; font-weight: 700; color: #0f766e; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">
+    SMART INDIA HACKATHON 2024–2026 &bull; PROBLEM STATEMENT SIH26183
+  </div>
+  <div style="font-size: 10pt; color: #64748b; margin-bottom: 25px;">
+    Ministry of Home Affairs (MHA) &bull; Indian Cybercrime Coordination Centre (I4C)
+  </div>
+
+  <div class="cover-title">NIRMAAN: CHAINTRACE AI</div>
+  <div class="cover-subtitle">Real-Time Identification of Fraud-Linked Cryptocurrency Exchanges from Victim-Reported Suspect Wallet Addresses through Automated Blockchain Analytics</div>
+  
+  <div class="cover-desc">
+    A sovereign, end-to-end blockchain analytics, heuristic graph tracing, and statutory legal compliance platform engineered for frontline Indian cyber police stations, the national 1930 helpline, and FIU-IND compliance enforcement.
+  </div>
+
+  <div class="graph-container" style="max-width: 720px; margin: 25px auto;">
+    <img src="./assets/diagram1_sweep_forensics.svg" alt="Core Heuristic Sweep Architecture" />
+  </div>
+
+  <div class="cover-meta">
+    <table>
+      <tr><td><strong>Document Suite:</strong></td><td>Master Project Dossier (PRD + TRD + Research + Legal Templates)</td></tr>
+      <tr><td><strong>Target Deployment:</strong></td><td>Indian Cybercrime Coordination Centre (I4C) / District CCPS</td></tr>
+      <tr><td><strong>Statutory Compliance:</strong></td><td>Bharatiya Nagarik Suraksha Sanhita (BNSS), 2023 &amp; BSA, 2023</td></tr>
+      <tr><td><strong>Technology Core:</strong></td><td>FastAPI 3.12, In-Memory NetworkX, Cytoscape.js, TronGrid &amp; Etherscan APIs</td></tr>
+      <tr><td><strong>Status:</strong></td><td>Final Approved Specification &bull; Ready for Evaluation</td></tr>
+    </table>
+  </div>
+</div>
+<div class="page-break"></div>
+
+
+    <!-- PART 1: PRD -->
+    <div style="margin-top: 30px;">
+      <div class="gov-badge">
+        <span class="title">PART I: PRODUCT REQUIREMENTS SPECIFICATION</span>
+        <span class="sih-tag">SIH26183 / PRD</span>
+      </div>
+      <h1>PRODUCT REQUIREMENTS DOCUMENT (PRD)</h1>
+<p><strong>Project Codename:</strong> NIRMAAN / ChainTrace AI<br />
+<strong>SIH Problem Statement:</strong> SIH26183 — <em>Real-Time Identification of Fraud-Linked Cryptocurrency Exchanges from Victim-Reported Suspect Wallet Addresses through Automated Blockchain Analytics</em><br />
+<strong>Issuing Authority:</strong> Ministry of Home Affairs (MHA) / Indian Cybercrime Coordination Centre (I4C)<br />
+<strong>Document Version:</strong> 1.0.0<br />
+<strong>Status:</strong> Approved for Scaffolding &amp; Prototyping  </p>
+<hr />
+<h2>1. Executive Summary &amp; Product Vision</h2>
+<h3>1.1 Product Vision</h3>
+<p>To empower frontline Indian law enforcement officers (LEAs), cyber crime police stations (CCPS), and the national 1930/NCRP network with a <strong>sovereign, automated, real-time blockchain tracing and VASP attribution engine</strong> that intercepts illicit cryptocurrency flows during the critical <strong>"Golden Hour"</strong> and auto-generates court-admissible statutory notices under the <strong>Bharatiya Nagarik Suraksha Sanhita (BNSS), 2023</strong>.</p>
+<h3>1.2 The Problem Statement</h3>
+<p>Indian citizens lost <strong>₹22,845 Crore</strong> to cyber fraud in 2024. Over <strong>35% of high-value illicit proceeds</strong> (task scams, digital arrest scams, fake trading apps) are rapidly layered through P2P transactions into <strong>Tether (USDT)</strong> on Tron (TRC-20) and EVM chains. While the 1930 / CFCFRMS system effectively freezes Layer-1/Layer-2 bank accounts, the trail goes dark once fiat converts to crypto. </p>
+<p>Current foreign forensic solutions (Chainalysis Reactor, TRM Labs) cost <strong>₹45–₹70 Lakhs/seat/year</strong>, require weeks of manual training, and demand 30–60 minutes of manual graph expansion per case. NIRMAAN automates the entire investigative pipeline: <strong>from victim wallet input to destination exchange identification and statutory Section 94 BNSS notice dispatch in under 10 seconds</strong>.</p>
+<hr />
+<h2>2. Target User Personas &amp; User Journeys</h2>
+<pre><code>+───────────────────────────────────────────────────────────────────────────────────────────────────+
+| USER PERSONA MATRIX                                                                               |
++──────────────────────────┬─────────────────────────────────────┬──────────────────────────────────┤
+| Persona                  | Role &amp; Environment                  | Primary Goal                     |
++──────────────────────────┼─────────────────────────────────────┼──────────────────────────────────┤
+| Sub-Inspector (IO)       | District Cyber Police Station;      | Needs instant attribution of     |
+|                          | high case volume; zero Web3 skills. | suspect wallet &amp; pre-filled notice|
++──────────────────────────┼─────────────────────────────────────┼──────────────────────────────────┤
+| I4C Nodal Officer        | MHA Central Operations; oversees    | Automated syndicate clustering &amp; |
+|                          | 1930 &amp; national suspect registry.   | cross-district linkage analysis. |
++──────────────────────────┼─────────────────────────────────────┼──────────────────────────────────┤
+| VASP Compliance Officer  | Indian &amp; offshore exchanges         | Automated ingestion of verified  |
+|                          | (CoinDCX, Binance, WazirX).         | statutory preservation notices.  |
++──────────────────────────┼─────────────────────────────────────┼──────────────────────────────────┤
+| Bank Cyber Risk Manager  | Commercial Banks (SBI, HDFC);       | Early warning on P2P mule cashout|
+|                          | monitors high-velocity UPI exits.   | before police lien freeze orders.|
++──────────────────────────┴─────────────────────────────────────┴──────────────────────────────────┤
+</code></pre>
+<h3>2.1 Primary User Journey: The 60-Second Field Investigation</h3>
+<div class="graph-container">
+  <img src="./assets/diagram4_sequence_investigation.svg" alt="60-Second Investigation Sequence Diagram" />
+  <div class="graph-caption">Figure 1.1: The 60-Second Field Investigation Lifecycle: From Citizen Complaint to VASP Asset Freeze</div>
+</div>
+
+<hr />
+<h2>3. Product Scope &amp; Functional Requirements</h2>
+<h3>3.1 Functional Requirements Matrix</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">ID</th>
+<th style="text-align: left;">Module</th>
+<th style="text-align: left;">Feature Description</th>
+<th style="text-align: left;">Priority</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>FR-01</strong></td>
+<td style="text-align: left;">Multi-Chain Ingestion</td>
+<td style="text-align: left;">Auto-detect address format (Tron Base58 <code>T...</code>, EVM Hex <code>0x...</code>, Bitcoin Bech32/Base58 <code>bc1...</code>/<code>1...</code>) and route to correct crawler.</td>
+<td style="text-align: left;"><strong>P0 (Must Have)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>FR-02</strong></td>
+<td style="text-align: left;">Automated BFS Traversal</td>
+<td style="text-align: left;">Multi-hop transaction crawler traversing up to 5 hops with dynamic value pruning ($&gt; \$20$ USD threshold) and timestamp clipping.</td>
+<td style="text-align: left;"><strong>P0 (Must Have)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>FR-03</strong></td>
+<td style="text-align: left;">Deposit Sweep Heuristic</td>
+<td style="text-align: left;">Deterministic identification of unlabelled user deposit addresses via parent gas-funding + sweep pattern on EVM &amp; Tron Stake 2.0 energy delegations.</td>
+<td style="text-align: left;"><strong>P0 (Must Have)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>FR-04</strong></td>
+<td style="text-align: left;">VASP Directory &amp; Matching</td>
+<td style="text-align: left;">In-memory lookup matching resolved nodes against curated directory of 500+ global &amp; Indian FIU-registered exchange hot wallets.</td>
+<td style="text-align: left;"><strong>P0 (Must Have)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>FR-05</strong></td>
+<td style="text-align: left;">Interactive Visualizer</td>
+<td style="text-align: left;">Interactive Cytoscape.js canvas rendering: (1) Dagre linear fund flow view, (2) CoSE entity clustering view, with color-coded nodes.</td>
+<td style="text-align: left;"><strong>P0 (Must Have)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>FR-06</strong></td>
+<td style="text-align: left;">Legal Dossier Generator</td>
+<td style="text-align: left;">One-click export of court-admissible PDF dossier containing transaction ledger, graph snapshot, Section 94 BNSS notice, and Section 63 BSA certificate.</td>
+<td style="text-align: left;"><strong>P0 (Must Have)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>FR-07</strong></td>
+<td style="text-align: left;">Peeling Chain Detector</td>
+<td style="text-align: left;">Automated identification of UTXO / account-based peel chains (asymmetric 90/10 splits rolling into virgin change addresses).</td>
+<td style="text-align: left;"><strong>P1 (Should Have)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>FR-08</strong></td>
+<td style="text-align: left;">Mixer / Bridge Detection</td>
+<td style="text-align: left;">Flags interactions with Tornado Cash, FixedFloat, ChangeNOW, Thorchain, and known cross-chain bridges.</td>
+<td style="text-align: left;"><strong>P1 (Should Have)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>FR-09</strong></td>
+<td style="text-align: left;">Case Management Vault</td>
+<td style="text-align: left;">SQLite / Postgres case repository tracking FIR number, IO details, victim loss, notes, and timestamped audit logs.</td>
+<td style="text-align: left;"><strong>P1 (Should Have)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>FR-10</strong></td>
+<td style="text-align: left;">Dynamic API Rate Limiter</td>
+<td style="text-align: left;">Redis-backed token bucket preventing HTTP 429 throttling across TronGrid and Etherscan APIs.</td>
+<td style="text-align: left;"><strong>P1 (Should Have)</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>4. Non-Functional Requirements (NFRs)</h2>
+<ul>
+<li><strong>Performance &amp; Latency:</strong></li>
+<li>Multi-hop trace latency $\le 5.0\text{ seconds}$ for up to 4 hops on Tron TRC-20 and EVM chains.</li>
+<li>Graph rendering time $\le 500\text{ ms}$ for graphs containing up to 2,500 nodes.</li>
+<li><strong>Accuracy &amp; Attribution Confidence:</strong></li>
+<li>False positive rate for VASP attribution $\le 1.0\%$.</li>
+<li>Deposit sweep heuristics must achieve $\ge 98.0\%$ precision by validating parent gas/energy linkages.</li>
+<li><strong>Security &amp; Sovereign Compliance:</strong></li>
+<li>Zero citizen PII transmitted to public blockchain explorers.</li>
+<li>System architecture must be deployable on MeitY-empanelled cloud or on-premise State Data Centres (SDCs).</li>
+<li><strong>Legal Admissibility:</strong></li>
+<li>All generated forensic reports must produce a <strong>cryptographic SHA-256 hash</strong> of raw transaction ledgers, fulfilling Section 63(4)(c) of the Bharatiya Sakshya Adhiniyam, 2023.</li>
+</ul>
+<hr />
+<h2>5. Success Metrics &amp; Key Performance Indicators (KPIs)</h2>
+<ol>
+<li><strong>Mean Time to Attribution (MTTA):</strong> Reduced from <strong>14 days</strong> (manual/legacy) to <strong>$&lt; 10\text{ seconds}$</strong>.</li>
+<li><strong>Investigation Cost per Station:</strong> Reduced from <strong>₹50 Lakhs/seat/year</strong> (Chainalysis) to <strong>$&lt; ₹3 Lakhs/year</strong> per cyber station bundle.</li>
+<li><strong>Legal Notice Turnaround Time:</strong> Decreased from <strong>72 hours</strong> of manual paperwork to <strong>under 2 minutes</strong>.</li>
+<li><strong>VASP Trace Completion Rate:</strong> Successful resolution of $&gt; 85\%$ of victim-reported USDT scam flows into identifiable exchange endpoints.</li>
+</ol>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- PART 2: TRD -->
+    <div style="margin-top: 30px;">
+      <div class="gov-badge">
+        <span class="title">PART II: TECHNICAL REQUIREMENTS &amp; ENGINEERING ARCHITECTURE</span>
+        <span class="sih-tag">SIH26183 / TRD</span>
+      </div>
+      <h1>TECHNICAL REQUIREMENTS DOCUMENT (TRD) &amp; ENGINEERING ARCHITECTURE</h1>
+<p><strong>Project Codename:</strong> NIRMAAN / ChainTrace AI<br />
+<strong>SIH Problem Statement:</strong> SIH26183<br />
+<strong>Target Domain:</strong> Real-Time Blockchain Analytics, Graph Forensics &amp; Statutory LEA Integration<br />
+<strong>Document Version:</strong> 1.0.0  </p>
+<hr />
+<h2>1. System Architecture Overview</h2>
+<div class="graph-container">
+  <img src="./assets/diagram3_system_architecture.svg" alt="System Architecture Diagram" />
+  <div class="graph-caption">Figure 2.1: NIRMAAN Full Technical Architecture Decomposition</div>
+</div>
+
+<hr />
+<h2>2. Forensic Algorithms &amp; Heuristic Specifications</h2>
+<h3>2.1 Bounded Breadth-First-Search (BFS) with Dynamic Pruning</h3>
+<p>Standard BFS exhibits $O(b^d)$ branching complexity. To guarantee sub-5-second execution during the 1930 "Golden Hour", the graph crawler enforces three mathematical pruning constraints:</p>
+<pre><code>Traversal Constraints:
+1. Value Cutoff:      Value(e) &gt;= max( $20.00 USD,  0.005 * Initial_Victim_Loss )
+2. Temporal Window:   Timestamp(tx) &gt;= Timestamp(victim_deposit) - 60 seconds
+3. Max Depth Bound:   Depth(d) &lt;= 5 hops
+4. High-Degree Fan-out Pruning: If Out-Degree(node) &gt; 100 AND node NOT in VASP_DB, 
+                                sort edges by amount DESC and trace top 5 paths.
+</code></pre>
+<pre><code class="language-python"># Core BFS Traversal Logic
+import networkx as nx
+
+def bounded_bfs_trace(seed_address: str, chain: str, max_depth: int = 5, min_usd: float = 20.0):
+    G = nx.MultiDiGraph()
+    queue = [(seed_address, 0, None)]  # (current_node, current_depth, parent_tx)
+    visited = set()
+
+    while queue:
+        curr_addr, depth, parent_tx = queue.pop(0)
+        if depth &gt;= max_depth or curr_addr in visited:
+            continue
+        visited.add(curr_addr)
+
+        # Fetch outbound transfers asynchronously
+        txs = fetch_transfers(curr_addr, chain)
+        for tx in txs:
+            if tx.usd_value &lt; min_usd:
+                continue  # Prune dust
+
+            G.add_node(tx.to_address, label=resolve_label(tx.to_address))
+            G.add_edge(curr_addr, tx.to_address, tx_hash=tx.hash, amount=tx.amount, usd=tx.usd_value)
+
+            # If hit known exchange or sweep detected, terminate that branch
+            if is_vasp(tx.to_address) or is_sweep_contract(tx.to_address):
+                mark_destination_found(G, tx.to_address)
+                continue
+
+            queue.append((tx.to_address, depth + 1, tx.hash))
+    return G
+</code></pre>
+<hr />
+<h3>2.2 The Exchange Deposit Sweep Detection Heuristic</h3>
+<p>Because centralized exchanges generate individual, unlabelled deposit addresses for each user, standard address lookups fail. The sweep engine evaluates the parent-child gas funding and sweeping loop:</p>
+<div class="graph-container">
+  <img src="./assets/diagram1_sweep_forensics.svg" alt="Deposit Sweep Heuristic Forensic Architecture" />
+  <div class="graph-caption">Figure 2.2: Automated Blockchain Forensics & Deposit Sweep Attribution Heuristic</div>
+</div>
+
+<h4>Deterministic Deduction Rules:</h4>
+<ol>
+<li><strong>Rule 1 (Parent Gas Link):</strong> Address $D$ received native gas $G$ from address $P$ within $\Delta t_1 \le 600\text{s}$.</li>
+<li><strong>Rule 2 (Complete Balance Sweep):</strong> Address $D$ transfers $\ge 99\%$ of its token balance to address $H$ within $\Delta t_2 \le 180\text{s}$.</li>
+<li><strong>Rule 3 (Entity Attribution):</strong> If $P$ or $H$ matches an address in <code>known_vasps.json</code>, then address $D$ is deterministically classified as:<br />
+   $$\text{Classification}(D) = \text{VASP_DEPOSIT_ADDRESS} \quad [\text{Confidence} = 0.992]$$</li>
+</ol>
+<h4>Special TRON Architecture (Stake 2.0 Energy Delegation):</h4>
+<p>On TRON, tier-1 exchanges (Binance, HTX, Bybit) frequently do not transfer TRX. Instead, they broadcast a <code>DelegateResourceContract</code> transaction, delegating <strong>32,000 to 65,000 Energy</strong> to the child address for 1 hour.<br />
+* <strong>Detection Rule:</strong> The engine checks <code>/wallet/getdelegatedresource</code> on TronGrid. If an address executes a TRC-20 USDT transfer with 0 TRX balance, the delegator is parsed. <strong>The delegator is the exchange.</strong></p>
+<hr />
+<h2>3. Frontend Graph Canvas Architecture (Cytoscape.js)</h2>
+<h3>3.1 Dual Layout Engine Strategy</h3>
+<p>To satisfy both forensic money trail presentation and entity clustering:</p>
+<ol>
+<li><strong>Fund Flow View (<code>cytoscape-dagre</code>):</strong><br />
+   * Hierarchical Left-to-Right (<code>rankDir: 'LR'</code>) orientation.<br />
+   * Node positions represent hop distance from the victim.<br />
+   * Edges annotated with token symbol, amount, and timestamp.</li>
+<li><strong>Entity Cluster View (<code>cytoscape-cose-bilkent</code>):</strong><br />
+   * Compound force-directed layout grouping wallets controlled by the same actor or exchange into visual bounding boxes.</li>
+</ol>
+<h3>3.2 Dynamic Color-Coding Palette</h3>
+<ul>
+<li><code>Red (#FF4D4F)</code>: Victim / Seed Suspect Address.</li>
+<li><code>Yellow (#FAAD14)</code>: Intermediary Mule / Splitter Address.</li>
+<li><code>Blue (#1890FF)</code>: Smart Contract / Mixer / Cross-Chain Bridge.</li>
+<li><code>Green (#52C41A)</code>: Identified VASP Deposit Address / Exchange Hot Wallet.</li>
+</ul>
+<hr />
+<h2>4. API Endpoints &amp; Data Contracts</h2>
+<h3>4.1 <code>POST /api/v1/trace</code></h3>
+<p><strong>Request Payload:</strong></p>
+<pre><code class="language-json">{
+  &quot;seed_address&quot;: &quot;TX1234567890abcdef...&quot;,
+  &quot;chain&quot;: &quot;tron&quot;,
+  &quot;token&quot;: &quot;USDT&quot;,
+  &quot;max_depth&quot;: 4,
+  &quot;min_usd_value&quot;: 50.0,
+  &quot;case_metadata&quot;: {
+    &quot;fir_number&quot;: &quot;FIR-89/2026&quot;,
+    &quot;police_station&quot;: &quot;Cyber Crime PS Pune&quot;,
+    &quot;complainant_loss_inr&quot;: 500000
+  }
+}
+</code></pre>
+<p><strong>Response Payload:</strong></p>
+<pre><code class="language-json">{
+  &quot;trace_id&quot;: &quot;tr_9a8f7c6e&quot;,
+  &quot;execution_time_ms&quot;: 3840,
+  &quot;destination_found&quot;: true,
+  &quot;target_vasp&quot;: {
+    &quot;name&quot;: &quot;Binance&quot;,
+    &quot;fiu_registered&quot;: true,
+    &quot;deposit_address&quot;: &quot;TQ8z...&quot;,
+    &quot;hot_wallet&quot;: &quot;TK1x... (Binance Hot 3)&quot;,
+    &quot;sweep_tx_hash&quot;: &quot;0x4b7c...&quot;,
+    &quot;nodal_email&quot;: &quot;compliance-in@binance.com&quot;,
+    &quot;subpoena_portal&quot;: &quot;https://www.binance.com/en/support/law-enforcement&quot;
+  },
+  &quot;graph_data&quot;: {
+    &quot;nodes&quot;: [
+      {&quot;id&quot;: &quot;node_0&quot;, &quot;address&quot;: &quot;TX12...&quot;, &quot;type&quot;: &quot;SUSPECT&quot;, &quot;balance_usd&quot;: 0.0},
+      {&quot;id&quot;: &quot;node_1&quot;, &quot;address&quot;: &quot;TY56...&quot;, &quot;type&quot;: &quot;MULE&quot;, &quot;balance_usd&quot;: 120.0},
+      {&quot;id&quot;: &quot;node_2&quot;, &quot;address&quot;: &quot;TQ8z...&quot;, &quot;type&quot;: &quot;VASP_DEPOSIT&quot;, &quot;vasp&quot;: &quot;Binance&quot;}
+    ],
+    &quot;edges&quot;: [
+      {&quot;source&quot;: &quot;node_0&quot;, &quot;target&quot;: &quot;node_1&quot;, &quot;tx_hash&quot;: &quot;0xabc...&quot;, &quot;amount&quot;: 5000.0, &quot;timestamp&quot;: 1772345600},
+      {&quot;source&quot;: &quot;node_1&quot;, &quot;target&quot;: &quot;node_2&quot;, &quot;tx_hash&quot;: &quot;0xdef...&quot;, &quot;amount&quot;: 4980.0, &quot;timestamp&quot;: 1772346200}
+    ]
+  }
+}
+</code></pre>
+<hr />
+<h3>4.2 <code>POST /api/v1/dossier/generate</code></h3>
+<p>Generates a court-admissible PDF package including:<br />
+1. Chronological Transaction Table.<br />
+2. High-resolution vector diagram of the money trail.<br />
+3. Pre-populated <strong>Section 94 BNSS Notice</strong> (production of records &amp; account freeze).<br />
+4. <strong>Section 63 Bharatiya Sakshya Adhiniyam (BSA) Certificate</strong> with SHA-256 evidence hash.</p>
+<hr />
+<h2>5. Multi-Chain Resiliency &amp; Rate Limiting</h2>
+<h3>Redis Token-Bucket Implementation</h3>
+<p>To prevent HTTP 429 throttling across TronGrid (15 QPS) and Etherscan Pro (5–30 QPS):<br />
+* Requests pass through a Lua-scripted token bucket in Redis.<br />
+* Dynamic backoff with jitter: <code>t_wait = 2^attempt * base + uniform(0, 0.5)</code>.<br />
+* Automatic fallback from Explorer REST APIs to direct JSON-RPC (<code>eth_getLogs</code>) via QuickNode/Alchemy if explorer endpoints return 5xx errors.</p>
+<hr />
+<h2>6. Enterprise Production Scalability Path (National I4C Scale)</h2>
+<pre><code>[ Ingestion Layer ]   ==&gt;  [ Streaming Hub ]   ==&gt;  [ In-Memory Graph ]   ==&gt;  [ Columnar Warehouse ]
+Archive RPC Nodes          Apache Kafka             Memgraph Enterprise         ClickHouse Cluster
+(Erigon, Reth, TronGrid)   (raw.blocks,             (Sub-millisecond Cypher     (Billions of historical
+                            decoded.transfers)       multi-hop traversals)       transfers &amp; aggregation)
+</code></pre>
+<ol>
+<li><strong>Memgraph C++ Engine:</strong> Replaces NetworkX to support 100+ concurrent state cyber cell queries across 500M+ global edges.</li>
+<li><strong>ClickHouse Cluster:</strong> Provides sub-second historical aggregation (<code>sum(amount) GROUP BY to_address</code>) across petabytes of historical chain data.</li>
+<li><strong>Apache Kafka:</strong> Decouples live block ingestion from investigator query pipelines.</li>
+</ol>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- PART 3: RESEARCH & LEGAL -->
+    <div style="margin-top: 30px;">
+      <div class="gov-badge">
+        <span class="title">PART III: GENERAL RESEARCH, COMPETITIVE INTELLIGENCE &amp; STATUTORY COMPLIANCE</span>
+        <span class="sih-tag">SIH26183 / RESEARCH</span>
+      </div>
+      <h1>COMPREHENSIVE RESEARCH DOSSIER</h1>
+<p><strong>Project Codename:</strong> NIRMAAN / ChainTrace AI<br />
+<strong>SIH Problem Statement:</strong> SIH26183 — <em>Real-Time Identification of Fraud-Linked Cryptocurrency Exchanges from Victim-Reported Suspect Wallet Addresses through Automated Blockchain Analytics</em><br />
+<strong>Issuing Authority:</strong> Ministry of Home Affairs (MHA) / Indian Cybercrime Coordination Centre (I4C)<br />
+<strong>Document Version:</strong> 1.0.0  </p>
+<hr />
+<h2>1. Problem Statement Context &amp; The Indian Cybercrime Landscape</h2>
+<div class="graph-container">
+  <img src="./assets/diagram2_stakeholder_flow.svg" alt="1930 Helpline Ecosystem & I4C Integration" />
+  <div class="graph-caption">Figure 3.1: National Cybercrime Response Ecosystem & Automated Crypto Attribution Architecture</div>
+</div>
+
+<h3>1.1 The Operational Gap in the 1930 Helpline &amp; CFCFRMS</h3>
+<p>The Indian Cybercrime Coordination Centre (I4C), under the Ministry of Home Affairs (MHA), operates the <strong>Citizen Financial Cyber Fraud Reporting and Management System (CFCFRMS)</strong> and the national toll-free helpline <strong>1930</strong>. <br />
+* <strong>The "Golden Hour":</strong> When a victim reports a cyber fraud within 2 hours, the 1930 system dispatches automated API freeze requests down traditional banking channels (Layer 1, Layer 2, Layer 3 mule bank accounts).<br />
+* <strong>The Crypto Black Hole:</strong> Cybercrime syndicates (specifically Southeast Asian syndicates in Cambodia, Myanmar, and Laos operating "pig butchering", task fraud, and digital arrest scams) convert stolen INR into cryptocurrency via P2P desks on exchanges within <strong>15 to 30 minutes</strong>. <br />
+* Traditional banking liens hit an empty account; the money has already exited into <strong>Tether (USDT) on TRON (TRC-20) or Binance Smart Chain (BEP-20)</strong>.</p>
+<h3>1.2 Official Fraud Statistics (2024–2025 Benchmarks)</h3>
+<ul>
+<li><strong>National Loss Volume:</strong> Indian citizens lost <strong>₹22,845 Crore</strong> to cyber financial fraud in calendar year 2024.</li>
+<li><strong>Complaint Volume:</strong> Total complaints registered on the National Cybercrime Reporting Portal (NCRP) crossed <strong>65.89 Lakh cumulative complaints</strong>, with cumulative reported citizen losses exceeding <strong>₹55,050 Crore</strong>.</li>
+<li><strong>Crypto's Laundering Share:</strong> I4C empirical studies indicate that <strong>over 35% of all high-value cyber fraud proceeds</strong> are laundered via USDT on TRC-20 and EVM chains, representing an estimated <strong>₹7,000 to ₹9,000 Crore of annual illicit crypto outflows from India</strong>.</li>
+</ul>
+<hr />
+<h2>2. In-Depth Competitive Intelligence</h2>
+<h3>2.1 Competitor Benchmarking Matrix</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Competitor</th>
+<th style="text-align: left;">Valuation</th>
+<th style="text-align: left;">Est. Annual Revenue (ARR)</th>
+<th style="text-align: left;">License Cost / Seat</th>
+<th style="text-align: left;">Target Segment</th>
+<th style="text-align: left;">Key Shortcomings in Indian Context</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Chainalysis</strong></td>
+<td style="text-align: left;">$8.6B</td>
+<td style="text-align: left;">~$175M – $200M+</td>
+<td style="text-align: left;"><strong>$30,000 – $100,000+ / yr</strong> (~₹45L–₹85L)</td>
+<td style="text-align: left;">Federal LEAs (FBI, IRS-CI), Tier-1 Banks</td>
+<td style="text-align: left;">Prohibitive cost; complex manual UI; zero native integration with I4C / BNSS legal notices.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>TRM Labs</strong></td>
+<td style="text-align: left;">$2.0B</td>
+<td style="text-align: left;">~$100M</td>
+<td style="text-align: left;"><strong>$35,000 – $80,000 / yr</strong> (~₹30L–₹65L)</td>
+<td style="text-align: left;">US Federal LEAs (ICE, Secret Service), Top VASPs</td>
+<td style="text-align: left;">High-end pricing; indirect exposure scoring creates noise for frontline Indian officers.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Elliptic</strong></td>
+<td style="text-align: left;">$670M</td>
+<td style="text-align: left;">~$35M – $65M</td>
+<td style="text-align: left;"><strong>$15,000 – $50,000 / yr</strong> + API consumption</td>
+<td style="text-align: left;">UK/EU Banks, Custodians, Regulators</td>
+<td style="text-align: left;">Focused on Western TradFi compliance; weak dynamic sweep attribution on TRON.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Merkle Science</strong></td>
+<td style="text-align: left;">$100M–$250M</td>
+<td style="text-align: left;">~$5M – $12M</td>
+<td style="text-align: left;"><strong>$10,000 – $30,000 / yr</strong> base</td>
+<td style="text-align: left;">Mid-market VASPs, regional cyber units</td>
+<td style="text-align: left;">Slower graph visualization; lacks automated Section 94 notice dispatch workflows.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Bitquery</strong></td>
+<td style="text-align: left;">~$50M</td>
+<td style="text-align: left;">~$3.2M</td>
+<td style="text-align: left;">Developer API ($13/mo – $5k/mo)</td>
+<td style="text-align: left;">Web3 developers, quants</td>
+<td style="text-align: left;">Developer API tool; provides no out-of-the-box investigative GUI or court-ready dossiers.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>MistTrack</strong></td>
+<td style="text-align: left;">Private</td>
+<td style="text-align: left;">Undisclosed</td>
+<td style="text-align: left;">Freemium bot + API credits</td>
+<td style="text-align: left;">Incident response, DeFi security</td>
+<td style="text-align: left;">Hong Kong/APAC focus; no Indian FIU-IND regulatory or statutory notice workflows.</td>
+</tr>
+</tbody>
+</table>
+<h3>2.2 Empirical Indian Police Procurement Evidence</h3>
+<ul>
+<li><strong>Kerala Police Cyber Operations Tender (<code>2024_KP_678291_1</code> / <code>E1(c)-6143/2024/Cyb(1)</code>):</strong></li>
+<li>Procurement of <strong>01 single-user license</strong> of a cryptocurrency analyzing tool (Chainalysis).</li>
+<li>Sanctioned budget: <strong>₹50.00 Lakhs ($60,000 USD)</strong>; final award: <strong>₹45.00 Lakhs</strong>.</li>
+<li><strong>UP ATS &amp; Bihar Police GeM Bids (<code>GEM/2025/B/6908820</code>, <code>GEM/2026/B/8076690</code>):</strong></li>
+<li>Single-station software tenders consistently exhaust ₹40L – ₹1.2 Crore, proving that foreign software is mathematically unaffordable for the 800+ subordinate district-level cyber police stations across India.</li>
+</ul>
+<hr />
+<h2>3. Statutory Legal Framework (Active July 1, 2024)</h2>
+<p>To ensure evidence gathered by NIRMAAN is admissible in Indian courts, the platform natively implements the <strong>new criminal law codes</strong> enacted on July 1, 2024:</p>
+<pre><code>+───────────────────────────────────────────────────────────────────────────────────────────────────+
+| INDIAN STATUTORY TRANSITION MATRIX                                                                |
++──────────────────────────────────┬─────────────────────────────────┬──────────────────────────────┤
+| Previous Statutory Code (Old)    | Active Modern Code (BNSS/BSA)   | Operational Legal Scope      |
++──────────────────────────────────┼─────────────────────────────────┼──────────────────────────────┤
+| Section 91 CrPC, 1973            | Section 94 BNSS, 2023           | Requisition of documents,    |
+|                                  |                                 | electronic logs &amp; KYC.       |
++──────────────────────────────────┼─────────────────────────────────┼──────────────────────────────┤
+| Section 102 CrPC, 1973           | Section 106 &amp; 107 BNSS, 2023    | Police order for freezing    |
+|                                  |                                 | &amp; attaching crypto assets.   |
++──────────────────────────────────┼─────────────────────────────────┼──────────────────────────────┤
+| Section 172 CrPC, 1973           | Section 192 BNSS, 2023          | Police Case Diary entry      |
+|                                  |                                 | of blockchain money trail.   |
++──────────────────────────────────┼─────────────────────────────────┼──────────────────────────────┤
+| Section 65B Indian Evidence Act  | Section 63 BSA, 2023            | Mandatory certificate for    |
+| (IEA), 1872                      | (Schedule Form)                 | electronic record integrity. |
++──────────────────────────────────┴─────────────────────────────────┴──────────────────────────────┤
+</code></pre>
+<hr />
+<h2>4. Production-Ready Legal Notice Templates</h2>
+<h3>4.1 Section 94 BNSS, 2023 Notice Template (To VASP Nodal Officer)</h3>
+<pre><code class="language-text">FORM OF ORDER / NOTICE UNDER SECTION 94 OF THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023
+(Corresponding to Section 91 of the Code of Criminal Procedure, 1973)
+
+To:
+The Nodal Officer / Compliance Department / Law Enforcement Response Team,
+M/s [Name of Exchange, e.g., Binance / Bybit / CoinDCX / WazirX],
+Registered VASP Legal Desk.
+
+SUBJECT: REQUISITION FOR PRODUCTION OF RECORDS, TRANSACTION LEDGERS, AND URGENT FREEZING OF ASSETS 
+         IN CONNECTION WITH INVESTIGATION OF FIR NO. [_______/2026] UNDER SECTIONS 316(2), 318(4) BNS, 2023 
+         AND SECTION 66D INFORMATION TECHNOLOGY ACT, 2000.
+
+Whereas, an investigation into a cyber financial fraud complaint involving an amount of INR [_____________] 
+(Equivalent to [________] USDT) is being conducted by the undersigned Investigating Officer at [Cyber Police Station].
+
+And whereas, automated blockchain forensic analysis of the fund trail originating from the victim's address 
+[0x_Victim_Address / T_Victim_Address] has established that illicit proceeds were deposited into the following 
+address operated and maintained by your exchange:
+
+1. Target Deposit Address: [Target_Deposit_Address]
+2. Incoming Transaction Hash (TxID): [TxHash_Value]
+3. Transaction Timestamp: [YYYY-MM-DD HH:MM:SS UTC]
+4. Amount Deposited: [________] USDT
+5. Parent Sweeping / Gas Dispenser Hash: [Sweep_TxHash]
+
+Therefore, by virtue of powers conferred under Section 94 of the Bharatiya Nagarik Suraksha Sanhita, 2023, 
+you are hereby legally directed to produce the following records within 24 hours of receipt of this notice:
+
+1. Complete User Profile &amp; KYC Records: Legal name, DOB, residential address, government ID (PAN/Aadhaar/Passport), 
+   registered phone number, registered email address, and IP/facial verification records.
+2. Complete Transaction Ledger: Comprehensive deposit, order-book execution, and withdrawal records 
+   associated with the account UID linked to the above deposit address.
+3. Device &amp; Access Telemetry: IP logs with port numbers, timestamps, login history, IMEI/MAC, and User-Agent strings.
+4. Linked Banking / P2P Settlement Records: Bank accounts (Account number, IFSC, Bank name) and UPI IDs 
+   registered for P2P counterparty fiat off-ramping.
+5. Immediate Preservation &amp; Lien (Section 106/107 BNSS): Place an immediate freeze on all asset balances 
+   held under the target UID and restrict all outgoing crypto withdrawals and fiat settlements.
+
+Failure to comply renders you liable for penal action under Section 223 of the Bharatiya Nyaya Sanhita, 2023.
+
+Given under my hand and seal of the Police Station, this [Day] day of [Month], 2026.
+
+Investigating Officer (IO): ________________________________________
+Rank / Designation: _________________________________________________
+Police Station: ____________________________________________________
+State / District: __________________________________________________
+Official Email (gov.in/nic.in): ____________________________________
+</code></pre>
+<hr />
+<h3>4.2 Section 63 BSA, 2023 Electronic Evidence Certificate</h3>
+<pre><code class="language-text">CERTIFICATE UNDER SECTION 63(4)(c) OF THE BHARATIYA SAKSHYA ADHINIYAM (BSA), 2023
+(Corresponding to Section 65B of the Indian Evidence Act, 1872)
+FOR ADMISSIBILITY OF ELECTRONIC FORENSIC BLOCKCHAIN RECORDS
+
+I, [Name of Officer / Forensic Analyst], functioning at [Cyber Police Station / Organization], 
+do hereby solemnly affirm and state on oath as under:
+
+1. I am authorized and responsible for the technical extraction, on-chain traversal, and forensic audit of digital evidence.
+
+PART A: IDENTIFICATION OF ELECTRONIC RECORD &amp; SOURCE SYSTEMS
+2. The electronic record produced herewith consists of a computer-generated forensic audit dossier running into 
+   pages [1 to N], titled &quot;BLOCKCHAIN TRANSACTION AUDIT REPORT — CASE FIR NO. [______/2026]&quot;.
+3. The electronic record was generated through automated blockchain inspection software ingesting finalized block 
+   header data and transaction logs via authenticated API interfaces connected to public decentralized ledgers 
+   [TRON / Ethereum / BNB Chain].
+4. Date &amp; Time of Extraction: [YYYY-MM-DD HH:MM:SS IST]
+5. Cryptographic Integrity Hash (SHA-256) of Raw Trace Ledger:
+   [e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855]
+
+PART B: CERTIFICATE REGARDING REGULAR AND ACCURATE OPERATION
+6. In compliance with Section 63(2) of the Bharatiya Sakshya Adhiniyam, 2023, I certify that:
+   (a) The computer system, database, and querying software used to compile this record operated properly.
+   (b) The electronic records were fetched in the ordinary course of legitimate forensic analysis directly 
+       from immutable public blockchain distributed ledgers.
+   (c) The record was protected against unauthorized access, data alteration, or malicious corruption.
+   (d) The attached printout/PDF is an accurate reproduction of electronic ledger records stored in our server storage.
+
+IN WITNESS WHEREOF, I have signed this certificate on this [____] day of [________], 2026 at [City, State].
+
+Deponent / System Operator: ________________________________________
+Designation: _______________________________________________________
+Government ID / Badge No: _________________________________________
+</code></pre>
+<hr />
+<h2>5. Go-To-Market &amp; Government Procurement (GeM Portal)</h2>
+<h3>5.1 The GeM Portal Strategic Advantage</h3>
+<p>Under the Government of India's <strong>Public Procurement (Preference to Make in India) Order (DPIIT)</strong>:<br />
+* <strong>Class-I Local Supplier:</strong> Platforms developed in India with $&gt; 50\%$ local value addition receive mandatory procurement preference in all state and central government tenders.<br />
+* <strong>Overcoming Rule 166 GFR (General Financial Rules):</strong> Procuring foreign software like Chainalysis requires complex single-source exemptions and foreign exchange permissions. An indigenous solution listed on the <strong>GeM Portal (Government e-Marketplace)</strong> can be directly procured by State Police Cyber Commands via L1 bidding or custom RFP categories under the <strong>Modernisation of Police Forces (MPF) Scheme</strong>.</p>
+    </div>
+  </div>
+</body>
+</html>
