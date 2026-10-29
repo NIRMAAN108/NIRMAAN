@@ -55,7 +55,7 @@ DEMO_BTC_TRAIL = {
 }
 
 class BitcoinCrawler:
-    def __init__(self, timeout: float = 4.0):
+    def __init__(self, timeout: float = 12.0):
         self.timeout = timeout
         self.client = httpx.AsyncClient(timeout=timeout)
 
