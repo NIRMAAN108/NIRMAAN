@@ -1,16 +1,16 @@
 """
-TRON TRC-20 (USDT) Crawler
-Live Trongrid REST API integration + offline demo fallback resilience.
+Industrial Multi-Provider TRON Crawler
+Integrates TronGrid Primary + Tronscan Secondary + Circuit Breakers + Failover.
 """
-import httpx
 import logging
 import time
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
+import httpx
+
+from app.crawlers.resilience import ResilientHttpClient
 
 logger = logging.getLogger("nirmaan.crawler.tron")
-TRC20_USDT_CONTRACT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
 
-# Deterministic realistic demo trail (Victim -> Scam Burner -> Mule Splitter -> Binance Deposit -> Binance Hot Wallet)
 DEMO_FIXTURE_TRAIL = {
     "TScamOriginVictimAddress778899AABB": [
         {
@@ -19,7 +19,8 @@ DEMO_FIXTURE_TRAIL = {
             "amount": 15000.0,
             "tx_hash": "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
             "timestamp": int(time.time()) - 3600,
-            "token": "USDT"
+            "token": "USDT",
+            "chain": "tron"
         }
     ],
     "TMuleSplitterLayer1Address445566CC": [
@@ -29,7 +30,8 @@ DEMO_FIXTURE_TRAIL = {
             "amount": 14950.0,
             "tx_hash": "b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90a1",
             "timestamp": int(time.time()) - 2400,
-            "token": "USDT"
+            "token": "USDT",
+            "chain": "tron"
         },
         {
             "from": "TMuleSplitterLayer1Address445566CC",
@@ -37,7 +39,8 @@ DEMO_FIXTURE_TRAIL = {
             "amount": 50.0,
             "tx_hash": "c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2",
             "timestamp": int(time.time()) - 2400,
-            "token": "USDT"
+            "token": "USDT",
+            "chain": "tron"
         }
     ],
     "TBinanceUserDepositForwarder8899ZZ": [
@@ -47,62 +50,131 @@ DEMO_FIXTURE_TRAIL = {
             "amount": 14950.0,
             "tx_hash": "d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3",
             "timestamp": int(time.time()) - 1200,
-            "token": "USDT"
+            "token": "USDT",
+            "chain": "tron"
         }
     ]
 }
 
 class TronCrawler:
-    def __init__(self, timeout: float = 5.0):
-        self.timeout = timeout
-        self.client = httpx.AsyncClient(timeout=timeout)
+    def __init__(self, timeout: float = 6.0):
+        self.resilient_client = ResilientHttpClient(timeout=timeout)
+
+    def _parse_trongrid_response(self, response: httpx.Response, address: str) -> List[Dict[str, Any]]:
+        """Safely parses TronGrid JSON with defensive type coercion and decimal validation."""
+        data = response.json()
+        raw_txs = data.get("data", [])
+        if not isinstance(raw_txs, list):
+            return []
+
+        transfers = []
+        for item in raw_txs:
+            if not isinstance(item, dict):
+                continue
+            if item.get("from") == address:
+                try:
+                    raw_val = float(item.get("value", 0))
+                    token_info = item.get("token_info", {})
+                    decimals = int(token_info.get("decimals", 6))
+                    amount = raw_val / (10 ** decimals)
+                    symbol = token_info.get("symbol", "USDT")
+                    tx_id = item.get("transaction_id", "")
+                    ts = int(item.get("block_timestamp", 0)) // 1000
+
+                    if amount > 0 and tx_id:
+                        transfers.append({
+                            "from": address,
+                            "to": item.get("to", ""),
+                            "amount": round(amount, 6),
+                            "tx_hash": tx_id,
+                            "timestamp": ts if ts > 0 else int(time.time()),
+                            "token": symbol,
+                            "chain": "tron"
+                        })
+                except (ValueError, TypeError, ZeroDivisionError) as err:
+                    logger.debug(f"Skipping malformed TRON transaction record: {err}")
+                    continue
+
+        return transfers
+
+    def _parse_tronscan_response(self, response: httpx.Response, address: str) -> List[Dict[str, Any]]:
+        """Secondary fallback parser for Tronscan OpenAPI."""
+        data = response.json()
+        raw_txs = data.get("token_transfers", [])
+        if not isinstance(raw_txs, list):
+            return []
+
+        transfers = []
+        for item in raw_txs:
+            if not isinstance(item, dict):
+                continue
+            if item.get("from_address") == address:
+                try:
+                    raw_val = float(item.get("quant", 0))
+                    token_info = item.get("tokenInfo", {})
+                    decimals = int(token_info.get("tokenDecimal", 6))
+                    amount = raw_val / (10 ** decimals) if raw_val > 1e4 else raw_val
+                    symbol = token_info.get("tokenAbbr", "USDT")
+                    tx_id = item.get("transaction_id", "")
+                    ts = int(item.get("block_ts", 0)) // 1000
+
+                    if amount > 0 and tx_id:
+                        transfers.append({
+                            "from": address,
+                            "to": item.get("to_address", ""),
+                            "amount": round(amount, 6),
+                            "tx_hash": tx_id,
+                            "timestamp": ts if ts > 0 else int(time.time()),
+                            "token": symbol,
+                            "chain": "tron"
+                        })
+                except Exception:
+                    continue
+
+        return transfers
 
     async def fetch_transfers(self, address: str, limit: int = 15) -> List[Dict[str, Any]]:
         """
-        Fetches live outbound TRC-20 transfers via TronGrid official REST API.
-        Falls back to demo fixture for benchmark test addresses or when network is offline.
+        Multi-Provider Failover Crawl:
+        1. Checks demo fixture first (for offline resilience)
+        2. Queries TronGrid Official API
+        3. If failed/timed out, automatically fails over to Tronscan OpenAPI
         """
-        # Check demo fixture first for instant zero-latency benchmark demos
         if address in DEMO_FIXTURE_TRAIL:
             logger.info(f"Returning deterministic demo fixture for {address}")
             return DEMO_FIXTURE_TRAIL[address]
 
-        # Live TronGrid official API
-        url = f"https://api.trongrid.io/v1/accounts/{address}/transactions/trc20"
-        params = {
-            "limit": limit,
-            "only_to": "false",
-            "only_from": "true"
-        }
+        # Multi-provider definitions
+        providers = [
+            {
+                "url": f"https://api.trongrid.io/v1/accounts/{address}/transactions/trc20",
+                "params": {"limit": limit, "only_to": "false", "only_from": "true"},
+                "parser": lambda res: self._parse_trongrid_response(res, address)
+            },
+            {
+                "url": "https://apilist.tronscanapi.com/api/token_trc20/transfers",
+                "params": {"limit": limit, "start": 0, "sort": "-timestamp", "count": "true", "relatedAddress": address},
+                "parser": lambda res: self._parse_tronscan_response(res, address)
+            }
+        ]
 
-        try:
-            headers = {"User-Agent": "NIRMAAN-Forensic-Engine/1.0"}
-            response = await self.client.get(url, params=params, headers=headers)
-            if response.status_code == 200:
-                raw_txs = response.json().get("data", [])
-                transfers = []
-                for item in raw_txs:
-                    if item.get("from") == address:
-                        raw_val = float(item.get("value", 0))
-                        token_info = item.get("token_info", {})
-                        decimals = int(token_info.get("decimals", 6))
-                        amount = raw_val / (10 ** decimals)
-                        symbol = token_info.get("symbol", "USDT")
-
-                        transfers.append({
-                            "from": item.get("from"),
-                            "to": item.get("to"),
-                            "amount": amount,
-                            "tx_hash": item.get("transaction_id"),
-                            "timestamp": int(item.get("block_timestamp", 0)) // 1000,
-                            "token": symbol,
-                            "chain": "tron"
-                        })
-                return transfers
-        except Exception as e:
-            logger.warning(f"TronGrid live API query failed for {address}: {e}")
+        for p in providers:
+            res = await self.resilient_client.get_with_failover([p], p["parser"])
+            if res:
+                return res
 
         return []
 
+    async def fetch_energy_delegator(self, address: str) -> Optional[str]:
+        """Inspects TRON Stake 2.0 Energy Delegations to find exchange parent."""
+        url = "https://api.trongrid.io/wallet/getdelegatedresource"
+        payload = {"fromAddress": "", "toAddress": address}
+        data = await self.resilient_client.post_json(url, payload, timeout=4.0)
+        if data and isinstance(data, dict):
+            delegated_list = data.get("delegatedResource", [])
+            if delegated_list and isinstance(delegated_list, list):
+                return delegated_list[0].get("from")
+        return None
+
     async def close(self):
-        await self.client.aclose()
+        await self.resilient_client.close()

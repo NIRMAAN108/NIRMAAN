@@ -1,11 +1,13 @@
 """
-Bitcoin (UTXO) Crawler
-Tracks outbound Bitcoin transactions using Mempool.space / Blockstream Esplora API.
+Industrial Multi-Provider Bitcoin Crawler
+Integrates Mempool.space + Blockstream Esplora + Multi-Input Clustering + Failover.
 """
-import httpx
 import logging
 import time
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Set
+import httpx
+
+from app.crawlers.resilience import ResilientHttpClient
 
 logger = logging.getLogger("nirmaan.crawler.btc")
 
@@ -56,48 +58,93 @@ DEMO_BTC_TRAIL = {
 
 class BitcoinCrawler:
     def __init__(self, timeout: float = 12.0):
-        self.timeout = timeout
-        self.client = httpx.AsyncClient(timeout=timeout)
+        self.resilient_client = ResilientHttpClient(timeout=timeout)
+
+    def _parse_mempool_response(self, response: httpx.Response, address: str, limit: int) -> List[Dict[str, Any]]:
+        """Parses Mempool / Esplora UTXO transaction payloads."""
+        txs = response.json()
+        if not isinstance(txs, list):
+            return []
+
+        transfers = []
+        for tx in txs[:limit]:
+            if not isinstance(tx, dict):
+                continue
+            # Check if target address was a sender (in inputs)
+            inputs = tx.get("vin", [])
+            is_sender = any(vin.get("prevout", {}).get("scriptpubkey_address") == address for vin in inputs if vin.get("prevout"))
+            
+            if is_sender:
+                for vout in tx.get("vout", []):
+                    recipient = vout.get("scriptpubkey_address")
+                    if recipient and recipient != address:
+                        try:
+                            satoshis = vout.get("value", 0)
+                            btc_amount = satoshis / 1e8
+                            tx_id = tx.get("txid", "")
+                            ts = tx.get("status", {}).get("block_time", int(time.time()))
+
+                            if btc_amount > 0 and tx_id:
+                                transfers.append({
+                                    "from": address,
+                                    "to": recipient,
+                                    "amount": round(btc_amount, 8),
+                                    "tx_hash": tx_id,
+                                    "timestamp": ts,
+                                    "token": "BTC",
+                                    "chain": "bitcoin"
+                                })
+                        except Exception:
+                            continue
+
+        return transfers
 
     async def fetch_transfers(self, address: str, limit: int = 15) -> List[Dict[str, Any]]:
-        """
-        Fetches outbound Bitcoin transactions for a given address using Mempool.space API.
-        """
-        # Check demo fixture first
+        """Multi-Provider Failover Crawl for Bitcoin."""
         if address in DEMO_BTC_TRAIL:
             logger.info(f"Returning deterministic Bitcoin demo fixture for {address}")
             return DEMO_BTC_TRAIL[address]
 
-        url = f"https://mempool.space/api/address/{address}/txs"
+        providers = [
+            # Provider 1: Mempool.space
+            {
+                "url": f"https://mempool.space/api/address/{address}/txs",
+                "parser": lambda res: self._parse_mempool_response(res, address, limit)
+            },
+            # Provider 2: Blockstream Esplora (Alternative mirror)
+            {
+                "url": f"https://blockstream.info/api/address/{address}/txs",
+                "parser": lambda res: self._parse_mempool_response(res, address, limit)
+            }
+        ]
 
-        try:
-            response = await self.client.get(url)
-            if response.status_code == 200:
-                txs = response.json()
-                transfers = []
-                for tx in txs[:limit]:
-                    # Check if address is in inputs (meaning address spent money)
-                    is_sender = any(vin.get("prevout", {}).get("scriptpubkey_address") == address for vin in tx.get("vin", []))
-                    if is_sender:
-                        for vout in tx.get("vout", []):
-                            recipient = vout.get("scriptpubkey_address")
-                            if recipient and recipient != address:
-                                satoshis = vout.get("value", 0)
-                                btc_amount = satoshis / 1e8
-                                transfers.append({
-                                    "from": address,
-                                    "to": recipient,
-                                    "amount": btc_amount,
-                                    "tx_hash": tx.get("txid"),
-                                    "timestamp": tx.get("status", {}).get("block_time", int(time.time())),
-                                    "token": "BTC",
-                                    "chain": "bitcoin"
-                                })
-                return transfers
-        except Exception as e:
-            logger.warning(f"Mempool.space query failed for {address}: {e}")
+        for p in providers:
+            res = await self.resilient_client.get_with_failover([p], p["parser"])
+            if res:
+                return res
 
         return []
 
+    async def fetch_co_spent_cluster(self, address: str, max_txs: int = 5) -> Set[str]:
+        """Multi-Input Common-Spend Heuristic."""
+        cluster = {address}
+        url = f"https://mempool.space/api/address/{address}/txs"
+
+        try:
+            async with httpx.AsyncClient(timeout=6.0) as client:
+                r = await client.get(url, headers={"User-Agent": "NIRMAAN-Forensic-Engine/1.0"})
+                if r.status_code == 200:
+                    txs = r.json()
+                    if isinstance(txs, list):
+                        for tx in txs[:max_txs]:
+                            inputs = tx.get("vin", [])
+                            input_addrs = {vin.get("prevout", {}).get("scriptpubkey_address") for vin in inputs if vin.get("prevout")}
+                            if address in input_addrs:
+                                cluster.update(filter(None, input_addrs))
+        except Exception as e:
+            logger.debug(f"Common spend cluster query silent skip: {e}")
+
+        return cluster
+
     async def close(self):
-        await self.client.aclose()
+        await self.resilient_client.close()
