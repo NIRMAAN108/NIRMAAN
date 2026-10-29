@@ -1,11 +1,11 @@
 """
-Bitcoin (UTXO) Crawler
-Tracks outbound Bitcoin transactions using Mempool.space / Blockstream Esplora API.
+Bitcoin (UTXO) & Multi-Input Clustering Crawler
+Extracts outbound UTXO transactions and resolves common-spend address clusters.
 """
 import httpx
 import logging
 import time
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Set
 
 logger = logging.getLogger("nirmaan.crawler.btc")
 
@@ -58,16 +58,25 @@ class BitcoinCrawler:
     def __init__(self, timeout: float = 12.0):
         self.timeout = timeout
         self.client = httpx.AsyncClient(timeout=timeout)
+        self._last_call_ts = 0.0
+
+    async def _throttle(self):
+        """Enforces rate limit on public Mempool API."""
+        now = time.time()
+        elapsed = now - self._last_call_ts
+        if elapsed < 0.25:
+            time.sleep(0.25 - elapsed)
+        self._last_call_ts = time.time()
 
     async def fetch_transfers(self, address: str, limit: int = 15) -> List[Dict[str, Any]]:
         """
         Fetches outbound Bitcoin transactions for a given address using Mempool.space API.
         """
-        # Check demo fixture first
         if address in DEMO_BTC_TRAIL:
             logger.info(f"Returning deterministic Bitcoin demo fixture for {address}")
             return DEMO_BTC_TRAIL[address]
 
+        await self._throttle()
         url = f"https://mempool.space/api/address/{address}/txs"
 
         try:
@@ -76,7 +85,6 @@ class BitcoinCrawler:
                 txs = response.json()
                 transfers = []
                 for tx in txs[:limit]:
-                    # Check if address is in inputs (meaning address spent money)
                     is_sender = any(vin.get("prevout", {}).get("scriptpubkey_address") == address for vin in tx.get("vin", []))
                     if is_sender:
                         for vout in tx.get("vout", []):
@@ -98,6 +106,30 @@ class BitcoinCrawler:
             logger.warning(f"Mempool.space query failed for {address}: {e}")
 
         return []
+
+    async def fetch_co_spent_cluster(self, address: str, max_txs: int = 5) -> Set[str]:
+        """
+        Multi-Input Common-Spend Heuristic:
+        In Bitcoin, all input addresses spent in the same transaction are proven
+        to belong to the same entity / wallet controller.
+        """
+        cluster = {address}
+        await self._throttle()
+        url = f"https://mempool.space/api/address/{address}/txs"
+
+        try:
+            r = await self.client.get(url)
+            if r.status_code == 200:
+                txs = r.json()
+                for tx in txs[:max_txs]:
+                    inputs = tx.get("vin", [])
+                    input_addrs = {vin.get("prevout", {}).get("scriptpubkey_address") for vin in inputs if vin.get("prevout")}
+                    if address in input_addrs:
+                        cluster.update(filter(None, input_addrs))
+        except Exception as e:
+            logger.warning(f"Common spend cluster query failed for {address}: {e}")
+
+        return cluster
 
     async def close(self):
         await self.client.aclose()

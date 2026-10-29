@@ -1,14 +1,19 @@
 """
-TRON TRC-20 (USDT) Crawler
-Live Trongrid REST API integration + offline demo fallback resilience.
+TRON TRC-20 & Energy Delegation Forensic Crawler
+Extracts outbound USDT/USDC transfers and detects TRON Stake 2.0 Energy Delegations.
 """
 import httpx
 import logging
 import time
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 logger = logging.getLogger("nirmaan.crawler.tron")
-TRC20_USDT_CONTRACT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
+
+# Well-known TRON Stablecoins
+SUPPORTED_TRON_TOKENS = {
+    "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t": {"symbol": "USDT", "decimals": 6},
+    "TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8": {"symbol": "USDC", "decimals": 6}
+}
 
 # Deterministic realistic demo trail (Victim -> Scam Burner -> Mule Splitter -> Binance Deposit -> Binance Hot Wallet)
 DEMO_FIXTURE_TRAIL = {
@@ -19,7 +24,8 @@ DEMO_FIXTURE_TRAIL = {
             "amount": 15000.0,
             "tx_hash": "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
             "timestamp": int(time.time()) - 3600,
-            "token": "USDT"
+            "token": "USDT",
+            "chain": "tron"
         }
     ],
     "TMuleSplitterLayer1Address445566CC": [
@@ -29,7 +35,8 @@ DEMO_FIXTURE_TRAIL = {
             "amount": 14950.0,
             "tx_hash": "b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90a1",
             "timestamp": int(time.time()) - 2400,
-            "token": "USDT"
+            "token": "USDT",
+            "chain": "tron"
         },
         {
             "from": "TMuleSplitterLayer1Address445566CC",
@@ -37,7 +44,8 @@ DEMO_FIXTURE_TRAIL = {
             "amount": 50.0,
             "tx_hash": "c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2",
             "timestamp": int(time.time()) - 2400,
-            "token": "USDT"
+            "token": "USDT",
+            "chain": "tron"
         }
     ],
     "TBinanceUserDepositForwarder8899ZZ": [
@@ -47,27 +55,36 @@ DEMO_FIXTURE_TRAIL = {
             "amount": 14950.0,
             "tx_hash": "d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3",
             "timestamp": int(time.time()) - 1200,
-            "token": "USDT"
+            "token": "USDT",
+            "chain": "tron"
         }
     ]
 }
 
 class TronCrawler:
-    def __init__(self, timeout: float = 5.0):
+    def __init__(self, timeout: float = 6.0):
         self.timeout = timeout
         self.client = httpx.AsyncClient(timeout=timeout)
+        self._last_call_ts = 0.0
+
+    async def _throttle(self):
+        """Enforces a smooth 5 req/sec rate limit to protect public endpoints."""
+        now = time.time()
+        elapsed = now - self._last_call_ts
+        if elapsed < 0.20:
+            time.sleep(0.20 - elapsed)
+        self._last_call_ts = time.time()
 
     async def fetch_transfers(self, address: str, limit: int = 15) -> List[Dict[str, Any]]:
         """
         Fetches live outbound TRC-20 transfers via TronGrid official REST API.
         Falls back to demo fixture for benchmark test addresses or when network is offline.
         """
-        # Check demo fixture first for instant zero-latency benchmark demos
         if address in DEMO_FIXTURE_TRAIL:
             logger.info(f"Returning deterministic demo fixture for {address}")
             return DEMO_FIXTURE_TRAIL[address]
 
-        # Live TronGrid official API
+        await self._throttle()
         url = f"https://api.trongrid.io/v1/accounts/{address}/transactions/trc20"
         params = {
             "limit": limit,
@@ -103,6 +120,25 @@ class TronCrawler:
             logger.warning(f"TronGrid live API query failed for {address}: {e}")
 
         return []
+
+    async def fetch_energy_delegator(self, address: str) -> Optional[str]:
+        """
+        TRON Stake 2.0 Forensics:
+        Checks if an unlabelled address received dynamic Energy delegation from an exchange
+        to execute a zero-TRX transfer. Returns delegator address if found.
+        """
+        url = "https://api.trongrid.io/wallet/getdelegatedresource"
+        payload = {"fromAddress": "", "toAddress": address}
+        try:
+            r = await self.client.post(url, json=payload)
+            if r.status_code == 200:
+                delegated_list = r.json().get("delegatedResource", [])
+                if delegated_list:
+                    # Return parent delegator
+                    return delegated_list[0].get("from")
+        except Exception as e:
+            logger.warning(f"Energy delegation check failed for {address}: {e}")
+        return None
 
     async def close(self):
         await self.client.aclose()
