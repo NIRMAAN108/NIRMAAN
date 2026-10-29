@@ -10,6 +10,7 @@ import os
 from app.models.schemas import TraceRequest, TraceResponse
 from app.core.tracer import ForensicTracer
 from app.core.legal_notice import generate_section_94_bnss_notice
+from app.crawlers.multi_chain_crawler import detect_chain
 
 app = FastAPI(
     title="NIRMAAN Forensic Tracing Engine",
@@ -54,10 +55,11 @@ async def run_trace(req: TraceRequest):
     Accepts suspect TRON wallet, traces multi-hop flows, runs deposit sweep detection,
     and returns graph nodes, edges, target VASP, and pre-filled Section 94 BNSS notice.
     """
-    if not req.seed_address or not req.seed_address.startswith("T"):
+    chain = detect_chain(req.seed_address)
+    if chain == "unknown":
         raise HTTPException(
             status_code=400,
-            detail="Invalid TRON wallet address. Suspect address must start with 'T'."
+            detail="Unrecognized blockchain address format. Supported: TRON (starts with 'T'), EVM (starts with '0x'), Bitcoin (starts with 'bc1', '1', or '3')."
         )
 
     response = await tracer.trace(req)
