@@ -176,10 +176,30 @@ def test_direct_hot_wallet_input():
     assert data["nodes"][0]["node_type"] == "VASP_HOT"
 
 def test_invalid_address_rejection():
-    """Invalid address format must return HTTP 400 with actionable feedback."""
+    """Invalid address format must return HTTP 400 with standardized error payload."""
     response = client.post("/api/trace", json={"seed_address": "invalid_random_wallet_xyz"})
     assert response.status_code == 400
-    assert "Unrecognized blockchain address format" in response.json()["detail"]
+    data = response.json()
+    assert data["success"] is False
+    assert data["error"]["code"] == "INVALID_WALLET_ADDRESS"
+    assert "Unrecognized blockchain address format" in data["error"]["details"]
+
+def test_http_404_not_found():
+    """Accessing non-existent endpoint must return clean 404 error payload."""
+    response = client.get("/api/non_existent_route")
+    assert response.status_code == 404
+    data = response.json()
+    assert data["success"] is False
+    assert data["error"]["code"] == "RESOURCE_NOT_FOUND"
+
+def test_http_422_validation_error():
+    """Malformed request payload (e.g. invalid types or depth > 6) returns clean 422."""
+    response = client.post("/api/trace", json={"seed_address": "TMuA6YqfCeX8EhbfYEg5y7S4DnxJRB4b7N", "max_depth": 99})
+    assert response.status_code == 422
+    data = response.json()
+    assert data["success"] is False
+    assert data["error"]["code"] == "SCHEMA_VALIDATION_ERROR"
+    assert "max_depth" in str(data["error"]["details"])
 
 def test_dead_end_wallet_handling():
     """If an address has 0 outgoing transactions, return cleanly with 0 edges and no crash."""
