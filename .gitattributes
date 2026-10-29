@@ -1,0 +1,4 @@
+archive/** linguist-vendored
+docs/** linguist-documentation
+frontend/*.html linguist-detectable=false
+*.py linguist-detectable=true
