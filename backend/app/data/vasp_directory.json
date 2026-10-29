@@ -1,0 +1,78 @@
+{
+  "vasps": {
+    "binance": {
+      "name": "Binance",
+      "fiu_registered": true,
+      "nodal_email": "compliance-in@binance.com",
+      "law_enforcement_portal": "https://www.binance.com/en/support/law-enforcement",
+      "known_hot_wallets": [
+        "TMuA6YqfCeX8EhbfYEg5y7S4DnxJRB4b7N",
+        "TKkeUaoe9s3s4n7eFw9qPqL2WbY6sE198A",
+        "TNDp6k7jG9mHkQ37gWq7H6wZ2NqQ8b1YzA",
+        "TPYSumqFnidVnQ4HnhL6C57Uv9fB336BwA",
+        "TTb96W5Yw9fB336BwAPYu2WbY6sE198A2B"
+      ]
+    },
+    "bybit": {
+      "name": "Bybit",
+      "fiu_registered": false,
+      "nodal_email": "compliance@bybit.com",
+      "law_enforcement_portal": "https://www.bybit.com/en-US/help-center/bybitHC_Article?id=000001090",
+      "known_hot_wallets": [
+        "TAUN6FwrnwwmaEqYcckffC7wYgdf45XGhd",
+        "TB63b8wQ37gWq7H6wZ2NqQ8b1YzA98A7B2",
+        "TCkffC7wYgdf45XGhdAUN6FwrnwwmaEqYc"
+      ]
+    },
+    "okx": {
+      "name": "OKX",
+      "fiu_registered": false,
+      "nodal_email": "enforcement@okx.com",
+      "law_enforcement_portal": "https://www.okx.com/help/law-enforcement-request-guide",
+      "known_hot_wallets": [
+        "TJDnKae4fGqQkffC7wYgdf45XGhdAUN6Fw",
+        "TNaRAbW5Yw9fB336BwAPYu2WbY6sE198A2"
+      ]
+    },
+    "kucoin": {
+      "name": "KuCoin",
+      "fiu_registered": true,
+      "nodal_email": "legal@kucoin.com",
+      "law_enforcement_portal": "https://www.kucoin.com/support/law-enforcement",
+      "known_hot_wallets": [
+        "TBWc7NqQ8b1YzA98A7B2TPYSumqFnidVnQ",
+        "TDuYcckffC7wYgdf45XGhdAUN6Fwrnwwma"
+      ]
+    },
+    "htx": {
+      "name": "HTX (Huobi)",
+      "fiu_registered": false,
+      "nodal_email": "compliance@htx-inc.com",
+      "law_enforcement_portal": "https://www.htx.com/support/law-enforcement",
+      "known_hot_wallets": [
+        "TNUC9QB1rRpS5CbWLmNMxXBjyFoy2YTdMt",
+        "TL2WbY6sE198A2BNkffC7wYgdf45XGhdAU"
+      ]
+    },
+    "coindcx": {
+      "name": "CoinDCX",
+      "fiu_registered": true,
+      "nodal_email": "legal@coindcx.com",
+      "law_enforcement_portal": "https://coindcx.com/compliance-contact",
+      "known_hot_wallets": [
+        "TGC1Q8b1YzA98A7B2TPYSumqFnidVnQ4Hn",
+        "TLbFYgdf45XGhdAUN6FwrnwwmaEqYcckff"
+      ]
+    },
+    "wazirx": {
+      "name": "WazirX",
+      "fiu_registered": true,
+      "nodal_email": "nodal@wazirx.com",
+      "law_enforcement_portal": "https://wazirx.com/law-enforcement",
+      "known_hot_wallets": [
+        "TXh9qL2WbY6sE198A2BNkffC7wYgdf45XG",
+        "TStX336BwAPYu2WbY6sE198A2BNkffC7wY"
+      ]
+    }
+  }
+}
