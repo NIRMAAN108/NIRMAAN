@@ -1,137 +1,118 @@
-# NIRMAAN: 4-DEVELOPER TEAM ALLOCATION & LINEAR MILESTONE TIMELINE
+# OPTIMIZED MILESTONE PLAN: PARALLEL SPRINT ROADMAP
 
-**SIH Problem Statement:** SIH26183 · Ministry of Home Affairs (MHA) / I4C  
-**Team Composition:** 4 Developers  
-* **Skill Inventory:**
-  * 4 Developers capable of WebDev (Frontend / Backend / API)
-  * 3 Generalists ("Can work on anything" — Systems, pipelines, integration)
-  * 2 Machine Learning & Model Training Specialists (GNNs, clustering, heuristics)
-  * 1 Blockchain Specialist (EVM, Tron, Bitcoin UTXO, RPC nodes)
-
----
-
-## 1. The 4 Dedicated Project Verticals
-
-```
-┌──────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                     NIRMAAN 4-VERTICAL MATRIX                                │
-├──────────────────────────┬──────────────────────────┬──────────────────────────┬─────────────┤
-│ VERTICAL 1: BLOCKCHAIN   │ VERTICAL 2: ML &         │ VERTICAL 3: FRONTEND     │ VERTICAL 4: │
-│ INGESTION & PROTOCOLS    │ HEURISTIC INTELLIGENCE   │ INVESTIGATION CANVAS     │ BACKEND &   │
-│                          │                          │                          │ LEGAL LEA   │
-├──────────────────────────┼──────────────────────────┼──────────────────────────┼─────────────┤
-│ Lead: Dev 1 (Blockchain) │ Lead: Dev 2 & Dev 3 (ML) │ Lead: Dev 4 (WebDev)     │ Lead: Dev 3 │
-│ Assisting: Dev 3 (Gen)   │ Assisting: AI Subagent   │ Assisting: Dev 1/2 (Web) │ (Generalist)│
-├──────────────────────────┼──────────────────────────┼──────────────────────────┼─────────────┤
-│ • EVM Crawler (ETH/BSC)  │ • Peeling Chain ML Model │ • Cytoscape Canvas UI    │ • FastAPI   │
-│ • Bitcoin UTXO Indexer   │ • GNN / Node2Vec Scoring │ • Timeline Scrubber      │ • Case DB   │
-│ • Internal Tx Traces     │ • Mixer / Bridge Detect  │ • Entity Inspector Pane  │ • BNSS PDF  │
-│ • VASP Directory 500+    │ • Deposit Sweep Rules    │ • 1-Click Export Tool    │ • ZIP Vault │
-└──────────────────────────┴──────────────────────────┴──────────────────────────┴─────────────┘
-```
+**Project:** NIRMAAN (ChainTrace AI) · SIH26183  
+**Team Allocation:**  
+* **YOU (Dev 1):** Blockchain Infrastructure & Multi-Chain Crawlers (TRON, EVM, BTC, VASP DB)
+* **DEV 2:** Machine Learning, Peeling Chain Classification & Risk Scoring
+* **DEV 3:** Backend Architecture, Case Vault & Section 94 BNSS Legal PDF Engine
+* **DEV 4:** Frontend UI/UX, Cytoscape.js Canvas & Timeline Playback Scrubber
 
 ---
 
-## 2. Developer Role Assignments & Concrete Ownership
+## ⚡ Core Optimizations Applied
 
-### 🔷 DEV 1: Blockchain Infrastructure Specialist (Blockchain + WebDev)
-* **Assigned Vertical:** **Vertical 1 — Multi-Chain Ingestion & Protocol Crawlers**
-* **Core Responsibilities:**
-  1. Build the EVM crawler (`backend/app/crawlers/evm.py`) for Ethereum and BSC USDT/USDC (handling ERC-20 Transfer logs + internal smart contract calls).
-  2. Build the Bitcoin crawler (`backend/app/crawlers/btc.py`) for UTXO transaction fetching via Blockstream/Mempool API.
-  3. Expand TRON crawler to inspect Stake 2.0 energy delegations (`/wallet/getdelegatedresource`).
-  4. Curate and expand `backend/app/data/vasp_directory.json` with 500+ known exchange hot wallets and nodal officer contacts.
-
-### 🟣 DEV 2: Machine Learning & Fraud Modeling Specialist (ML + WebDev)
-* **Assigned Vertical:** **Vertical 2 — Anomaly Detection, GNN & Risk Scoring**
-* **Core Responsibilities:**
-  1. Build the **Peeling Chain Anomaly Classifier** (detects asymmetric 90/10 splits rolling into virgin change addresses).
-  2. Implement **Mixer & Bridge Detection Heuristics** (Tornado Cash, FixedFloat, ChangeNOW, Thorchain signatures).
-  3. Develop a lightweight **Graph Risk Scoring Engine** (0.0 to 1.0 fraud propensity score for each node using in-degree, out-degree, velocity, and transitivity features).
-  4. Package models as modular pure-Python / ONNX inference functions callable by the graph traversal engine in $< 50\text{ ms}$.
-
-### 🟢 DEV 3: Full-Stack Systems & Integration Specialist (Generalist + ML + WebDev)
-* **Assigned Vertical:** **Vertical 4 — Backend APIs, Case Vault & Legal Dossier Engine**
-* **Core Responsibilities:**
-  1. Maintain and extend the **FastAPI Gateway** (`backend/app/main.py`) with clean REST endpoints.
-  2. Build the **Case Management Vault** (SQLite database tracking FIR number, IO name, complainant loss, and notes).
-  3. Build the **Automated Court-Ready Dossier Engine** (`backend/app/core/pdf_dossier.py` using WeasyPrint/Playwright) generating Section 94 BNSS notices and Section 63 BSA certificates with SHA-256 cryptographic hashes.
-  4. Cross-vertical glue: Bridge ML outputs and blockchain crawler outputs into the core NetworkX tracer.
-
-### 🟡 DEV 4: UI/UX & Visual Analytics Lead (WebDev)
-* **Assigned Vertical:** **Vertical 3 — Interactive Investigation Canvas & Frontend**
-* **Core Responsibilities:**
-  1. Expand the Cytoscape.js frontend into an executive dark-mode investigation workspace.
-  2. Implement dual layout switching:
-     * **Dagre Mode:** Linear Left-to-Right money trail view.
-     * **CoSE Mode:** Force-directed entity clustering view.
-  3. Build the **Timeline Playback Scrubber** (animates transactions chronologically so police can watch the money move step-by-step).
-  4. Build the **Entity Inspector & Legal Notice Modal** with instant 1-click PDF download.
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                 KEY CRITICAL-PATH OPTIMIZATIONS                             │
+├──────────────────────────┬──────────────────────────────────────────────────────────────────┤
+│ 1. Zero-Wait Mocking     │ Backend & Frontend use mock contracts on Minute 1.               │
+│                          │ No developer ever sits idle waiting for APIs or models.          │
+├──────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ 2. "Steel Thread" First  │ The entire end-to-end TRON pipe is operational by Hour 4.        │
+│                          │ EVM and Bitcoin are additive modules that cannot break the core. │
+├──────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ 3. Heuristics Before ML  │ Dev 2 ships fast deterministic rules first (peel ratios, mixers),│
+│                          │ then layers ML risk scoring. Demo never fails if ML overfits.    │
+├──────────────────────────┼──────────────────────────────────────────────────────────────────┤
+│ 4. Pitch-Proof Fallback  │ If hackathon WiFi drops during jury demo, system switches to     │
+│                          │ local fixture seamlessly in 0.2s without error popups.           │
+└──────────────────────────┴──────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## 3. Linear Milestone Timeline Chart (Phased Sprint)
+## 📅 The 4 Time-Boxed Milestones
 
 ```
 ====================================================================================================
-PHASE 1: FOUNDATIONS & CONTRACTS (Day 1: Hours 0 – 6)
+MILESTONE 1: THE "STEEL THREAD" (Hours 0 – 4)
+Objective: Have the entire pipeline operational end-to-end with zero blocking dependencies.
 ====================================================================================================
-[DEV 1 - Blockchain]  ==> Implement EVM crawler schema & get free API keys (Etherscan/BscScan).
-[DEV 2 - ML/Model]    ==> Extract feature vectors from transaction edges (amount, velocity, degree).
-[DEV 3 - Backend/LEA] ==> Finalize Pydantic data contracts (TraceRequest, GraphNode, TraceResponse).
-[DEV 4 - Frontend]    ==> Setup Cytoscape canvas container, theme palette, and node styling classes.
+• YOU (Blockchain)  ==> Test live TRON TRC-20 crawler with Tronscan API + verify fallback fixture.
+• DEV 2 (ML/Model)  ==> Write deterministic peeling chain filter function (len(out)==2 & 90/10 ratio).
+• DEV 3 (Backend)   ==> Freeze Pydantic schemas; expose /api/trace and /api/vasps on FastAPI.
+• DEV 4 (Frontend)  ==> Wire Cytoscape.js canvas to /api/trace; render Red (Suspect) -> Green (VASP).
 ----------------------------------------------------------------------------------------------------
-CHECKPOINT 1: All 4 developers align on API schemas; mock JSON returns valid graph to frontend.
+🎯 DEFINITION OF DONE (DoD 1):
+Any team member can open the browser, paste a TRON address, see nodes draw on screen in < 1 second,
+and click to view a pre-filled Section 94 BNSS notice.
 
 ====================================================================================================
-PHASE 2: CORE VERTICAL EXECUTION (Day 1: Hours 6 – 18)
+MILESTONE 2: LIVE DATA & INTELLIGENCE INJECTION (Hours 4 – 12)
+Objective: Replace mocks with real multi-chain ingestion and automated legal notice generation.
 ====================================================================================================
-[DEV 1 - Blockchain]  ==> Live EVM ERC-20 + BTC UTXO crawlers working with rate-limit retry logic.
-[DEV 2 - ML/Model]    ==> Peeling chain classifier + mixer fingerprint detector tested on historical txs.
-[DEV 3 - Backend/LEA] ==> SQLite Case Vault (CRUD for FIR cases) + Section 94 BNSS PDF generator.
-[DEV 4 - Frontend]    ==> Connect search bar to live API; implement Dagre auto-layout on node insertion.
+• YOU (Blockchain)  ==> 1. Build EVM crawler (backend/app/crawlers/evm.py) for ETH & BSC USDT.
+                    ==> 2. Add Tron Stake 2.0 energy delegation checks to attribute CEX parent sweeps.
+• DEV 2 (ML/Model)  ==> 1. Add mixer detection heuristics (Tornado Cash, FixedFloat, ChangeNOW).
+                    ==> 2. Package 0.0–1.0 node risk scoring function into the traversal engine.
+• DEV 3 (Backend)   ==> 1. Implement SQLite Case Vault (save FIR #, IO Name, Complainant Loss).
+                    ==> 2. Build automated PDF dossier generator with SHA-256 evidence integrity seal.
+• DEV 4 (Frontend)  ==> 1. Build dual layout toggle (Dagre Linear Flow vs CoSE Entity Clusters).
+                    ==> 2. Add Entity Inspector card showing target exchange, deposit address & sweep hash.
 ----------------------------------------------------------------------------------------------------
-CHECKPOINT 2: End-to-end trace works for TRON + EVM; graph displays with ML risk badges on nodes.
+🎯 DEFINITION OF DONE (DoD 2):
+Live Ethereum & TRON wallets trace through real explorer APIs; legal notice exports as a court-ready PDF.
 
 ====================================================================================================
-PHASE 3: ADVANCED FEATURES & INTEGRATION (Day 2: Hours 18 – 28)
+MILESTONE 3: MULTI-CHAIN DEPTH & ADVANCED UI (Hours 12 – 20)
+Objective: Polish investigation capabilities and expand exchange intelligence.
 ====================================================================================================
-[DEV 1 - Blockchain]  ==> Expand VASP directory to 500+ hot wallets (Binance, Bybit, CoinDCX, WazirX).
-[DEV 2 - ML/Model]    ==> Deploy 0.0–1.0 risk score calculation into response payload.
-[DEV 3 - Backend/LEA] ==> Build Section 63 BSA SHA-256 certificate & 1-click ZIP evidence packet export.
-[DEV 4 - Frontend]    ==> Build Timeline Playback Scrubber & node filter controls (min USD, date range).
+• YOU (Blockchain)  ==> 1. Build Bitcoin UTXO crawler (backend/app/crawlers/btc.py) via Mempool API.
+                    ==> 2. Expand vasp_directory.json to 200+ hot wallets (CoinDCX, WazirX, Binance).
+• DEV 2 (ML/Model)  ==> Refine GNN / feature-based anomaly classifier for high-risk hop branches.
+• DEV 3 (Backend)   ==> Build 1-click ZIP Evidence Export (Signed PDF Dossier + Raw JSON Trace Ledger).
+• DEV 4 (Frontend)  ==> Build Timeline Playback Scrubber (animate transaction hops chronologically).
 ----------------------------------------------------------------------------------------------------
-CHECKPOINT 3: System passes live end-to-end multi-hop trace in < 5 seconds; 1-click generates PDF.
+🎯 DEFINITION OF DONE (DoD 3):
+Platform supports TRON, EVM, and BTC; timeline scrubber animates the money trail step-by-step.
 
 ====================================================================================================
-PHASE 4: POLISH, BENCHMARKS & JURY REHEARSAL (Day 2: Hours 28 – 36)
+MILESTONE 4: HARDENING, RESILIENCE & JURY REHEARSAL (Hours 20 – 24)
+Objective: Bulletproof stability and pitch-perfect delivery for the SIH evaluation jury.
 ====================================================================================================
-[ALL DEVS]            ==> 1. Run full regression test with 3 live scam case studies (Task Scam, Digital Arrest).
-                      ==> 2. Ensure offline demo fallbacks are 100% resilient if WiFi fails during pitch.
-                      ==> 3. Prepare pitch deck slides highlighting 1930 Golden Hour & ₹50L vs ₹3L cost advantage.
+• ALL DEVS TOGETHER:
+  1. Fail-Safe Offline Test: Disconnect WiFi completely. Verify demo executes flawlessly in 0.3s.
+  2. Pitch Story Alignment: Rehearse the 3-minute pitch:
+     - 0:00–0:45: Victim story (Ramesh lost ₹15L; 1930 freezes fiat, but crypto goes dark).
+     - 0:45–1:45: Live Demo (Paste wallet -> 4-second attribution -> Binance Hot Wallet hit).
+     - 1:45–2:30: Legal Innovation (1-click Section 94 BNSS notice + Sec 63 BSA certificate).
+     - 2:30–3:00: Business & Cost Disruption (₹3L Made-in-India GeM vs ₹50L Chainalysis).
 ----------------------------------------------------------------------------------------------------
-FINAL OUTCOME: Winning Prototype ready for SIH Jury Evaluation!
+🏆 FINAL OUTCOME: Production-grade, crash-proof, award-winning SIH prototype.
 ====================================================================================================
 ```
 
 ---
 
-## 4. Cross-Vertical Integration Contracts (Interfaces)
+## 🔌 Cross-Developer Interface Contract (Zero Merge Conflicts)
 
-To guarantee that all 4 developers work in parallel without blocking each other:
-
-1. **Crawler Interface (Dev 1 -> Dev 3):**
-   ```python
-   async def fetch_transfers(address: str, chain: str) -> List[Dict]:
-       # Returns: [{"from": str, "to": str, "amount": float, "token": str, "tx_hash": str, "timestamp": int}]
-   ```
-
-2. **ML Classifier Interface (Dev 2 -> Dev 3):**
-   ```python
-   def evaluate_node_risk(node_history: List[Dict]) -> Dict:
-       # Returns: {"risk_score": float, "is_peel_chain": bool, "mixer_detected": Optional[str]}
-   ```
-
-3. **Frontend API Contract (Dev 3 -> Dev 4):**
-   * Endpoint: `POST /api/trace`
-   * Response: Strict `TraceResponse` schema (JSON with `nodes`, `edges`, `target_vasp`, `section_94_notice_text`).
+```
+        [ DEV 1: CRAWLERS ]                   [ DEV 2: ML & HEURISTICS ]
+         (evm.py, tron.py)                       (peel.py, mixer.py)
+                 │                                        │
+                 ▼                                        ▼
+    Normalized Transfer Dicts               {"risk_score": 0.85, ...}
+                 │                                        │
+                 └──────────────► ┌──────────────────┐ ◄──┘
+                                  │ DEV 3: BACKEND   │
+                                  │ (tracer.py)      │
+                                  └────────┬─────────┘
+                                           │
+                                  TraceResponse JSON
+                                           │
+                                           ▼
+                                  ┌──────────────────┐
+                                  │ DEV 4: FRONTEND  │
+                                  │ (Cytoscape UI)   │
+                                  └──────────────────┘
+```
