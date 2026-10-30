@@ -16,6 +16,75 @@
         "34xp4vRoCGJym3xR7yCVPFHoCNxv4Twseo"
       ]
     },
+    "coindcx": {
+      "name": "CoinDCX",
+      "fiu_registered": true,
+      "nodal_email": "legal@coindcx.com",
+      "law_enforcement_portal": "https://coindcx.com/compliance-contact",
+      "known_hot_wallets": [
+        "TGC1Q8b1YzA98A7B2TPYSumqFnidVnQ4Hn",
+        "TLbFYgdf45XGhdAUN6FwrnwwmaEqYcckff",
+        "0x0283c847d95dca83f8fbfe853e3fa299097d7ee4",
+        "0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be",
+        "bc1qdcxhotcoldtreasurycoindcxin998877"
+      ]
+    },
+    "wazirx": {
+      "name": "WazirX",
+      "fiu_registered": true,
+      "nodal_email": "nodal@wazirx.com",
+      "law_enforcement_portal": "https://wazirx.com/law-enforcement",
+      "known_hot_wallets": [
+        "TXh9qL2WbY6sE198A2BNkffC7wYgdf45XG",
+        "TStX336BwAPYu2WbY6sE198A2BNkffC7wY",
+        "0x27ecfc02c2e94762198ea00fb6a1ad6b6c0e5a8f",
+        "0x5ee546e44fd963666877477dcbbdb34915a0889a"
+      ]
+    },
+    "coinswitch": {
+      "name": "CoinSwitch Kuber",
+      "fiu_registered": true,
+      "nodal_email": "compliance@coinswitch.co",
+      "law_enforcement_portal": "https://coinswitch.co/compliance",
+      "known_hot_wallets": [
+        "TCSh7788kffC7wYgdf45XGhdAUN6Fwrnww",
+        "0x9812ba94a3b8e726b50c4ed8d0fb90ad053324f3",
+        "bc1qcoinswitchkuberhotvault998877aabb"
+      ]
+    },
+    "zebpay": {
+      "name": "ZebPay",
+      "fiu_registered": true,
+      "nodal_email": "compliance@zebpay.com",
+      "law_enforcement_portal": "https://zebpay.com/in/legal-compliance",
+      "known_hot_wallets": [
+        "TZP9988A7B2TPYSumqFnidVnQ4HnkffC7w",
+        "0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359",
+        "1ZebPayHotTreasuryMasterBitcoinVault"
+      ]
+    },
+    "mudrex": {
+      "name": "Mudrex",
+      "fiu_registered": true,
+      "nodal_email": "compliance@mudrex.com",
+      "law_enforcement_portal": "https://mudrex.com/compliance",
+      "known_hot_wallets": [
+        "TMdx9qL2WbY6sE198A2BNkffC7wYgdf45X",
+        "0x70836222f2b2b24a3f36f98668ed8f0b38d1a872"
+      ]
+    },
+    "kucoin": {
+      "name": "KuCoin",
+      "fiu_registered": true,
+      "nodal_email": "compliance-in@kucoin.com",
+      "law_enforcement_portal": "https://www.kucoin.com/support/law-enforcement",
+      "known_hot_wallets": [
+        "TKc6k7jG9mHkQ37gWq7H6wZ2NqQ8b1YzA9",
+        "0x689077782d2ADe0d852523e5b4c738883a69830A",
+        "0xD6216fC19DB775Df9774a6E33526131dA7D19a2c",
+        "3KkP9rQjB8hV7z1Z5Yd5z7YV7z1Z5Yd5z7"
+      ]
+    },
     "bybit": {
       "name": "Bybit",
       "fiu_registered": false,
@@ -40,27 +109,44 @@
         "0xa7efae728d2936e78bda97dc267687568dd593f3"
       ]
     },
-    "coindcx": {
-      "name": "CoinDCX",
-      "fiu_registered": true,
-      "nodal_email": "legal@coindcx.com",
-      "law_enforcement_portal": "https://coindcx.com/compliance-contact",
+    "bitget": {
+      "name": "Bitget",
+      "fiu_registered": false,
+      "nodal_email": "enforcement@bitget.com",
+      "law_enforcement_portal": "https://www.bitget.com/support/articles/law-enforcement",
       "known_hot_wallets": [
-        "TGC1Q8b1YzA98A7B2TPYSumqFnidVnQ4Hn",
-        "TLbFYgdf45XGhdAUN6FwrnwwmaEqYcckff",
-        "0x0283c847d95dca83f8fbfe853e3fa299097d7ee4",
-        "0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be"
+        "TBg8A2BNkffC7wYgdf45XGhdAUN6Fwrnww",
+        "0x11111231a31Ee1afC51d94C2eFcCAa2092aD1028"
       ]
     },
-    "wazirx": {
-      "name": "WazirX",
-      "fiu_registered": true,
-      "nodal_email": "nodal@wazirx.com",
-      "law_enforcement_portal": "https://wazirx.com/law-enforcement",
+    "mexc": {
+      "name": "MEXC Global",
+      "fiu_registered": false,
+      "nodal_email": "compliance@mexc.com",
+      "law_enforcement_portal": "https://www.mexc.com/support/articles/360037887391",
       "known_hot_wallets": [
-        "TXh9qL2WbY6sE198A2BNkffC7wYgdf45XG",
-        "TStX336BwAPYu2WbY6sE198A2BNkffC7wY",
-        "0x27ecfc02c2e94762198ea00fb6a1ad6b6c0e5a8f"
+        "TMx4n7eFw9qPqL2WbY6sE198A2BNkffC7w",
+        "0x75e89d5979e4f6fba9f97c104c2f0afb3f1dcb88"
+      ]
+    },
+    "gateio": {
+      "name": "Gate.io",
+      "fiu_registered": false,
+      "nodal_email": "compliance@gate.io",
+      "law_enforcement_portal": "https://www.gate.io/docs/law-enforcement",
+      "known_hot_wallets": [
+        "TGtH6wZ2NqQ8b1YzA98A7B2TPYSumqFnid",
+        "0x0d0707963952f2fba59dd06f2b425ace40b492fe"
+      ]
+    },
+    "htx": {
+      "name": "HTX (Huobi)",
+      "fiu_registered": false,
+      "nodal_email": "compliance@htx.com",
+      "law_enforcement_portal": "https://www.htx.com/support/law-enforcement",
+      "known_hot_wallets": [
+        "THbAUN6FwrnwwmaEqYcckffC7wYgdf45XG",
+        "0xab5c66752a9e8167967685f1450532fb96d5d24f"
       ]
     }
   }

@@ -60,7 +60,7 @@
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
     .badge-pill {
       background: #1e293b;
@@ -108,7 +108,7 @@
       background: #0284c7;
       color: #ffffff;
       border: none;
-      padding: 7px 16px;
+      padding: 7px 15px;
       border-radius: 6px;
       font-size: 12px;
       font-weight: 600;
@@ -121,6 +121,8 @@
     .btn:hover { background: #0369a1; }
     .btn-emerald { background: #059669; }
     .btn-emerald:hover { background: #047857; }
+    .btn-purple { background: #7c3aed; }
+    .btn-purple:hover { background: #6d28d9; }
     .btn-secondary {
       background: #1e293b;
       color: #94a3b8;
@@ -211,12 +213,12 @@
       color: #ffffff;
     }
 
-    /* Timeline Playback Scrubber (Bottom of Graph) */
+    /* Timeline Playback Scrubber */
     .timeline-bar {
       position: absolute;
       bottom: 14px;
       left: 20px;
-      right: 420px;
+      right: 430px;
       background: rgba(15, 23, 42, 0.92);
       border: 1px solid #334155;
       backdrop-filter: blur(12px);
@@ -267,13 +269,13 @@
 
     /* Side Inspector & Case Panel */
     .inspector {
-      width: 400px;
+      width: 410px;
       background: #0f172a;
       border-left: 1px solid #1e293b;
       padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
       overflow-y: auto;
       flex-shrink: 0;
     }
@@ -287,7 +289,7 @@
       background: transparent;
       border: none;
       color: #94a3b8;
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 700;
       padding: 6px 10px;
       cursor: pointer;
@@ -331,7 +333,7 @@
       border-radius: 4px;
     }
     .field {
-      margin-bottom: 8px;
+      margin-bottom: 7px;
     }
     .field-label {
       font-size: 10px;
@@ -340,7 +342,7 @@
       font-weight: 600;
     }
     .field-val {
-      font-size: 12px;
+      font-size: 11.5px;
       font-family: monospace;
       color: #e2e8f0;
       word-break: break-all;
@@ -358,7 +360,7 @@
       transition: width 0.4s ease;
     }
 
-    /* Modal */
+    /* Modals */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -419,22 +421,26 @@
     </div>
     <div class="header-actions">
       <span class="badge-pill" id="chainPill"><i class="fa-solid fa-link"></i> Auto-Detect</span>
+      <span class="badge-pill" style="color: #34d399; border-color: #065f46;"><i class="fa-solid fa-building-columns"></i> FIU-IND FinNet 2.0</span>
       <span class="badge-pill" id="latencyBadge"><i class="fa-solid fa-shield-check"></i> System Ready</span>
     </div>
   </header>
 
   <!-- Controls -->
   <div class="control-bar">
-    <div class="input-group" style="flex: 2.5; min-width: 320px;">
+    <div class="input-group" style="flex: 2.2; min-width: 300px;">
       <i class="fa-solid fa-magnifying-glass"></i>
       <input type="text" id="seedAddress" value="TScamOriginVictimAddress778899AABB" placeholder="Paste Suspect Wallet (TRON 'T...', EVM '0x...', BTC 'bc1...')" />
     </div>
-    <div class="input-group" style="flex: 1.2; min-width: 180px;">
+    <div class="input-group" style="flex: 1.1; min-width: 170px;">
       <i class="fa-solid fa-file-invoice"></i>
       <input type="text" id="firNumber" value="FIR-88/2026 Cyber Crime PS" placeholder="FIR / NCRP ID" />
     </div>
     <button class="btn" onclick="executeTrace()">
       <i class="fa-solid fa-bolt"></i> Trace Flow
+    </button>
+    <button class="btn btn-purple" onclick="openNcrpModal()">
+      <i class="fa-solid fa-file-import"></i> 1930 Ingest
     </button>
     <button class="btn btn-emerald" onclick="openSaveCaseModal()">
       <i class="fa-solid fa-floppy-disk"></i> Save Case
@@ -444,8 +450,9 @@
     <div class="presets">
       <span style="font-size: 10px; color: #64748b;">Presets:</span>
       <button class="preset-btn" onclick="loadPreset('tron')">TRON Task Scam</button>
-      <button class="preset-btn" onclick="loadPreset('evm')">Ethereum CEX Sweep</button>
-      <button class="preset-btn" onclick="loadPreset('btc')">Bitcoin Pig Butchering</button>
+      <button class="preset-btn" onclick="loadPreset('evm')">Ethereum CEX</button>
+      <button class="preset-btn" onclick="loadPreset('btc')">Bitcoin UTXO</button>
+      <button class="preset-btn" onclick="loadPreset('coindcx')">CoinDCX Hot</button>
     </div>
   </div>
 
@@ -472,7 +479,7 @@
         <div class="legend-item"><span class="legend-dot" style="background:#f59e0b;"></span> Intermediary Mule</div>
         <div class="legend-item"><span class="legend-dot" style="background:#dc2626;"></span> Sanctioned Mixer / Bridge</div>
         <div class="legend-item"><span class="legend-dot" style="background:#0284c7;"></span> VASP Deposit Forwarder</div>
-        <div class="legend-item"><span class="legend-dot" style="background:#10b981;"></span> Master Exchange Hot Wallet</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#10b981;"></span> Master Exchange Hot Vault</div>
       </div>
     </div>
 
@@ -533,12 +540,15 @@
         </div>
 
         <!-- Action Buttons -->
-        <div style="display: flex; gap: 8px; margin-top: 10px;">
-          <button class="btn" style="flex: 1; justify-content: center; background: #0284c7;" onclick="openNoticeModal()">
-            <i class="fa-solid fa-file-contract"></i> View Notice
+        <div style="display: flex; gap: 6px; margin-top: 10px;">
+          <button class="btn" style="flex: 1; justify-content: center; font-size: 11px; background: #0284c7;" onclick="openNoticeModal()">
+            <i class="fa-solid fa-file-contract"></i> Sec 94 Notice
           </button>
-          <button class="btn btn-emerald" style="flex: 1; justify-content: center;" onclick="downloadOfficialDossier()">
-            <i class="fa-solid fa-file-pdf"></i> Export PDF
+          <button class="btn btn-emerald" style="flex: 1; justify-content: center; font-size: 11px;" onclick="downloadOfficialDossier()">
+            <i class="fa-solid fa-file-pdf"></i> PDF Dossier
+          </button>
+          <button class="btn btn-purple" style="flex: 1; justify-content: center; font-size: 11px;" onclick="downloadOfficialBundle()">
+            <i class="fa-solid fa-box-archive"></i> Court Bundle
           </button>
         </div>
 
@@ -548,19 +558,19 @@
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
             <div>
               <div class="field-label">Volume Routed</div>
-              <div class="field-val" id="summaryVolume" style="font-size: 15px; color:#38bdf8; font-weight:bold;">$15,000 USD</div>
+              <div class="field-val" id="summaryVolume" style="font-size: 14px; color:#38bdf8; font-weight:bold;">$15,000 USD</div>
             </div>
             <div>
               <div class="field-label">Max Depth</div>
-              <div class="field-val" id="summaryHops" style="font-size: 15px; color:#38bdf8; font-weight:bold;">3 Hops</div>
+              <div class="field-val" id="summaryHops" style="font-size: 14px; color:#38bdf8; font-weight:bold;">3 Hops</div>
             </div>
             <div>
               <div class="field-label">Attribution Confidence</div>
-              <div class="field-val" style="font-size: 15px; color:#10b981; font-weight:bold;">99.8%</div>
+              <div class="field-val" style="font-size: 14px; color:#10b981; font-weight:bold;">99.8%</div>
             </div>
             <div>
-              <div class="field-label">SHA-256 Seal</div>
-              <div class="field-val" id="summarySeal" style="font-size: 10px; color:#94a3b8;">f81e717ce2ec...</div>
+              <div class="field-label">Evidence Seal</div>
+              <div class="field-val" id="summarySeal" style="font-size: 9.5px; color:#94a3b8;">f81e717ce2ec...</div>
             </div>
           </div>
         </div>
@@ -624,7 +634,34 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeNoticeModal()">Close</button>
         <button class="btn btn-emerald" onclick="downloadOfficialDossier()">
-          <i class="fa-solid fa-file-pdf"></i> Download Court Dossier (PDF)
+          <i class="fa-solid fa-file-pdf"></i> Download PDF Dossier
+        </button>
+        <button class="btn btn-purple" onclick="downloadOfficialBundle()">
+          <i class="fa-solid fa-box-archive"></i> Download ZIP Bundle
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NCRP 1930 Ingestion Modal -->
+  <div class="modal-overlay" id="ncrpModal">
+    <div class="modal-content" style="width: 600px;">
+      <div class="modal-header">
+        <div style="font-size: 13px; font-weight: 700; color:#a855f7;">
+          <i class="fa-solid fa-file-import"></i> Smart 1930 / NCRP Complaint Ingestion
+        </div>
+        <button style="background:transparent; border:none; color:#94a3b8; font-size:18px; cursor:pointer;" onclick="closeNcrpModal()">&times;</button>
+      </div>
+      <div class="modal-body" style="background:#0f172a; display:flex; flex-direction:column; gap:10px;">
+        <div style="font-size: 11px; color:#94a3b8; font-family:sans-serif;">
+          Paste raw complaint narrative from NCRP portal or 1930 SMS ticket. NIRMAAN will automatically extract suspect wallet addresses, loss amounts in INR, and FIR numbers.
+        </div>
+        <textarea id="ncrpText" rows="6" style="width:100%; background:#1e293b; border:1px solid #334155; padding:10px; color:#fff; border-radius:6px; font-size:12px; font-family:monospace; resize:none;" placeholder="Example: Complainant Ramesh Kumar reports loss of Rs 15,00,000 on Telegram task fraud. Transferred USDT to suspect address TScamOriginVictimAddress778899AABB under FIR-88/2026."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeNcrpModal()">Cancel</button>
+        <button class="btn btn-purple" onclick="submitNcrpParse()">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Extract & Trace
         </button>
       </div>
     </div>
@@ -687,6 +724,11 @@
         address: "bc1qScamVictimBtcSeedAddress998877AABB",
         fir: "FIR-12/2026 Cyber Crime PS Delhi",
         chain: "Bitcoin (UTXO)"
+      },
+      coindcx: {
+        address: "TGC1Q8b1YzA98A7B2TPYSumqFnidVnQ4Hn",
+        fir: "FIR-45/2026 Cyber Crime PS Mumbai",
+        chain: "CoinDCX Hot Treasury"
       }
     };
 
@@ -956,6 +998,47 @@
       document.getElementById('noticeModal').style.display = 'none';
     }
 
+    function openNcrpModal() {
+      document.getElementById('ncrpModal').style.display = 'flex';
+    }
+    function closeNcrpModal() {
+      document.getElementById('ncrpModal').style.display = 'none';
+    }
+
+    async function submitNcrpParse() {
+      const text = document.getElementById('ncrpText').value.trim();
+      if (!text) return alert("Please paste complaint text.");
+
+      try {
+        const res = await fetch('http://127.0.0.1:8000/api/ncrp/parse', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: text })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.primary_seed_address) {
+            document.getElementById('seedAddress').value = data.primary_seed_address;
+            document.getElementById('firNumber').value = data.suggested_fir || "FIR-NCRP-1930/2026";
+            closeNcrpModal();
+            executeTrace();
+          } else {
+            alert("No cryptocurrency address detected in the text. Please verify.");
+          }
+        }
+      } catch (e) {
+        // Fallback simple regex extraction
+        const match = text.match(/(T[1-9A-HJ-NP-za-km-z]{33}|0x[a-fA-F0-9]{40}|bc1[a-z0-9]{25,62})/);
+        if (match) {
+          document.getElementById('seedAddress').value = match[0];
+          closeNcrpModal();
+          executeTrace();
+        } else {
+          alert("Could not extract a valid cryptocurrency address.");
+        }
+      }
+    }
+
     function openSaveCaseModal() {
       if (!currentTraceData) return alert("Run a trace before saving to the Case Vault.");
       document.getElementById('saveFir').value = document.getElementById('firNumber').value;
@@ -1019,9 +1102,12 @@
                 <span style="font-size:9px; color:#10b981;">${c.destination_vasp || 'VASP'}</span>
               </div>
               <div style="font-size:10px; color:#94a3b8; margin-top:2px;">Seed: ${c.seed_address.substring(0, 16)}...</div>
-              <div style="display:flex; justify-content:space-between; margin-top:6px;">
+              <div style="display:flex; gap:6px; margin-top:6px;">
                 <button class="btn btn-secondary" style="padding:2px 8px; font-size:10px;" onclick="loadCaseDossier('${c.case_id}')">
-                  <i class="fa-solid fa-download"></i> Dossier
+                  <i class="fa-solid fa-file-pdf"></i> PDF
+                </button>
+                <button class="btn btn-purple" style="padding:2px 8px; font-size:10px;" onclick="loadCaseBundle('${c.case_id}')">
+                  <i class="fa-solid fa-box-archive"></i> ZIP Bundle
                 </button>
               </div>
             </div>
@@ -1036,11 +1122,24 @@
       window.open(`http://127.0.0.1:8000/api/cases/${caseId}/dossier`, '_blank');
     }
 
+    function loadCaseBundle(caseId) {
+      window.open(`http://127.0.0.1:8000/api/cases/${caseId}/bundle`, '_blank');
+    }
+
     function downloadOfficialDossier() {
       if (currentCaseId) {
         loadCaseDossier(currentCaseId);
       } else {
         alert("Please save the case to the Vault first to generate the court-stamped PDF dossier.");
+        openSaveCaseModal();
+      }
+    }
+
+    function downloadOfficialBundle() {
+      if (currentCaseId) {
+        loadCaseBundle(currentCaseId);
+      } else {
+        alert("Please save the case to the Vault first to compile the sealed court ZIP evidence bundle.");
         openSaveCaseModal();
       }
     }
@@ -1085,7 +1184,6 @@
       document.getElementById('timelineLabel').innerText = `${percentage}% Trail Scrubbed`;
       if (!cy) return;
       const edges = cy.edges();
-      const nodes = cy.nodes();
       const count = Math.ceil((percentage / 100) * edges.length);
       edges.forEach((edge, idx) => {
         if (idx < count) {

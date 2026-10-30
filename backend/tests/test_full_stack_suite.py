@@ -1,9 +1,13 @@
 """
 Integration Test Suite for Full Stack Verticals:
 - Vertical 2: ML Peeling Classifier, Mixer Directory & Risk Scorer
-- Vertical 3: SQLite Case Vault Persistence & Section 94 / 63 BSA PDF Dossier
+- Vertical 3: SQLite Case Vault Persistence, Section 94 / 63 BSA PDF Dossier,
+              FIU-IND PMLA STR Reporting & Court-Sealed Evidence Bundles
+- Domain Ingestion: NCRP / 1930 Cybercrime Complaint Parser
 """
 
+import zipfile
+import io
 import pytest
 from httpx import AsyncClient, ASGITransport
 from app.main import app
@@ -12,6 +16,9 @@ from app.ml.peeling import analyze_peeling_chain, detect_structuring_smurfing
 from app.ml.scorer import calculate_node_risk
 from app.db.case_service import save_case, list_cases, get_case
 from app.core.pdf_dossier import generate_pdf_dossier
+from app.core.evidence_bundle import generate_evidence_bundle_zip
+from app.core.pmla_str import generate_fiu_ind_str
+from app.core.ncrp_parser import parse_ncrp_complaint
 from app.models.schemas import CaseCreateRequest
 
 def test_mixer_entity_recognition():
@@ -61,12 +68,103 @@ def test_composite_risk_scorer_mixer_penalty():
     assert res["risk_tier"] == "CRITICAL"
     assert res["is_mixer"] is True
 
+def test_ncrp_complaint_parser():
+    """Verify unstructured victim complaint parsing from NCRP portal / 1930 SMS."""
+    raw_complaint = (
+        "Complainant Suresh Rao reports loss of Rs. 18,50,000 on Telegram task group. "
+        "Fraudsters directed him to transfer crypto to suspect wallet "
+        "TScamOriginVictimAddress778899AABB with receipt tx 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890. "
+        "Complaint registered under FIR-44/2026 Cyber Cell. Phone: +919876543210."
+    )
+    data = parse_ncrp_complaint(raw_complaint)
+    assert len(data.extracted_addresses) == 1
+    assert data.extracted_addresses[0]["address"] == "TScamOriginVictimAddress778899AABB"
+    assert data.extracted_addresses[0]["chain"] == "tron"
+    assert data.primary_seed_address == "TScamOriginVictimAddress778899AABB"
+    assert data.estimated_loss_inr == 1850000.0
+    assert "FIR-44/2026" in data.suggested_fir
+
+def test_fiu_ind_pmla_str_generation():
+    """Verify generation of FINnet 2.0 compliant STR payload for FIU-IND."""
+    mock_case = {
+        "fir_number": "FIR-88/2026",
+        "police_station": "State Cyber PS",
+        "investigating_officer": "DSP Verma",
+        "complainant_name": "Ramesh Kumar",
+        "loss_amount_inr": 1500000.0,
+        "seed_address": "TScamOriginVictimAddress778899AABB",
+        "chain": "TRON (TRC-20)",
+        "destination_vasp": "Binance",
+        "total_routed_usd": 15000.0,
+        "evidence_sha256": "f81e717ce2ec4938a1b5d6e7f809a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2",
+        "trace_data": {
+            "target_vasp": {
+                "name": "Binance",
+                "fiu_registered": True,
+                "deposit_address": "TBinanceUserDepositForwarder8899ZZ",
+                "hot_wallet": "TMuA6YqfCeX8EhbfYEg5y7S4DnxJRB4b7N",
+                "sweep_tx_hash": "d4e5f60718293a4b5c6d7e8f90a1b2c3",
+                "nodal_email": "compliance-in@binance.com"
+            },
+            "nodes": [{"id": "1", "is_peeling": True}],
+            "edges": [{"source": "1", "target": "2"}]
+        }
+    }
+    str_report = generate_fiu_ind_str(mock_case)
+    assert str_report["report_header"]["regulatory_body"] == "Financial Intelligence Unit - India (FIU-IND)"
+    assert str_report["target_reporting_entity"]["entity_name"] == "Binance"
+    assert "VDA_ALGORITHMIC_PEELING_CHAIN_DETECTED" in str_report["aml_suspicion_indicators"]
+
+def test_court_evidence_bundle_zip_and_manifest():
+    """Verify that the ZIP evidence bundle compiles with valid SHA256SUMS manifest."""
+    mock_case = {
+        "fir_number": "FIR-88/2026",
+        "police_station": "State Cyber PS",
+        "investigating_officer": "DSP Verma",
+        "complainant_name": "Ramesh Kumar",
+        "loss_amount_inr": 1500000.0,
+        "seed_address": "TScamOriginVictimAddress778899AABB",
+        "chain": "TRON (TRC-20)",
+        "destination_vasp": "Binance",
+        "total_routed_usd": 15000.0,
+        "evidence_sha256": "f81e717ce2ec4938a1b5d6e7f809a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2",
+        "trace_data": {
+            "target_vasp": {
+                "name": "Binance",
+                "fiu_registered": True,
+                "deposit_address": "TBinanceUserDepositForwarder8899ZZ",
+                "hot_wallet": "TMuA6YqfCeX8EhbfYEg5y7S4DnxJRB4b7N",
+                "sweep_tx_hash": "d4e5f60718293a4b5c6d7e8f90a1b2c3",
+                "nodal_email": "compliance-in@binance.com"
+            },
+            "nodes": [],
+            "edges": []
+        }
+    }
+    zip_bytes = generate_evidence_bundle_zip(mock_case)
+    assert len(zip_bytes) > 2000
+
+    # Unpack in-memory and verify SHA256SUMS manifest
+    with zipfile.ZipFile(io.BytesIO(zip_bytes), "r") as zf:
+        namelist = zf.namelist()
+        assert "SHA256SUMS.txt" in namelist
+        assert any(n.endswith(".pdf") for n in namelist)
+        assert any("SECTION_94_BNSS" in n for n in namelist)
+        assert any("SECTION_63_BSA" in n for n in namelist)
+        assert any("FIU_IND_PMLA_STR" in n for n in namelist)
+        assert any("TRANSACTION_HOPS_LEDGER" in n for n in namelist)
+
 @pytest.mark.asyncio
 async def test_case_vault_api_endpoints():
-    """Verify Case Vault API (POST /api/cases, GET /api/cases, GET /api/cases/{id}/dossier)."""
+    """Verify Case Vault API (POST /api/cases, GET /api/cases, GET /api/cases/{id}/dossier, bundle, str)."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        # 1. Create Case
+        # 1. Test NCRP Parse
+        ncrp_res = await client.post("/api/ncrp/parse", json={"text": "Lost 500000 on TScamOriginVictimAddress778899AABB"})
+        assert ncrp_res.status_code == 200
+        assert ncrp_res.json()["primary_seed_address"] == "TScamOriginVictimAddress778899AABB"
+
+        # 2. Create Case
         payload = {
             "fir_number": "FIR-TEST/2026",
             "police_station": "Cyber Crime PS Cyberabad",
@@ -86,19 +184,30 @@ async def test_case_vault_api_endpoints():
         assert "case_id" in data
         case_id = data["case_id"]
 
-        # 2. List Cases
+        # 3. List Cases
         list_res = await client.get("/api/cases")
         assert list_res.status_code == 200
         cases = list_res.json()
         assert any(c["case_id"] == case_id for c in cases)
 
-        # 3. Get Case Details
+        # 4. Get Case Details
         detail_res = await client.get(f"/api/cases/{case_id}")
         assert detail_res.status_code == 200
         assert detail_res.json()["fir_number"] == "FIR-TEST/2026"
 
-        # 4. Download PDF Dossier
+        # 5. Download PDF Dossier
         dossier_res = await client.get(f"/api/cases/{case_id}/dossier")
         assert dossier_res.status_code == 200
         assert dossier_res.headers["content-type"] == "application/pdf"
         assert len(dossier_res.content) > 1000
+
+        # 6. Download ZIP Bundle
+        bundle_res = await client.get(f"/api/cases/{case_id}/bundle")
+        assert bundle_res.status_code == 200
+        assert bundle_res.headers["content-type"] == "application/zip"
+        assert len(bundle_res.content) > 1000
+
+        # 7. Get FIU STR Report
+        str_res = await client.get(f"/api/cases/{case_id}/str")
+        assert str_res.status_code == 200
+        assert "report_header" in str_res.json()

@@ -1,22 +1,27 @@
 """
 NIRMAAN (ChainTrace AI) - FastAPI Entry Point
-Real-Time Fraud-Linked Crypto Exchange Attribution Engine.
+Real-Time Fraud-Linked Crypto Exchange Attribution Engine (SIH26183 / I4C).
 Features standardized enterprise error handling (400, 404, 422, 429, 500, 504),
-SQLite Case Vault persistence, ML Risk & Peeling Analytics, and Court-Ready PDF Dossier generation.
+SQLite Case Vault persistence, ML Risk & Peeling Analytics, NCRP 1930 Incident Ingestion,
+FIU-IND PMLA STR Reporting, and Cryptographic Court-Ready Evidence Bundles.
 """
 from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from pydantic import BaseModel, Field
 import json
 import os
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from app.models.schemas import TraceRequest, TraceResponse, CaseCreateRequest, CaseRecord
 from app.core.tracer import ForensicTracer
 from app.core.legal_notice import generate_section_94_bnss_notice
 from app.core.pdf_dossier import generate_pdf_dossier
+from app.core.evidence_bundle import generate_evidence_bundle_zip
+from app.core.pmla_str import generate_fiu_ind_str
+from app.core.ncrp_parser import parse_ncrp_complaint, ExtractedComplaintData
 from app.crawlers.multi_chain_crawler import detect_chain
 from app.db.case_service import save_case, list_cases, get_case
 from app.core.errors import (
@@ -27,6 +32,9 @@ from app.core.errors import (
     custom_validation_exception_handler,
     generic_unhandled_exception_handler
 )
+
+class NCRPParseRequest(BaseModel):
+    text: str = Field(..., description="Unstructured 1930 Helpline or NCRP complaint text")
 
 app = FastAPI(
     title="NIRMAAN Forensic Tracing Engine",
@@ -84,6 +92,14 @@ def list_vasps():
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
+@app.post("/api/ncrp/parse", response_model=ExtractedComplaintData)
+def parse_complaint_endpoint(req: NCRPParseRequest):
+    """
+    Automated NLP & Regex extractor for NCRP / 1930 complaints.
+    Extracts suspect wallets, transaction hashes, loss amounts, and FIR ticket IDs.
+    """
+    return parse_ncrp_complaint(req.text)
+
 @app.post("/api/trace", response_model=TraceResponse)
 async def run_trace(req: TraceRequest):
     """
@@ -104,7 +120,7 @@ async def run_trace(req: TraceRequest):
     return response
 
 # -------------------------------------------------------------
-# 3. CASE VAULT ENDPOINTS (Vertical 3)
+# 3. CASE VAULT & EVIDENCE PACKAGING ENDPOINTS (Vertical 3)
 # -------------------------------------------------------------
 @app.post("/api/cases", response_model=CaseRecord, status_code=status.HTTP_201_CREATED)
 def create_case_record(req: CaseCreateRequest):
@@ -137,12 +153,46 @@ def download_case_dossier(case_id: str):
             detail=f"Case ID '{case_id}' not found in Case Vault."
         )
     pdf_bytes = generate_pdf_dossier(case)
-    filename = f"NIRMAAN_DOSSIER_{case['fir_number'].replace('/', '_')}.pdf"
+    fir_clean = case['fir_number'].replace('/', '_').replace(' ', '_')
+    filename = f"NIRMAAN_DOSSIER_{fir_clean}.pdf"
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'}
     )
+
+@app.get("/api/cases/{case_id}/bundle")
+def download_case_evidence_bundle(case_id: str):
+    """
+    Generates and streams a court-sealed ZIP evidence bundle containing:
+    PDF dossier, Section 94 notice, Section 63 BSA certificate, FIU-IND STR,
+    CSV hop ledger, JSON graph, and SHA256SUMS.txt manifest.
+    """
+    case = get_case(case_id)
+    if not case:
+        raise StarletteHTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Case ID '{case_id}' not found in Case Vault."
+        )
+    zip_bytes = generate_evidence_bundle_zip(case)
+    fir_clean = case['fir_number'].replace('/', '_').replace(' ', '_')
+    filename = f"NIRMAAN_EVIDENCE_BUNDLE_{fir_clean}.zip"
+    return Response(
+        content=zip_bytes,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
+
+@app.get("/api/cases/{case_id}/str")
+def get_case_fiu_str(case_id: str):
+    """Generates structured FIU-IND PMLA Suspicious Transaction Report (STR) payload."""
+    case = get_case(case_id)
+    if not case:
+        raise StarletteHTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Case ID '{case_id}' not found in Case Vault."
+        )
+    return generate_fiu_ind_str(case)
 
 if __name__ == "__main__":
     import uvicorn

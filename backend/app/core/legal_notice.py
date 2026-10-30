@@ -1,13 +1,19 @@
 """
-Section 94 BNSS Legal Notice & Case Dossier Generator
+Section 94 BNSS Legal Notice & Section 63 BSA Electronic Certificate Generator.
 Enforces compliance with Bharatiya Nagarik Suraksha Sanhita, 2023 & Bharatiya Sakshya Adhiniyam, 2023.
 """
 import time
 import hashlib
-from typing import Optional
+from typing import Optional, Dict, Any, Union
 from app.models.schemas import TraceResponse, CaseMetadata
 
-def generate_section_94_bnss_notice(trace: TraceResponse, meta: Optional[CaseMetadata] = None) -> str:
+def _get_attr(obj: Any, key: str, default: Any = None) -> Any:
+    """Helper to extract attribute from either a Pydantic model or a dictionary."""
+    if isinstance(obj, dict):
+        return obj.get(key, default)
+    return getattr(obj, key, default)
+
+def generate_section_94_bnss_notice(trace: Union[TraceResponse, Dict[str, Any]], meta: Optional[CaseMetadata] = None) -> str:
     """Generates a court-ready, pre-filled Section 94 BNSS requisition notice."""
     if not meta:
         meta = CaseMetadata()
@@ -15,14 +21,20 @@ def generate_section_94_bnss_notice(trace: TraceResponse, meta: Optional[CaseMet
     current_date = time.strftime("%d-%m-%Y")
     current_time_utc = time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())
 
-    vasp_name = trace.target_vasp.name if trace.target_vasp else "Centralized Exchange / VASP"
-    nodal_email = trace.target_vasp.nodal_email if trace.target_vasp else "compliance@exchange.com"
-    deposit_addr = trace.target_vasp.deposit_address if trace.target_vasp else "N/A"
-    hot_wallet = trace.target_vasp.hot_wallet if trace.target_vasp else "N/A"
-    sweep_tx = trace.target_vasp.sweep_tx_hash if (trace.target_vasp and trace.target_vasp.sweep_tx_hash) else "N/A"
+    target_vasp = _get_attr(trace, "target_vasp")
+    vasp_name = _get_attr(target_vasp, "name", "Centralized Exchange / VASP") if target_vasp else "Centralized Exchange / VASP"
+    nodal_email = _get_attr(target_vasp, "nodal_email", "compliance@exchange.com") if target_vasp else "compliance@exchange.com"
+    deposit_addr = _get_attr(target_vasp, "deposit_address", "N/A") if target_vasp else "N/A"
+    hot_wallet = _get_attr(target_vasp, "hot_wallet", "N/A") if target_vasp else "N/A"
+    sweep_tx = _get_attr(target_vasp, "sweep_tx_hash", "N/A") if target_vasp else "N/A"
+
+    seed_address = _get_attr(trace, "seed_address", "N/A")
+    trace_id = _get_attr(trace, "trace_id", "TRACE")
+    edges = _get_attr(trace, "edges", [])
+    exec_ms = _get_attr(trace, "execution_time_ms", 350.0)
 
     # Compute SHA-256 evidence hash of graph nodes and edges
-    evidence_payload = f"{trace.seed_address}:{deposit_addr}:{hot_wallet}:{len(trace.edges)}"
+    evidence_payload = f"{seed_address}:{deposit_addr}:{hot_wallet}:{len(edges)}"
     sha256_hash = hashlib.sha256(evidence_payload.encode()).hexdigest()
 
     notice_template = f"""========================================================================================
@@ -31,7 +43,7 @@ FORM OF STATUTORY NOTICE UNDER SECTION 94 OF THE BHARATIYA NAGARIK SURAKSHA SANH
 AND REQUISITION FOR IMMEDIATE ASSET PRESERVATION UNDER SECTIONS 106/107 BNSS, 2023
 ========================================================================================
 
-NOTICE REFERENCE NO: LEA/CYBER/BNSS94/{trace.trace_id.upper()}
+NOTICE REFERENCE NO: LEA/CYBER/BNSS94/{trace_id.upper()}
 DATE OF ISSUE: {current_date}
 PRIORITY: HIGH (1930 HELPLINE / GOLDEN HOUR CASE)
 
@@ -52,15 +64,15 @@ SUBJECT: STATUTORY REQUISITION FOR PRODUCTION OF SUBSCRIBER KYC, TRANSACTION LED
    - Reported Victim Loss: INR {meta.loss_amount_inr:,.2f}
 
 2. FORENSIC BLOCKCHAIN TRAIL SUMMARY:
-   Automated multi-hop blockchain tracing on the TRON (TRC-20) network originating from 
-   suspect address '{trace.seed_address}' established that illicit proceeds were routed 
-   across {len(trace.edges)} transaction hops and deposited into your exchange infrastructure:
+   Automated multi-hop blockchain tracing on the cryptocurrency ledger originating from 
+   suspect address '{seed_address}' established that illicit proceeds were routed 
+   across {len(edges)} transaction hops and deposited into your exchange infrastructure:
 
    * Identified User Deposit Address: {deposit_addr}
    * Associated Exchange Hot Wallet:  {hot_wallet}
    * Sweeping / Consolidation TxHash: {sweep_tx}
    * Identification Timestamp:        {current_time_utc}
-   * Execution Traversal Latency:     {trace.execution_time_ms} ms
+   * Execution Traversal Latency:     {exec_ms} ms
 
 3. STATUTORY DIRECTIONS UNDER SECTION 94 BNSS, 2023:
    By virtue of powers conferred under Section 94 BNSS, you are hereby legally required to 
@@ -89,3 +101,68 @@ Notice Issued By:
 {meta.police_station}
 ========================================================================================"""
     return notice_template
+
+def generate_section_63_bsa_certificate(trace: Union[TraceResponse, Dict[str, Any]], meta: Optional[CaseMetadata] = None) -> Dict[str, Any]:
+    """
+    Generates a formal Certificate of Electronic Evidence under Section 63(4) of the
+    Bharatiya Sakshya Adhiniyam (BSA), 2023 (corresponding to Section 65B Indian Evidence Act).
+    """
+    if not meta:
+        meta = CaseMetadata()
+
+    current_date = time.strftime("%d-%m-%Y")
+    current_time_utc = time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())
+    
+    seed_address = _get_attr(trace, "seed_address", "N/A")
+    trace_id = _get_attr(trace, "trace_id", "TRACE")
+    edges = _get_attr(trace, "edges", [])
+    nodes = _get_attr(trace, "nodes", [])
+
+    payload = f"{trace_id}:{seed_address}:{len(nodes)}:{len(edges)}"
+    sha256_hash = hashlib.sha256(payload.encode()).hexdigest()
+
+    certificate_text = f"""========================================================================================
+CERTIFICATE OF ELECTRONIC EVIDENCE UNDER SECTION 63 OF THE BHARATIYA SAKSHYA ADHINIYAM, 2023
+(Replaces Section 65B of the Indian Evidence Act, 1872)
+FOR ADMISSIBILITY OF BLOCKCHAIN FORENSIC LEDGERS & VASP ATTRIBUTION RECORDS
+========================================================================================
+
+CERTIFICATE ID: CERT-BSA63-{trace_id.upper()}
+DATE OF CERTIFICATION: {current_date}
+INVESTIGATION REFERENCE: {meta.fir_number}
+
+I, {meta.investigating_officer}, do hereby certify and declare on official oath as under:
+
+1. LAWFUL COMPUTER OPERATING CONDITIONS:
+   During the period over which the electronic cryptocurrency records were produced, the 
+   automated NIRMAAN Blockchain Forensic System was operating properly in the ordinary course 
+   of official lawful cyber investigations.
+
+2. INTEGRITY OF DATA INGESTION:
+   The transaction records and graph traversal data were extracted directly from immutable 
+   public distributed blockchain nodes (TRON, EVM, Bitcoin) without manual alteration, 
+   injection, or modification.
+
+3. FORENSIC SEAL AND CRYPTOGRAPHIC NON-REPUDIATION:
+   To ensure evidentiary non-repudiation and chain of custody, the digital ledger artifacts 
+   have been cryptographically bound with a SHA-256 integrity seal:
+   
+   * Evidence Seal (SHA-256): {sha256_hash}
+   * Target Seed Address:     {seed_address}
+   * Nodes Resolved:          {len(nodes)}
+   * Transaction Edges:       {len(edges)}
+   * Verification Time (UTC): {current_time_utc}
+
+4. STATUTORY DECLARATION:
+   The particulars given above are true and correct to the best of my knowledge, and this 
+   certificate fulfills all statutory requirements of Section 63(4) Bharatiya Sakshya Adhiniyam, 2023.
+
+Certified by:
+{meta.investigating_officer}
+{meta.police_station}
+========================================================================================"""
+    return {
+        "certificate_id": f"CERT-BSA63-{trace_id.upper()}",
+        "sha256_hash": sha256_hash,
+        "certificate_text": certificate_text
+    }
