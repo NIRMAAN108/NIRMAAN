@@ -1,12 +1,12 @@
 {
-  "timestamp": "2026-10-30T13:59:52Z",
+  "timestamp": "2026-10-30T14:17:53Z",
   "target_endpoint": "http://127.0.0.1:8000",
   "summary": {
     "total": 16,
     "passed": 16,
     "failed": 0,
     "pass_rate_pct": 100.0,
-    "elapsed_seconds": 45.39
+    "elapsed_seconds": 45.84
   },
   "results": [
     {
@@ -67,13 +67,13 @@
       "name": "Preset 1: TRON Demo (\u20b915L Telegram Scam)",
       "status": "PASS",
       "details": {
-        "latency_ms": 2662.47,
+        "latency_ms": 2949.87,
         "destination_found": true,
         "target_vasp": "Binance",
         "typology": "STANDARD_RAPID_MULE",
         "nodes_count": 5,
         "edges_count": 4,
-        "evidence_sha256": "43527adf7d874db4a10f109d13d6ccb7ba177195a8d14892c2da721009ad27ac"
+        "evidence_sha256": "a8a3dd0d991cdd8582073008b2dae25a77c307b38f6895bc7e4fb5cff70ac297"
       },
       "notes": ""
     },
@@ -82,7 +82,7 @@
       "name": "Preset 2: EVM Demo (\u20b925L CEX Layering)",
       "status": "PASS",
       "details": {
-        "latency_ms": 1679.43,
+        "latency_ms": 2583.89,
         "destination_found": true,
         "target_vasp": "Binance",
         "nodes_count": 5,
@@ -95,7 +95,7 @@
       "name": "Preset 3: BTC Demo (\u20b950L Pig Butchering UTXO)",
       "status": "PASS",
       "details": {
-        "latency_ms": 27386.73,
+        "latency_ms": 28068.87,
         "destination_found": true,
         "target_vasp": "Binance",
         "nodes_count": 5,
@@ -108,7 +108,7 @@
       "name": "Preset 4: Live Binance 14 Hot Vault (EVM)",
       "status": "PASS",
       "details": {
-        "latency_ms": 1.29,
+        "latency_ms": 3.28,
         "target_vasp": "Binance",
         "nodal_email": "compliance-in@binance.com",
         "fiu_registered": true
@@ -120,7 +120,7 @@
       "name": "Preset 5: Live WazirX Exploiter (CRITICAL Risk Tier)",
       "status": "PASS",
       "details": {
-        "latency_ms": 1359.98,
+        "latency_ms": 2309.18,
         "risk_tier": "CRITICAL",
         "ml_anomaly_score": 0.85,
         "flags": [
@@ -134,9 +134,9 @@
       "name": "Preset 6: Live Active TRON Wallet (TronGrid Live)",
       "status": "PASS",
       "details": {
-        "latency_ms": 9306.14,
-        "nodes_count": 13,
-        "edges_count": 35,
+        "latency_ms": 6104.68,
+        "nodes_count": 27,
+        "edges_count": 49,
         "ml_anomaly_score": 0.95
       },
       "notes": ""
@@ -146,7 +146,7 @@
       "name": "SQLite Case Vault: Case Creation (POST /api/cases)",
       "status": "PASS",
       "details": {
-        "case_id": "case_3b0b17f288",
+        "case_id": "case_7279e8c4be",
         "fir_number": "FIR-E2E-AUDIT/2026"
       },
       "notes": ""
@@ -156,7 +156,7 @@
       "name": "Case Retrieval by ID (GET /api/cases/{id})",
       "status": "PASS",
       "details": {
-        "case_id": "case_3b0b17f288",
+        "case_id": "case_7279e8c4be",
         "destination_vasp": "Binance"
       },
       "notes": ""
@@ -166,7 +166,7 @@
       "name": "Court Dossier PDF Generation (GET /api/cases/{id}/dossier)",
       "status": "PASS",
       "details": {
-        "bytes_length": 4432,
+        "bytes_length": 4437,
         "header_signature": "%PDF-",
         "content_type": "application/pdf"
       },
@@ -208,7 +208,7 @@
       "name": "Frontend UI Static Asset & Control Discovery",
       "status": "PASS",
       "details": {
-        "html_bytes": 44292,
+        "html_bytes": 70465,
         "total_verified_ids": 30,
         "missing_ids": [],
         "total_verified_actions": 12,
