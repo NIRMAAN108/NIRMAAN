@@ -31,6 +31,8 @@ class GraphNode(BaseModel):
     is_mixer: Optional[bool] = False
     flags: Optional[List[str]] = []
     explanation: Optional[str] = None
+    feature_vector: Optional[List[float]] = None
+    typology: Optional[Dict[str, Any]] = None
 
 class GraphEdge(BaseModel):
     source: str
@@ -61,6 +63,8 @@ class TraceResponse(BaseModel):
     edges: List[GraphEdge]
     section_94_notice_text: Optional[str] = None
     evidence_sha256: Optional[str] = None
+    syndicate_typology: Optional[Dict[str, Any]] = None
+    ml_anomaly_score: Optional[float] = None
 
 # Case Vault Persistence Models (Vertical 3)
 class CaseCreateRequest(BaseModel):

@@ -174,7 +174,10 @@ class ForensicTracer:
                 if not is_known_hot:
                     queue.append((recipient, depth + 1, "MULE"))
 
-        # ML Risk & Peeling Analytics Layer (Vertical 2)
+        # ML Risk, Syndicate Typology & Graph Analytics Layer (Vertical 2)
+        dominant_typology = None
+        max_ml_score = 0.0
+
         for node_id, node in nodes_map.items():
             in_edges = [e.model_dump() for e in edges_list if e.target == node_id]
             out_edges = [e.model_dump() for e in edges_list if e.source == node_id]
@@ -184,7 +187,8 @@ class ForensicTracer:
                 node_type=node.node_type,
                 incoming_transfers=in_edges,
                 outgoing_transfers=out_edges,
-                is_vasp=bool(node.vasp_name)
+                is_vasp=bool(node.vasp_name),
+                chain=chain_label
             )
 
             node.risk_score = risk_profile["risk_score"]
@@ -193,6 +197,14 @@ class ForensicTracer:
             node.is_mixer = risk_profile["is_mixer"]
             node.flags = risk_profile["flags"]
             node.explanation = risk_profile["explanation"]
+            node.feature_vector = risk_profile.get("feature_vector")
+            node.typology = risk_profile.get("typology")
+
+            if node.risk_score > max_ml_score:
+                max_ml_score = node.risk_score
+
+            if risk_profile.get("typology") and not dominant_typology:
+                dominant_typology = risk_profile["typology"]
 
             if risk_profile["is_mixer"]:
                 node.node_type = "MIXER"
@@ -213,5 +225,7 @@ class ForensicTracer:
             target_vasp=found_target_vasp,
             nodes=list(nodes_map.values()),
             edges=edges_list,
-            evidence_sha256=evidence_sha256
+            evidence_sha256=evidence_sha256,
+            syndicate_typology=dominant_typology,
+            ml_anomaly_score=round(max_ml_score, 2)
         )

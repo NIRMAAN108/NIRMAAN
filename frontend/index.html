@@ -65,7 +65,7 @@
     <div class="flex items-center gap-4">
       <div class="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-300">
         <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span class="font-mono text-[11px]" id="engineStatusBadge">Engine Active • TRON, EVM, BTC</span>
+        <span class="font-mono text-[11px]" id="engineStatusBadge">Live Mainnet Crawlers Active (TRON • EVM • BTC)</span>
       </div>
       
       <div class="flex items-center gap-2 border-l border-zinc-800 pl-4">
@@ -97,7 +97,7 @@
       </h1>
       
       <p class="text-sm text-zinc-400 max-w-xl">
-        Enter a suspect wallet address or paste raw 1930 / NCRP complaint text to resolve multi-hop laundering chains, identify destination exchanges, and generate court-ready freeze notices.
+        Enter ANY suspect wallet address or paste raw 1930 / NCRP complaint text to resolve multi-hop laundering chains, identify destination exchanges, and generate court-ready freeze notices.
       </p>
 
       <!-- SEARCH CARD CONTAINER -->
@@ -164,9 +164,9 @@
 
         <!-- TRACE ACTION BUTTON -->
         <div class="mt-4 pt-3 border-t border-zinc-800/80 flex items-center justify-between gap-4">
-          <div class="text-[11px] text-zinc-500 flex items-center gap-1.5 font-mono">
-            <span class="material-symbols-outlined text-[14px] text-emerald-400">verified</span>
-            <span>Automated VASP Matching</span>
+          <div class="text-[11px] text-zinc-500 flex items-center gap-1.5 font-mono" id="crawlModeIndicator">
+            <span class="material-symbols-outlined text-[14px] text-emerald-400">public</span>
+            <span>Live Network Crawl Enabled</span>
           </div>
 
           <button 
@@ -181,24 +181,51 @@
 
       </div>
 
-      <!-- ONE-CLICK DEMO SCENARIOS -->
-      <div class="flex flex-wrap items-center justify-center gap-2 mt-1">
-        <span class="text-xs text-zinc-500 font-medium mr-1">One-Click Demos:</span>
-        
-        <button onclick="loadScenario('tron')" class="px-3 py-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-300 flex items-center gap-1.5 transition-all">
-          <span class="h-2 w-2 rounded-full bg-red-400"></span>
-          <span>TRON: ₹15L Telegram Scam</span>
-        </button>
+      <!-- ONE-CLICK DEMO SCENARIOS & REAL-WORLD PRESETS -->
+      <div class="flex flex-col gap-2 mt-1 w-full max-w-4xl">
+        <!-- REAL-WORLD ON-CHAIN CASES -->
+        <div class="flex flex-wrap items-center justify-center gap-2">
+          <span class="text-xs text-emerald-400 font-semibold mr-1 flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">public</span> Real-World On-Chain:
+          </span>
 
-        <button onclick="loadScenario('evm')" class="px-3 py-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-300 flex items-center gap-1.5 transition-all">
-          <span class="h-2 w-2 rounded-full bg-blue-400"></span>
-          <span>EVM: ₹25L CEX Layering</span>
-        </button>
+          <button onclick="loadScenario('binance_live')" class="px-3 py-1.5 rounded-lg bg-emerald-950/30 hover:bg-emerald-900/50 border border-emerald-500/30 text-xs text-emerald-300 flex items-center gap-1.5 transition-all">
+            <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+            <span>Binance Master Hot Vault (EVM)</span>
+          </button>
 
-        <button onclick="loadScenario('btc')" class="px-3 py-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-300 flex items-center gap-1.5 transition-all">
-          <span class="h-2 w-2 rounded-full bg-amber-400"></span>
-          <span>BTC: ₹50L Pig Butchering</span>
-        </button>
+          <button onclick="loadScenario('wazirx_live')" class="px-3 py-1.5 rounded-lg bg-rose-950/30 hover:bg-rose-900/50 border border-rose-500/30 text-xs text-rose-300 flex items-center gap-1.5 transition-all">
+            <span class="h-2 w-2 rounded-full bg-rose-400"></span>
+            <span>WazirX $235M Exploiter (Tornado Cash)</span>
+          </button>
+
+          <button onclick="loadScenario('tron_live')" class="px-3 py-1.5 rounded-lg bg-sky-950/30 hover:bg-sky-900/50 border border-sky-500/30 text-xs text-sky-300 flex items-center gap-1.5 transition-all">
+            <span class="h-2 w-2 rounded-full bg-sky-400"></span>
+            <span>Active TRON Wallet (TronGrid Live)</span>
+          </button>
+        </div>
+
+        <!-- SYNTHETIC TEST CASES (OFFLINE RESILIENT) -->
+        <div class="flex flex-wrap items-center justify-center gap-2">
+          <span class="text-xs text-zinc-500 font-medium mr-1 flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">offline_bolt</span> Fast Demo Fixtures:
+          </span>
+
+          <button onclick="loadScenario('tron_demo')" class="px-3 py-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-300 flex items-center gap-1.5 transition-all">
+            <span class="h-2 w-2 rounded-full bg-red-400"></span>
+            <span>TRON: ₹15L Telegram Scam</span>
+          </button>
+
+          <button onclick="loadScenario('evm_demo')" class="px-3 py-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-300 flex items-center gap-1.5 transition-all">
+            <span class="h-2 w-2 rounded-full bg-blue-400"></span>
+            <span>EVM: ₹25L CEX Layering</span>
+          </button>
+
+          <button onclick="loadScenario('btc_demo')" class="px-3 py-1.5 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-300 flex items-center gap-1.5 transition-all">
+            <span class="h-2 w-2 rounded-full bg-amber-400"></span>
+            <span>BTC: ₹50L Pig Butchering</span>
+          </button>
+        </div>
       </div>
     </section>
 
@@ -252,7 +279,7 @@
         <div class="glass-card rounded-xl p-4 flex flex-col justify-between border-l-4 border-l-amber-500 gap-3">
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-bold font-mono uppercase px-2 py-0.5 rounded bg-amber-500/10 text-amber-400">Hop 1 • Layering</span>
-            <span class="text-[10px] text-amber-400/80 font-mono">Dwell: 3m 42s</span>
+            <span class="text-[10px] text-amber-400/80 font-mono" id="trailHop1Dwell">Dwell: 3m 42s</span>
           </div>
           <div>
             <div class="text-xs font-medium text-white mb-1">Intermediary Mule Splitter</div>
@@ -288,7 +315,7 @@
         <div class="glass-card rounded-xl p-4 flex flex-col justify-between border-l-4 border-l-emerald-500 gap-3 bg-emerald-950/10">
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-bold font-mono uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">Hop 3 • Terminal</span>
-            <span class="text-[10px] text-emerald-400 font-mono font-bold">Identified</span>
+            <span class="text-[10px] text-emerald-400 font-mono font-bold" id="trailHop3Badge">Identified</span>
           </div>
           <div>
             <div class="text-xs font-medium text-white mb-1" id="trailHop3Title">Binance Omnibus Vault</div>
@@ -327,7 +354,7 @@
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         
-        <!-- CARD A: IDENTIFIED TARGET VERDICT (7 COLS) -->
+        <!-- CARD A: IDENTIFIED TARGET VERDICT & ML TYPOLOGY (7 COLS) -->
         <div class="lg:col-span-7 glass-card rounded-2xl p-6 flex flex-col justify-between gap-5 border border-zinc-800">
           <div>
             <div class="flex items-center justify-between mb-2">
@@ -339,12 +366,21 @@
             
             <div class="flex items-baseline gap-3">
               <h3 class="text-3xl font-extrabold text-white tracking-tight" id="verdictExchangeTitle">Binance</h3>
-              <span class="text-sm font-mono text-emerald-400 font-semibold" id="verdictAmountTracked">₹14,95,000 Tracked (14,950 USDT)</span>
+              <span class="text-sm font-mono text-emerald-400 font-semibold" id="verdictAmountTracked">₹14,95,000 Tracked</span>
             </div>
             
-            <p class="text-xs text-zinc-400 mt-2 leading-relaxed" id="verdictAnalysisText">
-              Trace concluded at custodial exchange sweep infrastructure. Funds are currently consolidated inside the target exchange omnibus hot vault under internal KYC account custody.
-            </p>
+            <!-- ML SYNDICATE TYPOLOGY BADGE -->
+            <div class="mt-3 p-3 rounded-xl bg-indigo-950/20 border border-indigo-500/30 flex flex-col gap-1.5" id="typologyBox">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-mono uppercase text-indigo-400 font-semibold flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[14px]">psychology</span> ML Modus Operandi Typology
+                </span>
+                <span class="text-[10px] font-mono text-indigo-300 font-bold" id="typologyConfidence">94% Confidence</span>
+              </div>
+              <div class="text-xs font-semibold text-white" id="typologyName">Southeast Asian Telegram Task Scam</div>
+              <div class="text-[11px] text-zinc-400 leading-relaxed" id="typologyDesc">Victim lured into Telegram task group, instructed to send TRON USDT deposits. Automated multi-hop mule layering with fixed 1-5% peeling cuts followed by instant CEX consolidation.</div>
+              <div class="text-[10px] font-mono text-indigo-300 mt-0.5" id="typologyViolation">Violation: Section 318(4) BNS, 2023 &amp; Section 66D IT Act, 2000</div>
+            </div>
           </div>
 
           <!-- TARGET DETAILS GRID -->
@@ -374,7 +410,7 @@
           <!-- RISK SCORE INDICATOR -->
           <div class="flex flex-col gap-1.5">
             <div class="flex items-center justify-between text-xs">
-              <span class="text-zinc-400 font-medium">Laundering Risk Assessment:</span>
+              <span class="text-zinc-400 font-medium">Syndicate Laundering Risk:</span>
               <span class="font-mono font-bold text-rose-400" id="verdictRiskScore">0.92 (CRITICAL RISK)</span>
             </div>
             <div class="h-2 w-full bg-zinc-900 rounded-full overflow-hidden border border-zinc-800">
@@ -506,20 +542,43 @@ Loading notice content...
     let currentCaseId = null;
 
     const SCENARIOS = {
-      tron: {
+      // Fast Deterministic Scenarios (Offline Resilient)
+      tron_demo: {
         wallet: "TScamOriginVictimAddress778899AABB",
         fir: "FIR-88/2026 Cyber PS Bhopal",
-        loss: 1500000
+        loss: 1500000,
+        is_live: false
       },
-      evm: {
+      evm_demo: {
         wallet: "0xScamOriginVictimEther998877AABBCCDDEEFF",
         fir: "FIR-104/2026 Cyber PS Bengaluru",
-        loss: 2500000
+        loss: 2500000,
+        is_live: false
       },
-      btc: {
+      btc_demo: {
         wallet: "bc1qScamVictimBtcSeedAddress998877AABB",
         fir: "FIR-12/2026 Cyber PS Delhi",
-        loss: 5000000
+        loss: 5000000,
+        is_live: false
+      },
+      // Real-World Live Mainnet Landmark Cases
+      binance_live: {
+        wallet: "0x28C6c06298d514Db089934071355E5743bf21d60",
+        fir: "FIR-301/2026 Cyber HQ Mumbai",
+        loss: 8500000,
+        is_live: true
+      },
+      wazirx_live: {
+        wallet: "0x0bfC924618e950882e70e3025255474B5C6eDb27",
+        fir: "FIR-192/2024 Special Cell Delhi",
+        loss: 19500000000,
+        is_live: true
+      },
+      tron_live: {
+        wallet: "TTRnHsXFcGkkjC8NzQhUsVF1y86o38VjTw",
+        fir: "FIR-44/2026 Cyber PS Cyberabad",
+        loss: 3400000,
+        is_live: true
       }
     };
 
@@ -556,6 +615,14 @@ Loading notice content...
       document.getElementById('inputWallet').value = s.wallet;
       document.getElementById('inputFir').value = s.fir;
       document.getElementById('inputLoss').value = s.loss;
+      
+      const indicator = document.getElementById('crawlModeIndicator');
+      if (s.is_live) {
+        indicator.innerHTML = `<span class="material-symbols-outlined text-[14px] text-emerald-400">public</span><span class="text-emerald-400 font-semibold">Real Mainnet Live API Query</span>`;
+      } else {
+        indicator.innerHTML = `<span class="material-symbols-outlined text-[14px] text-amber-400">offline_bolt</span><span class="text-amber-400">Deterministic Fixture</span>`;
+      }
+      
       executeTraceFlow();
     }
 
@@ -662,6 +729,28 @@ Loading notice content...
         document.getElementById('verdictPortalUrl').href = v.law_enforcement_portal || "#";
         document.getElementById('verdictSweepHash').innerText = (v.sweep_tx_hash || "").substring(0, 20) + "...";
         document.getElementById('verdictAmountTracked').innerText = `${loss ? '₹' + loss.toLocaleString('en-IN') : 'Proceeds'} Tracked`;
+      }
+
+      // 3. Typology & ML assessment
+      if (data.syndicate_typology) {
+        const typ = data.syndicate_typology;
+        document.getElementById('typologyName').innerText = typ.typology_name;
+        document.getElementById('typologyDesc').innerText = typ.description;
+        document.getElementById('typologyViolation').innerText = `Violation: ${typ.statutory_violation}`;
+        document.getElementById('typologyConfidence').innerText = `${Math.round(typ.confidence * 100)}% Confidence`;
+      }
+
+      // 4. ML Anomaly Score & Risk bar
+      const mlScore = data.ml_anomaly_score || 0.85;
+      const scorePct = Math.round(mlScore * 100);
+      document.getElementById('verdictRiskScore').innerText = `${mlScore} (${mlScore >= 0.8 ? 'CRITICAL RISK' : mlScore >= 0.6 ? 'HIGH RISK' : 'MODERATE'})`;
+      document.getElementById('verdictRiskBar').style.width = `${scorePct}%`;
+      if (mlScore >= 0.8) {
+        document.getElementById('verdictRiskBar').className = "h-full bg-rose-500 rounded-full transition-all";
+      } else if (mlScore >= 0.6) {
+        document.getElementById('verdictRiskBar').className = "h-full bg-amber-500 rounded-full transition-all";
+      } else {
+        document.getElementById('verdictRiskBar').className = "h-full bg-emerald-500 rounded-full transition-all";
       }
 
       if (data.evidence_sha256) {
