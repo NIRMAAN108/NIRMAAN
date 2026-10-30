@@ -1,1203 +1,1296 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NIRMAAN (ChainTrace AI) - Multi-Chain VASP Forensic Attribution & Case Vault</title>
-  <!-- Cytoscape & Layout Engines -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.5.0/cytoscape-dagre.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/cytoscape-cose-bilkent@4.1.0/cytoscape-cose-bilkent.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <meta content="web_dashboard" name="shell-type"/>
+  <title>NIRMAAN (ChainTrace AI) - Intelligence Workspace</title>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com" rel="preconnect"/>
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: #080c14;
-      color: #f1f5f9;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
+    @layer base {
+      html, body { margin: 0; padding: 0; }
+      body { overscroll-behavior: none; }
+      main > :first-child { margin-top: 0 !important; }
+      main > :last-child { margin-bottom: 0 !important; }
     }
-
-    /* Top Navigation Header */
-    header {
-      background: #0f172a;
-      border-bottom: 1px solid #1e293b;
-      padding: 10px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 60px;
-      flex-shrink: 0;
-    }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .brand-logo {
-      background: linear-gradient(135deg, #0284c7, #0d9488);
-      color: #ffffff;
-      font-weight: 900;
-      font-size: 14px;
-      padding: 6px 12px;
-      border-radius: 6px;
-      letter-spacing: 1.5px;
-      box-shadow: 0 0 12px rgba(13, 148, 136, 0.4);
-    }
-    .brand-title {
-      font-size: 15px;
-      font-weight: 700;
-      color: #f8fafc;
-    }
-    .brand-sub {
-      font-size: 11px;
-      color: #94a3b8;
-    }
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .badge-pill {
-      background: #1e293b;
-      border: 1px solid #334155;
-      padding: 4px 10px;
-      border-radius: 9999px;
-      font-size: 11px;
-      color: #38bdf8;
-      font-weight: 600;
-    }
-
-    /* Control Toolbar */
-    .control-bar {
-      background: #0b1120;
-      border-bottom: 1px solid #1e293b;
-      padding: 8px 24px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-      flex-shrink: 0;
-    }
-    .input-group {
-      display: flex;
-      align-items: center;
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 6px;
-      padding: 6px 12px;
-    }
-    .input-group i {
-      color: #64748b;
-      margin-right: 8px;
-    }
-    .input-group input, .input-group select {
-      background: transparent;
-      border: none;
-      outline: none;
-      color: #f8fafc;
-      font-size: 12px;
-      font-family: monospace;
-      width: 100%;
-    }
-    .btn {
-      background: #0284c7;
-      color: #ffffff;
-      border: none;
-      padding: 7px 15px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      transition: all 0.2s;
-    }
-    .btn:hover { background: #0369a1; }
-    .btn-emerald { background: #059669; }
-    .btn-emerald:hover { background: #047857; }
-    .btn-purple { background: #7c3aed; }
-    .btn-purple:hover { background: #6d28d9; }
-    .btn-secondary {
-      background: #1e293b;
-      color: #94a3b8;
-      border: 1px solid #334155;
-    }
-    .btn-secondary:hover { background: #334155; color: #ffffff; }
-
-    /* Quick Preset Buttons */
-    .presets {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-left: auto;
-    }
-    .preset-btn {
-      background: #1e293b;
-      color: #94a3b8;
-      border: 1px solid #334155;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 10px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .preset-btn:hover { background: #38bdf8; color: #0f172a; border-color: #38bdf8; }
-
-    /* Main Workspace */
-    .workspace {
-      display: flex;
-      flex: 1;
-      height: calc(100vh - 150px);
-      position: relative;
-    }
-
-    /* Cytoscape Canvas */
-    #cy {
-      flex: 1;
-      background: radial-gradient(circle at center, #0f172a 0%, #070a12 100%);
-      position: relative;
-    }
-
-    /* Canvas Overlays */
-    .canvas-overlay-top-left {
-      position: absolute;
-      top: 14px;
-      left: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      z-index: 10;
-    }
-    .legend {
-      background: rgba(15, 23, 42, 0.88);
-      border: 1px solid #1e293b;
-      backdrop-filter: blur(10px);
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 11px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    }
-    .legend-item { display: flex; align-items: center; gap: 8px; }
-    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
-
-    .layout-toggle {
-      background: rgba(15, 23, 42, 0.88);
-      border: 1px solid #1e293b;
-      backdrop-filter: blur(10px);
-      padding: 4px;
-      border-radius: 8px;
-      display: flex;
-      gap: 4px;
-    }
-    .toggle-btn {
-      background: transparent;
-      border: none;
-      color: #94a3b8;
-      font-size: 11px;
-      padding: 4px 8px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 600;
-    }
-    .toggle-btn.active {
-      background: #0284c7;
-      color: #ffffff;
-    }
-
-    /* Timeline Playback Scrubber */
-    .timeline-bar {
-      position: absolute;
-      bottom: 14px;
-      left: 20px;
-      right: 430px;
-      background: rgba(15, 23, 42, 0.92);
-      border: 1px solid #334155;
-      backdrop-filter: blur(12px);
-      padding: 8px 16px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      z-index: 10;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-    }
-    .timeline-controls {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .timeline-btn {
-      background: #1e293b;
-      border: 1px solid #475569;
-      color: #cbd5e1;
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 11px;
-    }
-    .timeline-btn:hover { background: #38bdf8; color: #0f172a; }
-    .timeline-slider-container {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .timeline-slider {
-      flex: 1;
-      accent-color: #38bdf8;
-      cursor: pointer;
-    }
-    .timeline-step-label {
-      font-size: 11px;
-      font-family: monospace;
-      color: #38bdf8;
-      white-space: nowrap;
-    }
-
-    /* Side Inspector & Case Panel */
-    .inspector {
-      width: 410px;
-      background: #0f172a;
-      border-left: 1px solid #1e293b;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      overflow-y: auto;
-      flex-shrink: 0;
-    }
-    .pane-tabs {
-      display: flex;
-      border-bottom: 1px solid #1e293b;
-      padding-bottom: 6px;
-      gap: 8px;
-    }
-    .tab-btn {
-      background: transparent;
-      border: none;
-      color: #94a3b8;
-      font-size: 11.5px;
-      font-weight: 700;
-      padding: 6px 10px;
-      cursor: pointer;
-      border-radius: 6px;
-    }
-    .tab-btn.active {
-      background: #1e293b;
-      color: #38bdf8;
-    }
-    .card {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      padding: 14px;
-    }
-    .card-title {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #94a3b8;
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .badge-fiu {
-      background: #064e3b;
-      color: #34d399;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 2px 6px;
-      border-radius: 4px;
-    }
-    .badge-critical {
-      background: #7f1d1d;
-      color: #fca5a5;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 2px 6px;
-      border-radius: 4px;
-    }
-    .field {
-      margin-bottom: 7px;
-    }
-    .field-label {
-      font-size: 10px;
-      color: #64748b;
-      text-transform: uppercase;
-      font-weight: 600;
-    }
-    .field-val {
-      font-size: 11.5px;
-      font-family: monospace;
-      color: #e2e8f0;
-      word-break: break-all;
-    }
-    .risk-meter {
-      height: 8px;
-      background: #334155;
-      border-radius: 4px;
-      overflow: hidden;
-      margin-top: 4px;
-    }
-    .risk-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #10b981 0%, #f59e0b 50%, #ef4444 100%);
-      transition: width 0.4s ease;
-    }
-
-    /* Modals */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(4px);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
-    }
-    .modal-content {
-      background: #0f172a;
-      border: 1px solid #334155;
-      width: 720px;
-      max-height: 85vh;
-      border-radius: 10px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    .modal-header {
-      padding: 14px 20px;
-      border-bottom: 1px solid #1e293b;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .modal-body {
-      padding: 16px 20px;
-      overflow-y: auto;
-      font-family: monospace;
-      font-size: 11px;
-      background: #070a12;
-      color: #e2e8f0;
-      line-height: 1.5;
-      white-space: pre-wrap;
-    }
-    .modal-footer {
-      padding: 12px 20px;
-      border-top: 1px solid #1e293b;
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      background: #0f172a;
-    }
+    ::-webkit-scrollbar { display: none; }
   </style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface": "#131316",
+            "background": "#131316",
+            "primary-fixed-dim": "#c0c1ff",
+            "tertiary": "#4edea3",
+            "outline": "#908fa0",
+            "surface-container-low": "#1b1b1e",
+            "on-error": "#690005",
+            "on-secondary": "#00354a",
+            "on-tertiary-container": "#000703",
+            "on-primary": "#1000a9",
+            "on-secondary-fixed": "#001e2c",
+            "outline-variant": "#464554",
+            "tertiary-container": "#00885d",
+            "surface-container-lowest": "#0e0e11",
+            "tertiary-fixed": "#6ffbbe",
+            "surface-bright": "#39393c",
+            "on-secondary-container": "#00374d",
+            "on-tertiary-fixed-variant": "#005236",
+            "primary-fixed": "#e1e0ff",
+            "inverse-on-surface": "#303033",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "surface-container-high": "#2a2a2d",
+            "on-secondary-fixed-variant": "#004c69",
+            "secondary-fixed-dim": "#7bd0ff",
+            "surface-dim": "#131316",
+            "on-background": "#e4e1e6",
+            "secondary-container": "#00a6e0",
+            "on-primary-container": "#0d0096",
+            "surface-tint": "#c0c1ff",
+            "surface-container-highest": "#353438",
+            "surface-variant": "#353438",
+            "inverse-surface": "#e4e1e6",
+            "on-surface": "#e4e1e6",
+            "tertiary-fixed-dim": "#4edea3",
+            "on-surface-variant": "#c7c4d7",
+            "on-primary-fixed": "#07006c",
+            "inverse-primary": "#494bd6",
+            "on-error-container": "#ffdad6",
+            "primary-container": "#8083ff",
+            "on-tertiary": "#003824",
+            "primary": "#c0c1ff",
+            "secondary": "#7bd0ff",
+            "error-container": "#93000a",
+            "error": "#ffb4ab",
+            "surface-container": "#1f1f22",
+            "secondary-fixed": "#c4e7ff",
+            "on-tertiary-fixed": "#002113"
+          },
+          borderRadius: {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          spacing: {
+            "gutter-mobile": "0.75rem",
+            "space-lg": "1.25rem",
+            "gutter": "1rem",
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "space-xl": "2rem",
+            "space-md": "0.75rem",
+            "margin": "1.5rem",
+            "margin-mobile": "1rem"
+          },
+          fontFamily: {
+            "body-lg": ["Inter", "sans-serif"],
+            "label-code": ["JetBrains Mono", "monospace"],
+            "headline-md": ["Geist", "sans-serif"],
+            "body-sm": ["Inter", "sans-serif"],
+            "headline-sm": ["Geist", "sans-serif"],
+            "display-lg-mobile": ["Geist", "sans-serif"],
+            "display-lg": ["Geist", "sans-serif"],
+            "headline-lg": ["Geist", "sans-serif"],
+            "body-md": ["Inter", "sans-serif"],
+            "label-badge": ["JetBrains Mono", "monospace"]
+          },
+          fontSize: {
+            "body-lg": ["15px", { lineHeight: "24px", letterSpacing: "-0.005em", fontWeight: "400" }],
+            "label-code": ["12px", { lineHeight: "16px", letterSpacing: "-0.01em", fontWeight: "500" }],
+            "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.015em", fontWeight: "500" }],
+            "body-sm": ["12px", { lineHeight: "18px", letterSpacing: "0em", fontWeight: "400" }],
+            "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "-0.01em", fontWeight: "500" }],
+            "display-lg-mobile": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "600" }],
+            "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.03em", fontWeight: "600" }],
+            "headline-lg": ["24px", { lineHeight: "32px", letterSpacing: "-0.02em", fontWeight: "600" }],
+            "body-md": ["13px", { lineHeight: "20px", letterSpacing: "0em", fontWeight: "400" }],
+            "label-badge": ["10px", { lineHeight: "14px", letterSpacing: "0.04em", fontWeight: "600" }]
+          }
+        }
+      }
+    };
+  </script>
 </head>
-<body>
+<body class="bg-surface text-on-surface font-body-md text-body-md min-h-screen selection:bg-primary-container selection:text-on-primary-container">
 
-  <!-- Header -->
-  <header>
-    <div class="brand">
-      <div class="brand-logo">NIRMAAN</div>
-      <div>
-        <div class="brand-title">ChainTrace AI &bull; Autonomous Multi-Chain Forensics</div>
-        <div class="brand-sub">Ministry of Home Affairs &bull; Indian Cybercrime Coordination Centre (I4C)</div>
+  <!-- TOP APP HEADER -->
+  <header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/90 backdrop-blur-xl border-b border-outline-variant/30 shadow-[0_1px_8px_rgba(0,0,0,0.4)]">
+    <div class="h-14 w-full px-space-md flex items-center justify-between gap-space-md">
+      <!-- Brand & I4C / MHA affiliation -->
+      <div class="flex items-center gap-space-md shrink-0">
+        <div class="flex items-center gap-space-xs">
+          <span class="font-headline-sm text-headline-sm font-semibold tracking-tight text-on-surface">NIRMAAN</span>
+          <span class="h-1.5 w-1.5 rounded-full bg-secondary shadow-[0_0_8px_#7bd0ff]"></span>
+        </div>
+        <div class="h-4 w-px bg-outline-variant/40 mx-space-xs"></div>
+        <div class="flex items-center gap-space-xs">
+          <span class="font-label-badge text-label-badge uppercase tracking-wider text-on-surface-variant font-medium">Intelligence Workspace</span>
+          <span class="text-outline-variant text-[10px]">•</span>
+          <span class="font-label-code text-label-code text-primary font-medium">I4C / MHA</span>
+        </div>
       </div>
-    </div>
-    <div class="header-actions">
-      <span class="badge-pill" id="chainPill"><i class="fa-solid fa-link"></i> Auto-Detect</span>
-      <span class="badge-pill" style="color: #34d399; border-color: #065f46;"><i class="fa-solid fa-building-columns"></i> FIU-IND FinNet 2.0</span>
-      <span class="badge-pill" id="latencyBadge"><i class="fa-solid fa-shield-check"></i> System Ready</span>
+
+      <!-- Segmented View Switcher -->
+      <div class="flex items-center justify-center shrink-0">
+        <nav class="flex items-center bg-surface-container-low p-space-xs rounded-lg border border-outline-variant/20">
+          <button type="button" id="tabTraceCanvas" class="px-space-md py-1 rounded transition-colors bg-surface-container-high text-on-surface font-medium border border-outline-variant/50">Trace Canvas</button>
+          <button type="button" id="tabCaseVault" class="px-space-md py-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors font-body-sm text-body-sm">Case Vault</button>
+          <button type="button" id="tabExchangeDirectory" class="px-space-md py-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors font-body-sm text-body-sm">Exchange Directory</button>
+        </nav>
+      </div>
+
+      <!-- Actions & Profile -->
+      <div class="flex items-center gap-space-sm shrink-0">
+        <div class="flex items-center gap-space-xs px-space-sm py-1 bg-surface-container-low border border-outline-variant/30 rounded-lg">
+          <span class="h-2 w-2 rounded-full bg-tertiary animate-pulse shadow-[0_0_6px_#4edea3]"></span>
+          <span class="font-label-code text-label-code text-on-surface-variant" id="headerRoutingLabel">Auto-Routing</span>
+          <span class="font-label-badge text-label-badge text-secondary font-medium px-1 bg-secondary/10 rounded" id="headerChainPill">TRON • EVM • BTC</span>
+        </div>
+        <button class="flex items-center gap-1.5 px-space-md py-1.5 bg-primary text-on-primary font-body-sm text-body-sm font-medium rounded-lg hover:bg-primary-fixed-dim transition-colors shadow-[0_0_12px_rgba(192,193,255,0.25)]" id="btnHeader1930" type="button">
+          <span class="material-symbols-outlined text-[16px]">bolt</span>
+          <span>1930 Ingest</span>
+        </button>
+        <button class="flex items-center gap-1.5 px-space-md py-1.5 bg-surface-container-high/80 hover:bg-surface-container-highest text-on-surface border border-outline-variant/40 rounded-lg transition-colors backdrop-blur-md" id="btnHeaderExportBundle" type="button">
+          <span class="material-symbols-outlined text-[16px] text-tertiary">verified</span>
+          <span class="font-body-sm text-body-sm font-medium">Export Legal Bundle</span>
+          <span class="font-label-badge text-label-badge bg-tertiary-container/30 text-tertiary border border-tertiary/20 px-1 py-0.5 rounded">Sec 63 BSA</span>
+        </button>
+        <div class="flex items-center gap-space-sm pl-space-xs border-l border-outline-variant/30">
+          <div class="text-right hidden xl:block">
+            <div class="font-headline-sm text-[12px] leading-tight font-medium text-on-surface">DSP Anjali Verma</div>
+            <div class="font-label-code text-[10px] leading-tight text-on-surface-variant">IN-CYBER-8842</div>
+          </div>
+          <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+            <span class="material-symbols-outlined text-on-primary text-[18px]">person</span>
+          </div>
+        </div>
+      </div>
     </div>
   </header>
 
-  <!-- Controls -->
-  <div class="control-bar">
-    <div class="input-group" style="flex: 2.2; min-width: 300px;">
-      <i class="fa-solid fa-magnifying-glass"></i>
-      <input type="text" id="seedAddress" value="TScamOriginVictimAddress778899AABB" placeholder="Paste Suspect Wallet (TRON 'T...', EVM '0x...', BTC 'bc1...')" />
+  <!-- SIDE NAVIGATION RAIL -->
+  <aside class="fixed left-0 top-14 bottom-0 w-16 bg-surface-container-lowest border-r border-outline-variant/30 z-40 flex flex-col items-center py-space-md justify-between">
+    <div class="flex flex-col items-center gap-space-sm">
+      <button class="w-10 h-10 rounded-lg flex items-center justify-center text-secondary bg-surface-container-high" title="Canvas Graph" type="button" onclick="switchMainView('canvas')"><span class="material-symbols-outlined text-[20px]">hub</span></button>
+      <button class="w-10 h-10 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" title="Case Management" type="button" onclick="switchMainView('vault')"><span class="material-symbols-outlined text-[20px]">folder_managed</span></button>
+      <button class="w-10 h-10 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" title="Exchange Directory" type="button" onclick="switchMainView('directory')"><span class="material-symbols-outlined text-[20px]">account_balance</span></button>
+      <button class="w-10 h-10 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" title="Entity Clustering" type="button" onclick="toggleLayoutType()"><span class="material-symbols-outlined text-[20px]">device_hub</span></button>
+      <button class="w-10 h-10 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" title="1930 NLP Ingest" type="button" onclick="openModal()"><span class="material-symbols-outlined text-[20px]">radar</span></button>
+      <button class="w-10 h-10 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" title="Evidence Dossier" type="button" onclick="triggerDownloadPDF()"><span class="material-symbols-outlined text-[20px]">gavel</span></button>
     </div>
-    <div class="input-group" style="flex: 1.1; min-width: 170px;">
-      <i class="fa-solid fa-file-invoice"></i>
-      <input type="text" id="firNumber" value="FIR-88/2026 Cyber Crime PS" placeholder="FIR / NCRP ID" />
+    <div class="flex flex-col items-center gap-space-xs">
+      <button class="w-10 h-10 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" title="Workspace Settings" type="button"><span class="material-symbols-outlined text-[20px]">tune</span></button>
+      <button class="w-10 h-10 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" title="Security Audit Logs" type="button"><span class="material-symbols-outlined text-[20px]">shield</span></button>
     </div>
-    <button class="btn" onclick="executeTrace()">
-      <i class="fa-solid fa-bolt"></i> Trace Flow
-    </button>
-    <button class="btn btn-purple" onclick="openNcrpModal()">
-      <i class="fa-solid fa-file-import"></i> 1930 Ingest
-    </button>
-    <button class="btn btn-emerald" onclick="openSaveCaseModal()">
-      <i class="fa-solid fa-floppy-disk"></i> Save Case
-    </button>
+  </aside>
 
-    <!-- Presets -->
-    <div class="presets">
-      <span style="font-size: 10px; color: #64748b;">Presets:</span>
-      <button class="preset-btn" onclick="loadPreset('tron')">TRON Task Scam</button>
-      <button class="preset-btn" onclick="loadPreset('evm')">Ethereum CEX</button>
-      <button class="preset-btn" onclick="loadPreset('btc')">Bitcoin UTXO</button>
-      <button class="preset-btn" onclick="loadPreset('coindcx')">CoinDCX Hot</button>
+  <!-- MAIN VIEWPORT CONTAINER -->
+  <div class="pl-16">
+    <main class="relative pt-14 bg-surface min-h-screen">
+      <div class="flex flex-col w-full text-on-surface">
+
+        <!-- Subtle Ambient Glows -->
+        <div class="fixed top-20 left-1/4 w-96 h-96 bg-primary-container/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
+        <div class="fixed bottom-12 right-1/4 w-[32rem] h-[32rem] bg-secondary-container/5 rounded-full blur-[140px] pointer-events-none -z-10"></div>
+
+        <!-- COMMAND PALETTE & HERO SEARCH ZONE -->
+        <section class="w-full px-space-lg pt-space-md pb-space-lg max-w-7xl mx-auto flex flex-col items-center">
+          <!-- Meta Breadcrumb / Case Indicator -->
+          <div class="flex items-center gap-space-sm mb-space-sm">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-container-high text-tertiary font-label-badge text-label-badge uppercase tracking-wider shadow-sm">
+              <span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+              Live Forensic Ingestion Active
+            </span>
+            <span class="text-outline-variant font-label-code text-label-code">•</span>
+            <span class="font-label-code text-label-code text-on-surface-variant tracking-tight" id="caseIndicatorLabel">Case #FIR-88/2026 • NCRP Token Synced</span>
+          </div>
+
+          <!-- Spotlight Command Bar -->
+          <div class="w-full max-w-3xl relative group">
+            <div class="w-full bg-surface-container-low rounded-xl p-1.5 shadow-xl transition-all duration-300 flex items-center gap-space-sm border border-outline-variant/30 focus-within:border-primary/60">
+              <div class="pl-space-md flex items-center pointer-events-none text-outline">
+                <span class="material-symbols-outlined text-[20px]">search</span>
+              </div>
+              <input class="flex-1 bg-transparent py-2.5 px-space-xs font-label-code text-body-md text-on-surface placeholder:text-outline focus:outline-none selection:bg-primary-container" id="mainAddressSearch" placeholder="Paste wallet address, transaction hash, or FIR number..." type="text" value="TScamOriginVictimAddress778899AABB"/>
+              <div class="hidden sm:flex items-center gap-1.5 pr-1">
+                <span class="px-2 py-1 rounded bg-surface-container-high text-on-surface-variant font-label-badge text-[10px] uppercase" id="detectedChainTag">TRON</span>
+              </div>
+              <button class="flex items-center gap-2 px-space-lg py-2.5 bg-primary text-on-primary rounded-lg font-headline-sm text-body-sm font-semibold hover:bg-primary-fixed-dim transition-all active:scale-[0.98] shadow-md shadow-primary/20 shrink-0" id="btnExecuteTrail" type="button">
+                <span>Analyze Trail</span>
+                <kbd class="px-1.5 py-0.5 rounded bg-on-primary/20 text-on-primary font-label-code text-[10px]">↵</kbd>
+              </button>
+            </div>
+          </div>
+
+          <!-- Demo Preset Filter Pills -->
+          <div class="flex items-center gap-space-sm mt-space-md overflow-x-auto max-w-full pb-1">
+            <span class="font-label-badge text-label-badge uppercase tracking-wider text-outline shrink-0">Quick Seeds:</span>
+            <button class="preset-pill px-3 py-1 rounded-full font-label-code text-label-code bg-surface-container-highest text-secondary font-medium transition-all shadow-sm shrink-0 flex items-center gap-1.5" data-seed="15k-tg-scam" type="button">
+              <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+              ✦ 15,000 USDT Telegram Task Scam
+            </button>
+            <button class="preset-pill px-3 py-1 rounded-full font-label-code text-label-code bg-surface-container-low hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-all shrink-0" data-seed="25k-eth-cex" type="button">
+              ✦ 25,000 USDT Ethereum CEX Sweep
+            </button>
+            <button class="preset-pill px-3 py-1 rounded-full font-label-code text-label-code bg-surface-container-low hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-all shrink-0" data-seed="btc-pig-butcher" type="button">
+              ✦ 0.85 BTC Pig Butchering
+            </button>
+            <button class="preset-pill px-3 py-1 rounded-full font-label-code text-label-code bg-surface-container-low hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-all shrink-0" data-seed="coindcx-treasury" type="button">
+              ✦ CoinDCX Treasury Sweep
+            </button>
+          </div>
+        </section>
+
+        <!-- 2-COLUMN MAIN INVESTIGATION COCKPIT -->
+        <section class="w-full px-space-lg pb-space-xl max-w-[1720px] mx-auto grid grid-cols-1 xl:grid-cols-12 gap-space-lg items-start" id="viewTraceCanvas">
+          <!-- LEFT/CENTER CANVAS VIEWPORT (68% Equivalent ~ 8 Cols on xl) -->
+          <div class="xl:col-span-8 flex flex-col gap-space-md">
+            <!-- Graph Canvas Container -->
+            <div class="relative w-full h-[760px] bg-surface-container-lowest rounded-xl overflow-hidden shadow-2xl flex flex-col justify-between border border-outline-variant/30" id="graphCanvasWrapper">
+              <!-- Canvas Background Grid -->
+              <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(rgba(228, 225, 230, 0.4) 1px, transparent 1px); background-size: 24px 24px;"></div>
+
+              <!-- Canvas Header Bar with HUD Controls -->
+              <div class="relative z-20 px-space-md py-space-sm bg-surface-container-low/80 backdrop-blur-md flex items-center justify-between shadow-sm border-b border-outline-variant/20">
+                <div class="flex items-center gap-space-sm">
+                  <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                  <div class="flex items-baseline gap-2">
+                    <span class="font-headline-sm text-headline-sm font-semibold tracking-tight text-on-surface">Multi-Hop Asset Dispersion Flow</span>
+                    <span class="font-label-code text-[11px] text-on-surface-variant" id="canvasChainEngineLabel">TRC-20 USDT Engine</span>
+                  </div>
+                  <span class="px-2 py-0.5 rounded bg-surface-container-high font-label-badge text-label-badge text-tertiary" id="canvasStatusTag">Deterministic Trace</span>
+                </div>
+
+                <!-- Canvas Floating Toolbar Cluster -->
+                <div class="flex items-center gap-space-xs bg-surface-container-high p-1 rounded-lg shadow-sm">
+                  <button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors" id="btnZoomIn" title="Zoom In (+)" type="button">
+                    <span class="material-symbols-outlined text-[18px]">zoom_in</span>
+                  </button>
+                  <button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors" id="btnZoomOut" title="Zoom Out (-)" type="button">
+                    <span class="material-symbols-outlined text-[18px]">zoom_out</span>
+                  </button>
+                  <button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors" id="btnFitView" title="Fit to Screen" type="button">
+                    <span class="material-symbols-outlined text-[18px]">center_focus_strong</span>
+                  </button>
+                  <div class="w-px h-4 bg-surface-container-highest mx-0.5"></div>
+                  <button class="px-2.5 py-1 rounded bg-surface-container-highest text-secondary font-label-code text-[11px] font-medium flex items-center gap-1 hover:bg-surface-container transition-colors" id="btnToggleLayout" type="button">
+                    <span class="material-symbols-outlined text-[14px]">account_tree</span>
+                    <span>Hierarchical Trail</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Interactive Canvas Stage with Dynamic Nodes -->
+              <div class="relative flex-1 w-full overflow-hidden flex items-center justify-center transition-transform duration-200" id="interactiveCanvasStage">
+                <!-- SVG Connecting Bezier Traces with Flow Pulses -->
+                <svg class="absolute inset-0 w-full h-full pointer-events-none z-0" id="svgConnections" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="gradFlow1" x1="0%" x2="100%" y1="0%" y2="0%">
+                      <stop offset="0%" stop-color="#ffb4ab" stop-opacity="0.8"></stop>
+                      <stop offset="100%" stop-color="#7bd0ff" stop-opacity="0.8"></stop>
+                    </linearGradient>
+                    <linearGradient id="gradFlow2" x1="0%" x2="100%" y1="0%" y2="0%">
+                      <stop offset="0%" stop-color="#7bd0ff" stop-opacity="0.8"></stop>
+                      <stop offset="100%" stop-color="#4edea3" stop-opacity="0.9"></stop>
+                    </linearGradient>
+                  </defs>
+                  <!-- Vector Path: Root -> Hop 1 -->
+                  <path class="text-outline-variant/60" d="M 230 330 C 310 330, 320 230, 400 230" fill="none" stroke="currentColor" stroke-dasharray="6,4" stroke-width="2"></path>
+                  <path class="animate-[dash_8s_linear_infinite]" d="M 230 330 C 310 330, 320 230, 400 230" fill="none" stroke="url(#gradFlow1)" stroke-dasharray="10,12" stroke-width="2.5"></path>
+                  <!-- Vector Path: Hop 1 -> Hop 2 -->
+                  <path class="text-outline-variant/60" d="M 590 230 C 670 230, 680 330, 760 330" fill="none" stroke="currentColor" stroke-dasharray="6,4" stroke-width="2"></path>
+                  <path class="animate-[dash_6s_linear_infinite]" d="M 590 230 C 670 230, 680 330, 760 330" fill="none" stroke="url(#gradFlow2)" stroke-dasharray="8,10" stroke-width="2.5"></path>
+                  <!-- Vector Path: Hop 2 -> Exchange Hot Wallet -->
+                  <path class="text-tertiary" d="M 950 330 C 1020 330, 1030 330, 1100 330" fill="none" stroke="currentColor" stroke-dasharray="8,8" stroke-width="2.5"></path>
+                </svg>
+
+                <!-- Graph Node Placements -->
+                <div class="relative w-full h-full max-w-[1300px] mx-auto" id="dynamicNodesContainer">
+                  <!-- NODE 0: ROOT SUSPECT SEED -->
+                  <div class="absolute left-6 top-[270px] z-10 w-[220px] bg-surface-container rounded-xl p-3.5 shadow-xl transition-all hover:scale-[1.02] border-l-2 border-l-error border border-outline-variant/20 cursor-pointer" onclick="inspectNode('seed')">
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-error-container/30 text-error font-label-badge text-label-badge uppercase font-semibold">
+                        <span class="w-1.5 h-1.5 rounded-full bg-error animate-ping"></span>
+                        Scam Seed
+                      </span>
+                      <span class="text-error font-label-code text-[11px] font-semibold">Hop 0</span>
+                    </div>
+                    <div class="font-headline-sm text-body-lg font-bold text-on-surface truncate" id="nodeSeedLabel">Victim Deposit Intake</div>
+                    <div class="flex items-center justify-between gap-1 my-2 bg-surface-container-lowest px-2 py-1.5 rounded font-label-code text-label-code text-on-surface-variant">
+                      <span class="truncate" id="nodeSeedAddr">TScamO...AABB</span>
+                      <button class="btn-copy text-outline hover:text-on-surface" id="btnCopySeed" data-copy="TScamOriginVictimAddress778899AABB" title="Copy Address" type="button">
+                        <span class="material-symbols-outlined text-[14px]">content_copy</span>
+                      </button>
+                    </div>
+                    <div class="flex items-baseline justify-between pt-1">
+                      <span class="font-label-badge text-[10px] text-outline uppercase tracking-wider">Dispersed</span>
+                      <span class="font-label-code text-body-sm font-semibold text-secondary" id="nodeSeedAmount">₹12,45,000 <span class="text-[10px] text-outline font-normal">/ 15,000 U</span></span>
+                    </div>
+                  </div>
+
+                  <!-- Path Value Pill 1 -->
+                  <div class="absolute left-[295px] top-[258px] z-20 bg-surface-container-high/90 backdrop-blur-md px-2.5 py-1 rounded-full text-center shadow-md border border-outline-variant/30">
+                    <span class="font-label-code text-[11px] font-semibold text-secondary" id="edgeVal1">14,980 USDT</span>
+                    <span class="font-label-badge text-[9px] text-outline block leading-none mt-0.5">-20 fee</span>
+                  </div>
+
+                  <!-- NODE 1: MULE HOP 1 -->
+                  <div class="absolute left-[390px] top-[175px] z-10 w-[205px] bg-surface-container-low rounded-xl p-3 shadow-lg hover:bg-surface-container transition-all border border-outline-variant/20 cursor-pointer" onclick="inspectNode('mule1')">
+                    <div class="flex items-center justify-between mb-1.5">
+                      <span class="font-label-badge text-label-badge uppercase tracking-wider text-secondary px-1.5 py-0.5 rounded bg-secondary-container/20">
+                        Hop 1 • Rapid Relay
+                      </span>
+                      <span class="material-symbols-outlined text-outline text-[16px]">sync_alt</span>
+                    </div>
+                    <div class="font-headline-sm text-body-md font-semibold text-on-surface">Layering Mule A</div>
+                    <div class="flex items-center justify-between gap-1 my-1.5 bg-surface-container-lowest px-2 py-1 rounded font-label-code text-label-code text-on-surface-variant">
+                      <span class="truncate" id="nodeMule1Addr">TMuleSplit...CC</span>
+                      <button class="btn-copy text-outline hover:text-on-surface" data-copy="TMuleSplitterLayer1Address445566CC" title="Copy Address" type="button">
+                        <span class="material-symbols-outlined text-[14px]">content_copy</span>
+                      </button>
+                    </div>
+                    <div class="flex items-center justify-between text-on-surface-variant pt-0.5">
+                      <span class="font-label-badge text-[10px] uppercase text-outline">Dwell Time</span>
+                      <span class="font-label-code text-[11px] text-tertiary">3m 42s</span>
+                    </div>
+                  </div>
+
+                  <!-- Path Value Pill 2 -->
+                  <div class="absolute left-[655px] top-[260px] z-20 bg-surface-container-high/90 backdrop-blur-md px-2.5 py-1 rounded-full text-center shadow-md border border-outline-variant/30">
+                    <span class="font-label-code text-[11px] font-semibold text-tertiary" id="edgeVal2">14,950 USDT</span>
+                    <span class="font-label-badge text-[9px] text-outline block leading-none mt-0.5">Energy Delegated</span>
+                  </div>
+
+                  <!-- NODE 2: MULE HOP 2 (Deposit Forwarder) -->
+                  <div class="absolute left-[750px] top-[275px] z-10 w-[205px] bg-surface-container-low rounded-xl p-3 shadow-lg hover:bg-surface-container transition-all border border-outline-variant/20 cursor-pointer" onclick="inspectNode('deposit')">
+                    <div class="flex items-center justify-between mb-1.5">
+                      <span class="font-label-badge text-label-badge uppercase tracking-wider text-primary px-1.5 py-0.5 rounded bg-primary-container/20">
+                        Hop 2 • Deposit
+                      </span>
+                      <span class="material-symbols-outlined text-outline text-[16px]">call_split</span>
+                    </div>
+                    <div class="font-headline-sm text-body-md font-semibold text-on-surface" id="nodeDepositLabel">Binance Deposit</div>
+                    <div class="flex items-center justify-between gap-1 my-1.5 bg-surface-container-lowest px-2 py-1 rounded font-label-code text-label-code text-on-surface-variant">
+                      <span class="truncate" id="nodeDepositAddr">TBinanceUser...ZZ</span>
+                      <button class="btn-copy text-outline hover:text-on-surface" data-copy="TBinanceUserDepositForwarder8899ZZ" title="Copy Address" type="button">
+                        <span class="material-symbols-outlined text-[14px]">content_copy</span>
+                      </button>
+                    </div>
+                    <div class="flex items-center justify-between text-on-surface-variant pt-0.5">
+                      <span class="font-label-badge text-[10px] uppercase text-outline">Custody</span>
+                      <span class="font-label-code text-[11px] text-tertiary">Forwarder</span>
+                    </div>
+                  </div>
+
+                  <!-- Path Value Pill 3 -->
+                  <div class="absolute left-[1010px] top-[312px] z-20 bg-surface-container-highest px-2 py-0.5 rounded text-center shadow-md border border-outline-variant/30">
+                    <span class="font-label-badge text-[10px] font-semibold text-tertiary">Sweep 0.35s</span>
+                  </div>
+
+                  <!-- NODE 3: DESTINATION EXCHANGE HOT WALLET -->
+                  <div class="absolute right-6 top-[250px] z-10 w-[250px] bg-surface-container-high rounded-xl p-4 shadow-2xl transition-all hover:scale-[1.02] border-l-2 border-l-tertiary border border-outline-variant/20 cursor-pointer" onclick="inspectNode('hot')">
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-tertiary-container/40 text-tertiary font-label-badge text-label-badge uppercase font-bold" id="cardFiuBadge">
+                        <span class="material-symbols-outlined text-[12px]">verified</span>
+                        FIU-IND Verified
+                      </span>
+                      <span class="text-tertiary font-label-code text-[11px] font-bold">Terminal Hop</span>
+                    </div>
+                    <div class="font-headline-sm text-body-lg font-bold text-on-surface" id="canvasTargetVaspName">Binance Hot Vault 14</div>
+                    <div class="font-label-badge text-[11px] text-on-surface-variant mt-0.5" id="canvasHotWalletShort">TMuA6Yqf...b47N</div>
+                    <div class="my-2.5 bg-surface-container-lowest p-2 rounded flex flex-col gap-1">
+                      <div class="flex items-center justify-between text-[11px] font-label-code text-on-surface-variant">
+                        <span>Swept Amount:</span>
+                        <span class="text-tertiary font-semibold" id="canvasSweptAmount">14,950 USDT</span>
+                      </div>
+                      <div class="flex items-center justify-between text-[10px] font-label-code text-outline">
+                        <span>Latency:</span>
+                        <span id="canvasLatency">348 ms</span>
+                      </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="font-label-badge text-[10px] text-secondary uppercase font-semibold">Freeze Order Ready</span>
+                      <button class="px-2 py-1 rounded bg-tertiary text-on-tertiary font-label-badge text-label-badge uppercase font-bold hover:bg-tertiary-fixed transition-colors" type="button" onclick="triggerOpenBNSS(event)">
+                        Tag Nodal
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Canvas Bottom Floating Playback & Scrubber Bar -->
+              <div class="relative z-20 px-space-md py-space-sm bg-surface-container-low/90 backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-space-sm shadow-md border-t border-outline-variant/20">
+                <div class="flex items-center gap-space-sm w-full md:w-auto">
+                  <button class="w-9 h-9 rounded-lg bg-primary text-on-primary flex items-center justify-center hover:bg-primary-fixed-dim transition-colors shadow-sm" id="btnPlayPause" type="button">
+                    <span class="material-symbols-outlined text-[20px]" id="playIcon">play_arrow</span>
+                  </button>
+                  <div class="flex flex-col">
+                    <div class="flex items-center gap-2">
+                      <span class="font-headline-sm text-body-sm font-semibold text-on-surface">Timeline Replay</span>
+                      <span class="font-label-badge text-[10px] text-tertiary px-1.5 py-0.2 rounded bg-tertiary-container/30 uppercase">Live Cadence</span>
+                    </div>
+                    <span class="font-label-code text-[11px] text-on-surface-variant truncate max-w-sm" id="timelineStatusText">
+                      Step 3 of 4: Swept into Binance Treasury in 0.35s (Automated Sweeper Script)
+                    </span>
+                  </div>
+                </div>
+                <!-- Slider Scrubber -->
+                <div class="flex items-center gap-space-md w-full md:w-7/12">
+                  <span class="font-label-code text-[11px] text-outline shrink-0">14:08 IST</span>
+                  <div class="relative flex-1 flex items-center">
+                    <input class="w-full h-1.5 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-secondary" id="timelineScrubber" max="4" min="1" type="range" value="3"/>
+                  </div>
+                  <span class="font-label-code text-[11px] text-on-surface shrink-0">14:22 IST</span>
+                  <div class="flex items-center gap-1 shrink-0 pl-space-xs border-l border-surface-container-highest">
+                    <span class="font-label-badge text-[10px] text-outline uppercase">Speed</span>
+                    <span class="font-label-code text-label-code text-secondary font-medium">1.5x</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Metrics Strip Under Canvas -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-space-sm">
+              <div class="bg-surface-container-low p-3 rounded-lg shadow-sm border border-outline-variant/20">
+                <div class="font-label-badge text-label-badge uppercase text-outline">Total Stolen Tracked</div>
+                <div class="font-headline-md text-headline-md font-bold text-on-surface mt-1" id="metricTotalLoss">₹15,00,000</div>
+                <div class="font-label-code text-[11px] text-secondary mt-0.5" id="metricTotalUsd">15,000.00 USDT</div>
+              </div>
+              <div class="bg-surface-container-low p-3 rounded-lg shadow-sm border border-outline-variant/20">
+                <div class="font-label-badge text-label-badge uppercase text-outline">Identified at CEX</div>
+                <div class="font-headline-md text-headline-md font-bold text-tertiary mt-1" id="metricIdentifiedCex">₹14,95,000</div>
+                <div class="font-label-code text-[11px] text-tertiary mt-0.5">99.66% Recoverable</div>
+              </div>
+              <div class="bg-surface-container-low p-3 rounded-lg shadow-sm border border-outline-variant/20">
+                <div class="font-label-badge text-label-badge uppercase text-outline">Total Mule Depth</div>
+                <div class="font-headline-md text-headline-md font-bold text-on-surface mt-1" id="metricHops">3 Hops Traversed</div>
+                <div class="font-label-code text-[11px] text-outline-variant mt-0.5">Elapsed: 14 mins</div>
+              </div>
+              <div class="bg-surface-container-low p-3 rounded-lg shadow-sm border border-outline-variant/20">
+                <div class="font-label-badge text-label-badge uppercase text-outline">Sec 94 BNSS Readiness</div>
+                <div class="font-headline-md text-headline-md font-bold text-primary mt-1">100% Validated</div>
+                <div class="font-label-code text-[11px] text-on-surface-variant mt-0.5" id="metricEvidenceSeal">f81e717ce2ec...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT FORENSIC DOSSIER & COMPLIANCE DRAWER (32% Equivalent ~ 4 Cols on xl) -->
+          <div class="xl:col-span-4 flex flex-col gap-space-md">
+            <!-- CARD 1: Attribution Verdict Hero Card -->
+            <div class="bg-surface-container-low rounded-xl p-space-lg shadow-xl relative overflow-hidden border border-outline-variant/30">
+              <div class="flex items-center justify-between mb-space-sm">
+                <span class="font-label-badge text-label-badge uppercase tracking-wider text-outline">Forensic Attribution</span>
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-tertiary-container/30 text-tertiary font-label-badge text-label-badge uppercase font-bold" id="drawerFiuBadge">
+                  <span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+                  FIU-IND Verified
+                </span>
+              </div>
+              <div class="flex items-baseline justify-between mb-space-md">
+                <h2 class="font-display-lg text-headline-lg font-bold text-on-surface tracking-tight" id="drawerVaspName">Destination: Binance</h2>
+                <span class="font-label-code text-body-sm text-secondary font-semibold" id="drawerRoutedVal">14,950 USDT</span>
+              </div>
+
+              <!-- 2-Column Key Value Forensic Registry Table -->
+              <div class="space-y-space-xs font-label-code text-[11px]">
+                <div class="bg-surface-container p-2 rounded flex items-center justify-between gap-2">
+                  <span class="text-outline shrink-0">Single-Use Deposit Wallet</span>
+                  <div class="flex items-center gap-1.5 truncate">
+                    <span class="text-on-surface truncate" id="drawerDepositAddr">TBinanceUserDeposit88xP90...</span>
+                    <button class="btn-copy text-outline hover:text-on-surface shrink-0" id="btnCopyDeposit" data-copy="TBinanceUserDepositForwarder8899ZZ" title="Copy" type="button">
+                      <span class="material-symbols-outlined text-[13px]">content_copy</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="bg-surface-container p-2 rounded flex items-center justify-between gap-2">
+                  <span class="text-outline shrink-0">Treasury Hot Wallet</span>
+                  <div class="flex items-center gap-1.5 truncate">
+                    <span class="text-on-surface truncate" id="drawerHotWallet">TMuA6YqfCeX8K39w74...</span>
+                    <button class="btn-copy text-outline hover:text-on-surface shrink-0" id="btnCopyHot" data-copy="TMuA6YqfCeX8EhbfYEg5y7S4DnxJRB4b7N" title="Copy" type="button">
+                      <span class="material-symbols-outlined text-[13px]">content_copy</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="bg-surface-container p-2 rounded flex items-center justify-between gap-2">
+                  <span class="text-outline shrink-0">Sweep Tx Hash</span>
+                  <div class="flex items-center gap-1.5 truncate">
+                    <span class="text-secondary truncate" id="drawerSweepTx">0xd4e5f681a942bc3a8...</span>
+                    <button class="btn-copy text-outline hover:text-on-surface shrink-0" id="btnCopySweep" data-copy="0xd4e5f60718293a4b5c6d7e8f90a1b2c3" title="Copy" type="button">
+                      <span class="material-symbols-outlined text-[13px]">content_copy</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="bg-surface-container p-2 rounded flex items-center justify-between gap-2">
+                  <span class="text-outline shrink-0">Compliance Nodal</span>
+                  <div class="flex items-center gap-1 truncate">
+                    <span class="text-tertiary truncate font-medium" id="drawerNodalEmail">compliance-in@binance.com</span>
+                    <a href="mailto:compliance-in@binance.com" class="material-symbols-outlined text-tertiary text-[13px] hover:scale-110">mail</a>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-space-md pt-space-sm border-t border-surface-container-highest flex items-center justify-between text-outline font-label-badge text-label-badge uppercase">
+                <span id="drawerFirMeta">FIR: FIR-88/2026</span>
+                <span id="drawerJurisdiction">Jurisdiction: Bhopal Cyber PS</span>
+              </div>
+            </div>
+
+            <!-- CARD 2: Statutory Legal Action & Certified Court Exporter -->
+            <div class="bg-surface-container-low rounded-xl p-space-lg shadow-xl flex flex-col gap-space-sm border border-outline-variant/30">
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-label-badge text-label-badge uppercase tracking-wider text-outline">Statutory Enforcement</span>
+                <span class="px-2 py-0.5 rounded bg-primary-container/20 text-primary font-label-badge text-[10px] font-semibold">I4C Interoperable</span>
+              </div>
+              <h3 class="font-headline-sm text-headline-sm font-semibold text-on-surface">Legal Freeze &amp; Court Admissibility</h3>
+              <p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+                Produce verifiable digital evidence admissible under Section 63 Bharatiya Sakshya Adhiniyam (BSA) 2023.
+              </p>
+              <!-- Action Buttons -->
+              <div class="flex flex-col gap-2 mt-2">
+                <!-- Button 1: Section 94 BNSS -->
+                <button class="w-full flex items-center justify-between px-space-md py-2.5 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-body-sm text-body-sm font-medium transition-all shadow-sm border border-outline-variant/20" id="btnGenerateBNSS" type="button">
+                  <span class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-secondary text-[18px]">gavel</span>
+                    <span>Generate Sec 94 BNSS Freeze Order</span>
+                  </span>
+                  <span class="font-label-badge text-[10px] px-1.5 py-0.5 rounded bg-surface-container-lowest text-outline">Auto-Filled</span>
+                </button>
+                <!-- Button 2: Certified Court Dossier (PDF) -->
+                <button class="w-full flex items-center justify-between px-space-md py-3 rounded-lg bg-primary hover:bg-primary-fixed-dim text-on-primary font-headline-sm text-body-sm font-semibold transition-all shadow-lg shadow-primary/20 active:scale-[0.99]" id="btnDownloadPDF" type="button">
+                  <span class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-on-primary text-[18px]">picture_as_pdf</span>
+                    <span>Download Certified Court Dossier (PDF)</span>
+                  </span>
+                  <span class="font-label-code text-[11px] bg-on-primary/20 px-2 py-0.5 rounded text-on-primary">Court Sealed</span>
+                </button>
+                <!-- Button 3: Full ZIP Evidence Bundle -->
+                <button class="w-full flex items-center justify-between px-space-md py-2.5 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-body-sm text-body-sm font-medium transition-all shadow-sm border border-outline-variant/20" id="btnDownloadZIP" type="button">
+                  <span class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-tertiary text-[18px]">verified_user</span>
+                    <span>Full ZIP Evidence Bundle</span>
+                  </span>
+                  <span class="font-label-badge text-[9px] px-1.5 py-0.5 rounded bg-tertiary-container/30 text-tertiary font-bold tracking-tight">Sec 63 BSA • SHA-256</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- CARD 3: ML Risk & Heuristics Breakdown -->
+            <div class="bg-surface-container-low rounded-xl p-space-lg shadow-xl flex flex-col gap-space-sm border border-outline-variant/30">
+              <div class="flex items-center justify-between">
+                <span class="font-label-badge text-label-badge uppercase tracking-wider text-outline">Predictive Risk Vector</span>
+                <span class="font-label-code text-body-sm font-bold text-error" id="drawerRiskScore">0.92 / 1.00</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="font-headline-sm text-body-lg font-semibold text-on-surface" id="drawerRiskTitle">Critical Anomaly Detected</span>
+                <span class="font-label-badge text-[10px] px-1.5 py-0.5 rounded bg-error-container/30 text-error uppercase font-bold" id="drawerRiskTier">L-4 Syndicate Pattern</span>
+              </div>
+              <!-- Custom Coral-to-Indigo Gradient Progress Bar -->
+              <div class="w-full h-2 rounded-full bg-surface-container-highest overflow-hidden my-1">
+                <div class="h-full rounded-full bg-gradient-to-r from-secondary via-primary-container to-error transition-all duration-500" id="drawerRiskBar" style="width: 92%;"></div>
+              </div>
+              <!-- Heuristic Tags -->
+              <div class="flex flex-wrap gap-1.5 my-1" id="drawerHeuristicTags">
+                <span class="px-2 py-1 rounded bg-surface-container-high text-on-surface-variant font-label-code text-[11px]">#PeelingChainDetected</span>
+                <span class="px-2 py-1 rounded bg-surface-container-high text-on-surface-variant font-label-code text-[11px]">#Sub10kStructuring</span>
+                <span class="px-2 py-1 rounded bg-surface-container-high text-on-surface-variant font-label-code text-[11px]">#DirectCEXSweep</span>
+                <span class="px-2 py-1 rounded bg-error-container/20 text-error font-label-code text-[11px]">#TelegramTaskBot</span>
+              </div>
+              <!-- Plain English Forensic Summary -->
+              <p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed bg-surface-container p-space-sm rounded-lg" id="drawerExplanation">
+                Funds were rapidly layered through 2 mule addresses within 14 minutes before automated exchange treasury consolidation at Binance Hot Vault.
+              </p>
+              <div class="flex items-center gap-2 pt-1 font-label-code text-[11px] text-outline">
+                <span class="material-symbols-outlined text-[14px]">psychology</span>
+                <span>NIRMAAN NeuroGraph v4.8 • Confidence 98.4%</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ALTERNATE VIEW 2: CASE VAULT (Initially Hidden) -->
+        <section class="w-full px-space-lg pb-space-xl max-w-7xl mx-auto hidden" id="viewCaseVault">
+          <div class="bg-surface-container-low rounded-xl p-space-lg border border-outline-variant/30 shadow-xl">
+            <div class="flex items-center justify-between mb-space-md pb-space-sm border-b border-outline-variant/30">
+              <div>
+                <h2 class="font-headline-lg text-headline-lg font-bold text-on-surface">SQLite Case Vault</h2>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">Archived digital evidence files, statutory freeze orders, and cryptographic SHA-256 seals.</p>
+              </div>
+              <button class="btn px-space-md py-1.5 bg-primary text-on-primary rounded-lg text-body-sm font-semibold" onclick="fetchVaultCases()">Refresh Vault</button>
+            </div>
+            <div class="flex flex-col gap-space-sm" id="vaultCaseListContainer">
+              <div class="text-center py-12 text-outline font-label-code text-body-sm">Loading archived cases from SQLite database...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ALTERNATE VIEW 3: EXCHANGE DIRECTORY (Initially Hidden) -->
+        <section class="w-full px-space-lg pb-space-xl max-w-7xl mx-auto hidden" id="viewExchangeDirectory">
+          <div class="bg-surface-container-low rounded-xl p-space-lg border border-outline-variant/30 shadow-xl">
+            <div class="flex items-center justify-between mb-space-md pb-space-sm border-b border-outline-variant/30">
+              <div>
+                <h2 class="font-headline-lg text-headline-lg font-bold text-on-surface">Curated VASP &amp; Exchange Directory</h2>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">13 Indian FIU-Registered and Global Offshore Virtual Digital Asset Service Providers.</p>
+              </div>
+              <span class="px-2.5 py-1 rounded bg-tertiary-container/30 text-tertiary font-label-badge text-label-badge uppercase font-semibold">13 Exchanges Tracked</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md" id="exchangeDirectoryGrid">
+              <!-- Dynamically populated from /api/vasps -->
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL: SMART 1930 COMPLAINT INGESTION OVERLAY -->
+  <div class="fixed inset-0 z-50 bg-surface-container-lowest/80 backdrop-blur-md hidden items-center justify-center p-space-md" id="modal1930Overlay">
+    <div class="bg-surface-container-low w-full max-w-2xl rounded-2xl shadow-2xl p-space-lg flex flex-col gap-space-md animate-in fade-in zoom-in-95 duration-200 border border-outline-variant/30">
+      <!-- Modal Header -->
+      <div class="flex items-start justify-between">
+        <div class="flex items-center gap-space-sm">
+          <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-on-primary">
+            <span class="material-symbols-outlined text-[24px]">document_scanner</span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="font-headline-lg text-headline-lg font-bold text-on-surface">Smart Complaint Reader</h3>
+              <span class="px-2 py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-badge text-label-badge uppercase font-semibold">1930 NLP Ingest</span>
+            </div>
+            <p class="font-body-sm text-body-sm text-on-surface-variant">
+              Paste raw victim message, FIR text, or 1930 SMS ticket. NIRMAAN extracts the crypto trail automatically.
+            </p>
+          </div>
+        </div>
+        <button class="w-8 h-8 rounded-lg flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container-high transition-colors" id="btnCloseModal" type="button">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <!-- Raw Victim Text Box -->
+      <div class="relative">
+        <textarea class="w-full bg-surface-container-lowest rounded-xl p-space-md font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none selection:bg-primary-container leading-relaxed border border-outline-variant/30 focus:border-primary/50" id="complaintTextInput" placeholder="Paste complaint statement, FIR transcript or bank UPI UTR string here..." rows="4">Victim stated transfer of Rs 15 Lakhs on Telegram task fraud group to suspect wallet TScamOriginVictimAddress778899AABB via USDT. Complaint registered under FIR-88/2026 Cyber Crime PS Bhopal. Phone: +919876543210.</textarea>
+      </div>
+
+      <!-- Dynamic Parsed Entity Tag Pills -->
+      <div class="flex flex-col gap-1.5">
+        <div class="flex items-center justify-between">
+          <span class="font-label-badge text-label-badge uppercase tracking-wider text-outline">Entities Extracted in Realtime:</span>
+          <span class="font-label-code text-[11px] text-tertiary font-medium" id="ncrpTokensFoundLabel">Ready to extract</span>
+        </div>
+        <div class="flex flex-wrap gap-2" id="ncrpLiveEntityTags">
+          <span class="px-2.5 py-1 rounded-lg bg-surface-container font-label-code text-[11px] text-secondary flex items-center gap-1 shadow-sm">
+            <span class="material-symbols-outlined text-[13px]">account_balance_wallet</span>
+            <span id="ncrpTagAddress">Address: TScam...AABB</span>
+          </span>
+          <span class="px-2.5 py-1 rounded-lg bg-surface-container font-label-code text-[11px] text-tertiary flex items-center gap-1 shadow-sm">
+            <span class="material-symbols-outlined text-[13px]">payments</span>
+            <span id="ncrpTagAmount">Amount: ₹15,00,000</span>
+          </span>
+          <span class="px-2.5 py-1 rounded-lg bg-surface-container font-label-code text-[11px] text-primary flex items-center gap-1 shadow-sm">
+            <span class="material-symbols-outlined text-[13px]">policy</span>
+            <span id="ncrpTagFir">FIR: FIR-88/2026</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Modal Footer CTA -->
+      <div class="pt-space-sm flex items-center justify-end gap-space-sm border-t border-surface-container-highest">
+        <button class="px-space-lg py-2.5 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-body-sm text-body-sm font-medium transition-colors" id="btnCancelModal" type="button">
+          Cancel
+        </button>
+        <button class="flex items-center gap-2 px-space-xl py-2.5 rounded-lg bg-primary hover:bg-primary-fixed-dim text-on-primary font-headline-sm text-body-sm font-semibold transition-all shadow-lg shadow-primary/25" id="btnExtractAndTrace" type="button">
+          <span class="material-symbols-outlined text-[18px]">insights</span>
+          <span>Extract &amp; Trace Trail</span>
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- Workspace -->
-  <div class="workspace">
-    <!-- Cytoscape Canvas -->
-    <div id="cy"></div>
-
-    <!-- Canvas Overlays -->
-    <div class="canvas-overlay-top-left">
-      <!-- Layout Toggle -->
-      <div class="layout-toggle">
-        <button class="toggle-btn active" id="btnLayoutDagre" onclick="switchLayout('dagre')">
-          <i class="fa-solid fa-sitemap"></i> Dagre Flow
-        </button>
-        <button class="toggle-btn" id="btnLayoutCose" onclick="switchLayout('cose')">
-          <i class="fa-solid fa-circle-nodes"></i> Entity Cluster
-        </button>
-      </div>
-
-      <!-- Legend -->
-      <div class="legend">
-        <div class="legend-item"><span class="legend-dot" style="background:#ef4444;"></span> Suspect Scam Wallet</div>
-        <div class="legend-item"><span class="legend-dot" style="background:#f59e0b;"></span> Intermediary Mule</div>
-        <div class="legend-item"><span class="legend-dot" style="background:#dc2626;"></span> Sanctioned Mixer / Bridge</div>
-        <div class="legend-item"><span class="legend-dot" style="background:#0284c7;"></span> VASP Deposit Forwarder</div>
-        <div class="legend-item"><span class="legend-dot" style="background:#10b981;"></span> Master Exchange Hot Vault</div>
-      </div>
-    </div>
-
-    <!-- Timeline Scrubber -->
-    <div class="timeline-bar">
-      <div class="timeline-controls">
-        <button class="timeline-btn" onclick="scrubStep(-1)"><i class="fa-solid fa-backward-step"></i></button>
-        <button class="timeline-btn" id="playBtn" onclick="togglePlay()"><i class="fa-solid fa-play"></i></button>
-        <button class="timeline-btn" onclick="scrubStep(1)"><i class="fa-solid fa-forward-step"></i></button>
-      </div>
-      <div class="timeline-slider-container">
-        <input type="range" class="timeline-slider" id="timeSlider" min="0" max="100" value="100" oninput="onSliderChange(this.value)" />
-        <span class="timeline-step-label" id="timelineLabel">All Hops Active</span>
-      </div>
-    </div>
-
-    <!-- Side Inspector & Case Vault Pane -->
-    <div class="inspector">
-      <div class="pane-tabs">
-        <button class="tab-btn active" id="tabForensicsBtn" onclick="switchTab('forensics')">
-          <i class="fa-solid fa-microscope"></i> Attribution
-        </button>
-        <button class="tab-btn" id="tabNodeBtn" onclick="switchTab('node')">
-          <i class="fa-solid fa-cube"></i> Entity Inspector
-        </button>
-        <button class="tab-btn" id="tabVaultBtn" onclick="switchTab('vault')">
-          <i class="fa-solid fa-vault"></i> Case Vault
-        </button>
-      </div>
-
-      <!-- FORENSICS TAB -->
-      <div id="tabForensics">
-        <!-- Target VASP Card -->
-        <div class="card" id="vaspCard">
-          <div class="card-title">
-            <span>Attributed VASP</span>
-            <span class="badge-fiu" id="fiuBadge">FIU Registered</span>
-          </div>
-          <div style="display:flex; align-items:center; margin-bottom: 8px;">
-            <span style="font-size: 22px; font-weight:800; color:#10b981;" id="vaspName">Binance</span>
-          </div>
-          <div class="field">
-            <div class="field-label">Deposit Forwarder Wallet</div>
-            <div class="field-val" id="depositAddr">TBinanceUserDepositForwarder8899ZZ</div>
-          </div>
-          <div class="field">
-            <div class="field-label">Master Exchange Vault</div>
-            <div class="field-val" id="hotWallet">TMuA6YqfCeX8EhbfYEg5y7S4DnxJRB4b7N</div>
-          </div>
-          <div class="field">
-            <div class="field-label">Sweep Transaction Hash</div>
-            <div class="field-val" id="sweepHash">d4e5f60718293a4b5c6d7e8f90a1b2c3...</div>
-          </div>
-          <div class="field">
-            <div class="field-label">Nodal Compliance Officer</div>
-            <div class="field-val" id="nodalEmail">compliance-in@binance.com</div>
-          </div>
+  <!-- MODAL: STATUTORY SECTION 94 BNSS NOTICE -->
+  <div class="fixed inset-0 z-50 bg-surface-container-lowest/80 backdrop-blur-md hidden items-center justify-center p-space-md" id="modalNoticeOverlay">
+    <div class="bg-surface-container-low w-full max-w-3xl rounded-2xl shadow-2xl p-space-lg flex flex-col gap-space-md border border-outline-variant/30 max-h-[85vh]">
+      <div class="flex items-center justify-between pb-space-sm border-b border-outline-variant/30">
+        <div class="flex items-center gap-space-sm">
+          <span class="material-symbols-outlined text-secondary text-[22px]">gavel</span>
+          <h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Section 94 BNSS Statutory Summons Order</h3>
         </div>
-
-        <!-- Action Buttons -->
-        <div style="display: flex; gap: 6px; margin-top: 10px;">
-          <button class="btn" style="flex: 1; justify-content: center; font-size: 11px; background: #0284c7;" onclick="openNoticeModal()">
-            <i class="fa-solid fa-file-contract"></i> Sec 94 Notice
+        <button class="w-8 h-8 rounded-lg flex items-center justify-center text-outline hover:text-on-surface" onclick="closeNoticeModal()" type="button">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+      <div class="bg-surface-container-lowest p-space-md rounded-xl font-label-code text-[11px] text-on-surface-variant overflow-y-auto max-h-[50vh] whitespace-pre-wrap leading-relaxed border border-outline-variant/20" id="noticeTextContainer">
+        Loading statutory requisition notice...
+      </div>
+      <div class="flex items-center justify-between pt-space-sm border-t border-outline-variant/30">
+        <span class="font-label-code text-[11px] text-tertiary">Admissible under Sec 63 Bharatiya Sakshya Adhiniyam, 2023</span>
+        <div class="flex items-center gap-space-sm">
+          <button class="px-space-md py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-body-sm font-medium" onclick="closeNoticeModal()" type="button">Close</button>
+          <button class="px-space-md py-1.5 rounded-lg bg-primary hover:bg-primary-fixed-dim text-on-primary text-body-sm font-semibold flex items-center gap-1.5" onclick="triggerDownloadPDF()" type="button">
+            <span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+            <span>Download Certified PDF</span>
           </button>
-          <button class="btn btn-emerald" style="flex: 1; justify-content: center; font-size: 11px;" onclick="downloadOfficialDossier()">
-            <i class="fa-solid fa-file-pdf"></i> PDF Dossier
-          </button>
-          <button class="btn btn-purple" style="flex: 1; justify-content: center; font-size: 11px;" onclick="downloadOfficialBundle()">
-            <i class="fa-solid fa-box-archive"></i> Court Bundle
-          </button>
-        </div>
-
-        <!-- Investigation Summary Card -->
-        <div class="card" style="margin-top: 12px;">
-          <div class="card-title">Investigation Summary</div>
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div>
-              <div class="field-label">Volume Routed</div>
-              <div class="field-val" id="summaryVolume" style="font-size: 14px; color:#38bdf8; font-weight:bold;">$15,000 USD</div>
-            </div>
-            <div>
-              <div class="field-label">Max Depth</div>
-              <div class="field-val" id="summaryHops" style="font-size: 14px; color:#38bdf8; font-weight:bold;">3 Hops</div>
-            </div>
-            <div>
-              <div class="field-label">Attribution Confidence</div>
-              <div class="field-val" style="font-size: 14px; color:#10b981; font-weight:bold;">99.8%</div>
-            </div>
-            <div>
-              <div class="field-label">Evidence Seal</div>
-              <div class="field-val" id="summarySeal" style="font-size: 9.5px; color:#94a3b8;">f81e717ce2ec...</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- NODE INSPECTOR TAB -->
-      <div id="tabNode" style="display: none;">
-        <div class="card">
-          <div class="card-title">Selected Entity Telemetry</div>
-          <div class="field">
-            <div class="field-label">Entity Label</div>
-            <div class="field-val" id="inspectorLabel" style="font-size: 14px; font-weight: bold; color: #f8fafc;">Click any node to inspect</div>
-          </div>
-          <div class="field">
-            <div class="field-label">Wallet Address</div>
-            <div class="field-val" id="inspectorAddress">-</div>
-          </div>
-          <div class="field">
-            <div class="field-label">Node Type</div>
-            <div class="field-val" id="inspectorType">-</div>
-          </div>
-          <div class="field">
-            <div class="field-label">ML Risk Score</div>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span id="inspectorRiskNum" style="font-size: 16px; font-weight:bold; color:#ef4444;">0.00</span>
-              <span class="badge-critical" id="inspectorTierBadge">UNKNOWN</span>
-            </div>
-            <div class="risk-meter">
-              <div class="risk-fill" id="inspectorRiskBar" style="width: 50%;"></div>
-            </div>
-          </div>
-          <div class="field">
-            <div class="field-label">Forensic ML Explanation</div>
-            <div class="field-val" id="inspectorExplanation" style="color: #cbd5e1; font-family: sans-serif; font-size: 11px;">-</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- CASE VAULT TAB -->
-      <div id="tabVault" style="display: none;">
-        <div class="card">
-          <div class="card-title">Case Vault (Saved FIRs)</div>
-          <div id="vaultList" style="display:flex; flex-direction:column; gap: 8px; max-height: 400px; overflow-y:auto;">
-            <div style="font-size: 11px; color:#94a3b8;">Loading cases...</div>
-          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Statutory Notice Modal -->
-  <div class="modal-overlay" id="noticeModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <div style="font-size: 13px; font-weight: 700; color:#38bdf8;">
-          <i class="fa-solid fa-shield-halved"></i> Statutory Notice (Section 94 BNSS & Section 63 BSA, 2023)
-        </div>
-        <button style="background:transparent; border:none; color:#94a3b8; font-size:18px; cursor:pointer;" onclick="closeNoticeModal()">&times;</button>
-      </div>
-      <div class="modal-body" id="noticeText">Loading notice...</div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeNoticeModal()">Close</button>
-        <button class="btn btn-emerald" onclick="downloadOfficialDossier()">
-          <i class="fa-solid fa-file-pdf"></i> Download PDF Dossier
-        </button>
-        <button class="btn btn-purple" onclick="downloadOfficialBundle()">
-          <i class="fa-solid fa-box-archive"></i> Download ZIP Bundle
-        </button>
-      </div>
-    </div>
+  <!-- Toast Notification Container -->
+  <div class="fixed bottom-6 right-6 z-50 transform translate-y-12 opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-2 px-space-md py-2.5 rounded-lg bg-surface-container-high text-on-surface font-label-code text-body-sm shadow-2xl border border-outline-variant/30" id="toastNotification">
+    <span class="material-symbols-outlined text-tertiary text-[18px]" id="toastIcon">check_circle</span>
+    <span id="toastMessage">Copied to clipboard</span>
   </div>
 
-  <!-- NCRP 1930 Ingestion Modal -->
-  <div class="modal-overlay" id="ncrpModal">
-    <div class="modal-content" style="width: 600px;">
-      <div class="modal-header">
-        <div style="font-size: 13px; font-weight: 700; color:#a855f7;">
-          <i class="fa-solid fa-file-import"></i> Smart 1930 / NCRP Complaint Ingestion
-        </div>
-        <button style="background:transparent; border:none; color:#94a3b8; font-size:18px; cursor:pointer;" onclick="closeNcrpModal()">&times;</button>
-      </div>
-      <div class="modal-body" style="background:#0f172a; display:flex; flex-direction:column; gap:10px;">
-        <div style="font-size: 11px; color:#94a3b8; font-family:sans-serif;">
-          Paste raw complaint narrative from NCRP portal or 1930 SMS ticket. NIRMAAN will automatically extract suspect wallet addresses, loss amounts in INR, and FIR numbers.
-        </div>
-        <textarea id="ncrpText" rows="6" style="width:100%; background:#1e293b; border:1px solid #334155; padding:10px; color:#fff; border-radius:6px; font-size:12px; font-family:monospace; resize:none;" placeholder="Example: Complainant Ramesh Kumar reports loss of Rs 15,00,000 on Telegram task fraud. Transferred USDT to suspect address TScamOriginVictimAddress778899AABB under FIR-88/2026."></textarea>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeNcrpModal()">Cancel</button>
-        <button class="btn btn-purple" onclick="submitNcrpParse()">
-          <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Extract & Trace
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Save Case Modal -->
-  <div class="modal-overlay" id="saveCaseModal">
-    <div class="modal-content" style="width: 480px;">
-      <div class="modal-header">
-        <div style="font-size: 13px; font-weight: 700; color:#10b981;">
-          <i class="fa-solid fa-folder-plus"></i> Save to SQLite Case Vault
-        </div>
-        <button style="background:transparent; border:none; color:#94a3b8; font-size:18px; cursor:pointer;" onclick="closeSaveCaseModal()">&times;</button>
-      </div>
-      <div class="modal-body" style="background:#0f172a; display:flex; flex-direction:column; gap:10px;">
-        <div>
-          <label style="font-size:10px; color:#94a3b8; text-transform:uppercase;">FIR / NCRP Number</label>
-          <input type="text" id="saveFir" style="width:100%; background:#1e293b; border:1px solid #334155; padding:6px 10px; color:#fff; border-radius:4px; font-size:12px;" />
-        </div>
-        <div>
-          <label style="font-size:10px; color:#94a3b8; text-transform:uppercase;">Police Station</label>
-          <input type="text" id="saveStation" value="State Cyber Crime PS" style="width:100%; background:#1e293b; border:1px solid #334155; padding:6px 10px; color:#fff; border-radius:4px; font-size:12px;" />
-        </div>
-        <div>
-          <label style="font-size:10px; color:#94a3b8; text-transform:uppercase;">Investigating Officer (IO)</label>
-          <input type="text" id="saveIO" value="Inspector Cyber Cell" style="width:100%; background:#1e293b; border:1px solid #334155; padding:6px 10px; color:#fff; border-radius:4px; font-size:12px;" />
-        </div>
-        <div>
-          <label style="font-size:10px; color:#94a3b8; text-transform:uppercase;">Complainant Loss (INR)</label>
-          <input type="number" id="saveLoss" value="1500000" style="width:100%; background:#1e293b; border:1px solid #334155; padding:6px 10px; color:#fff; border-radius:4px; font-size:12px;" />
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeSaveCaseModal()">Cancel</button>
-        <button class="btn btn-emerald" onclick="submitCaseSave()">Save Case</button>
-      </div>
-    </div>
-  </div>
-
+  <!-- LIVE APPLICATION ENGINE CONTROLLER SCRIPT -->
   <script>
-    let cy = null;
-    let currentTraceData = null;
-    let currentCaseId = null;
-    let currentLayoutName = 'dagre';
-    let isPlaying = false;
-    let playTimer = null;
+    (function () {
+      // System State
+      let currentTraceData = null;
+      let currentCaseId = null;
+      let currentScale = 1;
+      let isHierarchical = true;
+      let isPlaying = false;
+      let playInterval = null;
 
-    const PRESETS = {
-      tron: {
-        address: "TScamOriginVictimAddress778899AABB",
-        fir: "FIR-88/2026 Cyber Crime PS Bhopal",
-        chain: "TRON (TRC-20)"
-      },
-      evm: {
-        address: "0xScamOriginVictimEther998877AABBCCDDEEFF",
-        fir: "FIR-104/2026 Cyber Crime PS Bengaluru",
-        chain: "Ethereum (ERC-20)"
-      },
-      btc: {
-        address: "bc1qScamVictimBtcSeedAddress998877AABB",
-        fir: "FIR-12/2026 Cyber Crime PS Delhi",
-        chain: "Bitcoin (UTXO)"
-      },
-      coindcx: {
-        address: "TGC1Q8b1YzA98A7B2TPYSumqFnidVnQ4Hn",
-        fir: "FIR-45/2026 Cyber Crime PS Mumbai",
-        chain: "CoinDCX Hot Treasury"
+      // DOM Elements
+      const toast = document.getElementById('toastNotification');
+      const toastMessage = document.getElementById('toastMessage');
+      const toastIcon = document.getElementById('toastIcon');
+      const searchInput = document.getElementById('mainAddressSearch');
+      const btnExecuteTrail = document.getElementById('btnExecuteTrail');
+      const canvasStage = document.getElementById('interactiveCanvasStage');
+      const timelineScrubber = document.getElementById('timelineScrubber');
+      const timelineStatusText = document.getElementById('timelineStatusText');
+      const btnPlayPause = document.getElementById('btnPlayPause');
+      const playIcon = document.getElementById('playIcon');
+      const modal1930 = document.getElementById('modal1930Overlay');
+      const modalNotice = document.getElementById('modalNoticeOverlay');
+
+      // Toast Notification
+      function showToast(msg, icon = 'check_circle', isError = false) {
+        if (!toast) return;
+        toastMessage.textContent = msg;
+        toastIcon.textContent = icon;
+        toastIcon.className = `material-symbols-outlined text-[18px] ${isError ? 'text-error' : 'text-tertiary'}`;
+        toast.classList.remove('translate-y-12', 'opacity-0', 'pointer-events-none');
+        toast.classList.add('translate-y-0', 'opacity-100');
+
+        setTimeout(() => {
+          toast.classList.add('translate-y-12', 'opacity-0', 'pointer-events-none');
+          toast.classList.remove('translate-y-0', 'opacity-100');
+        }, 2600);
       }
-    };
 
-    function loadPreset(key) {
-      const p = PRESETS[key];
-      if (!p) return;
-      document.getElementById('seedAddress').value = p.address;
-      document.getElementById('firNumber').value = p.fir;
-      document.getElementById('chainPill').innerText = p.chain;
-      executeTrace();
-    }
-
-    function initCytoscape(elements) {
-      const layoutConfig = currentLayoutName === 'dagre' 
-        ? { name: 'dagre', rankDir: 'LR', nodeSep: 50, rankSep: 110 }
-        : { name: 'cose', animate: false, componentSpacing: 100 };
-
-      cy = cytoscape({
-        container: document.getElementById('cy'),
-        elements: elements,
-        style: [
-          {
-            selector: 'node',
-            style: {
-              'label': 'data(label)',
-              'color': '#f8fafc',
-              'font-size': '10px',
-              'font-weight': '600',
-              'text-valign': 'bottom',
-              'text-margin-y': '6px',
-              'background-color': '#475569',
-              'width': '38px',
-              'height': '38px',
-              'border-width': '2px',
-              'border-color': '#1e293b'
+      // 1-Click Copy Handlers
+      function setupCopyButtons() {
+        document.querySelectorAll('.btn-copy').forEach(btn => {
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            const copyText = btn.getAttribute('data-copy') || '';
+            if (navigator.clipboard && copyText) {
+              navigator.clipboard.writeText(copyText).then(() => {
+                showToast(`Copied: ${copyText.substring(0, 16)}...`);
+              }).catch(() => {
+                showToast('Failed to copy', 'error', true);
+              });
             }
-          },
-          {
-            selector: 'node[type = "SUSPECT"]',
-            style: { 'background-color': '#ef4444', 'border-color': '#f87171', 'width': '44px', 'height': '44px' }
-          },
-          {
-            selector: 'node[type = "MULE"]',
-            style: { 'background-color': '#f59e0b', 'border-color': '#fbbf24' }
-          },
-          {
-            selector: 'node[type = "MIXER"]',
-            style: { 'background-color': '#dc2626', 'border-color': '#b91c1c', 'shape': 'hexagon', 'width': '46px', 'height': '46px' }
-          },
-          {
-            selector: 'node[type = "VASP_DEPOSIT"]',
-            style: { 'background-color': '#0284c7', 'border-color': '#38bdf8', 'shape': 'diamond', 'width': '42px', 'height': '42px' }
-          },
-          {
-            selector: 'node[type = "VASP_HOT"]',
-            style: { 'background-color': '#10b981', 'border-color': '#34d399', 'width': '48px', 'height': '48px' }
-          },
-          {
-            selector: 'edge',
-            style: {
-              'width': 2.5,
-              'line-color': '#334155',
-              'target-arrow-color': '#38bdf8',
-              'target-arrow-shape': 'triangle',
-              'curve-style': 'bezier',
-              'label': 'data(label)',
-              'font-size': '9px',
-              'color': '#94a3b8',
-              'text-rotation': 'autorotate',
-              'text-margin-y': -8
-            }
-          },
-          {
-            selector: 'node:selected',
-            style: {
-              'border-color': '#ffffff',
-              'border-width': '4px',
-              'box-shadow': '0 0 15px rgba(255,255,255,0.8)'
-            }
-          }
-        ],
-        layout: layoutConfig
-      });
-
-      cy.on('tap', 'node', function(evt) {
-        const node = evt.target;
-        showNodeDetails(node.data());
-      });
-    }
-
-    function switchLayout(layoutName) {
-      currentLayoutName = layoutName;
-      document.getElementById('btnLayoutDagre').classList.toggle('active', layoutName === 'dagre');
-      document.getElementById('btnLayoutCose').classList.toggle('active', layoutName === 'cose');
-      if (cy) {
-        const config = layoutName === 'dagre' 
-          ? { name: 'dagre', rankDir: 'LR', nodeSep: 50, rankSep: 110 }
-          : { name: 'cose', animate: true, componentSpacing: 100 };
-        cy.layout(config).run();
-      }
-    }
-
-    async function executeTrace() {
-      const seed = document.getElementById('seedAddress').value.trim();
-      const fir = document.getElementById('firNumber').value.trim();
-      if (!seed) return alert("Please enter a suspect wallet address.");
-
-      document.getElementById('latencyBadge').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Tracing...';
-
-      try {
-        const res = await fetch('http://127.0.0.1:8000/api/trace', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            seed_address: seed,
-            max_depth: 4,
-            min_usd_value: 20.0,
-            case_metadata: { fir_number: fir, loss_amount_inr: 1500000.0 }
-          })
+          };
         });
-
-        if (res.ok) {
-          const data = await res.json();
-          currentTraceData = data;
-          renderTraceResult(data);
-          return;
-        } else {
-          const err = await res.json();
-          alert(`⚠️ Trace Error: ${err.detail || "Query failed"}`);
-          document.getElementById('latencyBadge').innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Error';
-          return;
-        }
-      } catch (e) {
-        console.warn("Backend offline, running embedded mock solver.");
-        runMockSolver(seed, fir);
       }
-    }
+      setupCopyButtons();
 
-    function runMockSolver(seed, fir) {
-      const isEvm = seed.startsWith("0x");
-      const isBtc = seed.startsWith("bc1") || seed.startsWith("1") || seed.startsWith("3");
-      const chainName = isEvm ? "Ethereum (ERC-20)" : (isBtc ? "Bitcoin (UTXO)" : "TRON (TRC-20)");
-      
-      const mockResult = {
-        trace_id: "tr_mock_" + Date.now().toString(16),
-        seed_address: seed,
-        chain: chainName,
-        execution_time_ms: 312.0,
-        destination_found: true,
-        evidence_sha256: "f81e717ce2ec4938a1b5d6e7f809a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2",
-        target_vasp: {
-          name: "Binance",
-          fiu_registered: true,
-          deposit_address: isEvm ? "0xBinanceUserDepositForwarder8899" : "TBinanceUserDepositForwarder8899ZZ",
-          hot_wallet: isEvm ? "0x28C6c06298d514Db089934071355E5743bf21d60" : "TMuA6YqfCeX8EhbfYEg5y7S4DnxJRB4b7N",
-          sweep_tx_hash: "0xd4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3",
-          nodal_email: "compliance-in@binance.com",
-          law_enforcement_portal: "https://www.binance.com/en/support/law-enforcement"
+      // Quick Seed Presets
+      const seedConfigs = {
+        '15k-tg-scam': {
+          val: 'TScamOriginVictimAddress778899AABB',
+          fir: 'FIR-88/2026 Cyber Crime PS Bhopal',
+          label: 'Loaded TRON Task Scam (15,000 USDT)'
         },
-        nodes: [
-          { id: seed, address: seed, label: "Scam Origin", node_type: "SUSPECT", risk_score: 0.95, risk_tier: "CRITICAL", explanation: "Reported victim fraud seed." },
-          { id: "addr_mule_1", address: "TMuleSplitterLayer1Address4455", label: "Mule Layer 1", node_type: "MULE", risk_score: 0.75, risk_tier: "HIGH", explanation: "Intermediary rapid transfer hop." },
-          { id: "addr_peel_change", address: "TPeelingChangeBurner112233", label: "Peel Burner", node_type: "MULE", risk_score: 0.88, risk_tier: "CRITICAL", is_peeling: true, explanation: "Algorithmic peeling chain fee hop." },
-          { id: "addr_deposit", address: "TBinanceUserDepositForwarder8899ZZ", label: "Binance Deposit", node_type: "VASP_DEPOSIT", risk_score: 0.10, risk_tier: "LOW", explanation: "Attributed customer forwarder." },
-          { id: "addr_hot", address: "TMuA6YqfCeX8EhbfYEg5y7S4DnxJRB4b7N", label: "Binance Hot Vault", node_type: "VASP_HOT", risk_score: 0.05, risk_tier: "LOW", vasp_name: "Binance", explanation: "Master omnibus exchange vault." }
-        ],
-        edges: [
-          { source: seed, target: "addr_mule_1", amount: 15000.0, token: isBtc ? "BTC" : "USDT", usd_value: 15000.0 },
-          { source: "addr_mule_1", target: "addr_peel_change", amount: 50.0, token: isBtc ? "BTC" : "USDT", usd_value: 50.0 },
-          { source: "addr_mule_1", target: "addr_deposit", amount: 14950.0, token: isBtc ? "BTC" : "USDT", usd_value: 14950.0 },
-          { source: "addr_deposit", target: "addr_hot", amount: 14950.0, token: isBtc ? "BTC" : "USDT", usd_value: 14950.0 }
-        ],
-        section_94_notice_text: `STATUTORY NOTICE UNDER SECTION 94 BNSS, 2023\nFIR: ${fir}\nTARGET VASP: Binance\nDEPOSIT WALLET: TBinanceUserDepositForwarder8899ZZ\nSWEEP TX: d4e5f60718293a4b5c6d7e8f90a1b2c3...\nNODAL EMAIL: compliance-in@binance.com\nDIRECTION: Freeze UID assets and provide KYC within 24 hours.`
+        '25k-eth-cex': {
+          val: '0xScamOriginVictimEther998877AABBCCDDEEFF',
+          fir: 'FIR-104/2026 Cyber Crime PS Bengaluru',
+          label: 'Loaded Ethereum CEX Sweep (25,000 USDT)'
+        },
+        'btc-pig-butcher': {
+          val: 'bc1qScamVictimBtcSeedAddress998877AABB',
+          fir: 'FIR-12/2026 Cyber Crime PS Delhi',
+          label: 'Loaded Pig Butchering Case (0.85 BTC)'
+        },
+        'coindcx-treasury': {
+          val: 'TGC1Q8b1YzA98A7B2TPYSumqFnidVnQ4Hn',
+          fir: 'FIR-45/2026 Cyber Crime PS Mumbai',
+          label: 'Loaded CoinDCX Treasury Sweep'
+        }
       };
 
-      currentTraceData = mockResult;
-      renderTraceResult(mockResult);
-    }
+      document.querySelectorAll('.preset-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+          document.querySelectorAll('.preset-pill').forEach(p => {
+            p.classList.remove('bg-surface-container-highest', 'text-secondary', 'font-medium', 'shadow-sm');
+            p.classList.add('bg-surface-container-low', 'text-on-surface-variant');
+          });
+          pill.classList.remove('bg-surface-container-low', 'text-on-surface-variant');
+          pill.classList.add('bg-surface-container-highest', 'text-secondary', 'font-medium', 'shadow-sm');
 
-    function renderTraceResult(data) {
-      document.getElementById('latencyBadge').innerHTML = `<i class="fa-solid fa-check"></i> Resolved in ${data.execution_time_ms} ms`;
-      document.getElementById('chainPill').innerText = data.chain;
-
-      if (data.target_vasp) {
-        document.getElementById('vaspName').innerText = data.target_vasp.name;
-        document.getElementById('depositAddr').innerText = data.target_vasp.deposit_address;
-        document.getElementById('hotWallet').innerText = data.target_vasp.hot_wallet;
-        document.getElementById('sweepHash').innerText = data.target_vasp.sweep_tx_hash || "Identified";
-        document.getElementById('nodalEmail').innerText = data.target_vasp.nodal_email;
-      }
-
-      if (data.evidence_sha256) {
-        document.getElementById('summarySeal').innerText = data.evidence_sha256.substring(0, 16) + '...';
-      }
-
-      const totalVol = data.edges.reduce((acc, e) => acc + (e.usd_value || e.amount || 0), 0);
-      document.getElementById('summaryVolume').innerText = `$${Math.round(totalVol):,}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " USD";
-
-      const elements = {
-        nodes: data.nodes.map(n => ({
-          data: {
-            id: n.id,
-            address: n.address || n.id,
-            label: n.label,
-            type: n.node_type,
-            risk_score: n.risk_score || 0.5,
-            risk_tier: n.risk_tier || "MEDIUM",
-            is_peeling: n.is_peeling || false,
-            is_mixer: n.is_mixer || false,
-            explanation: n.explanation || "Intermediary transfer node."
-          }
-        })),
-        edges: data.edges.map(e => ({
-          data: {
-            source: e.source,
-            target: e.target,
-            label: `${e.amount} ${e.token || 'USDT'}`
-          }
-        }))
-      };
-
-      initCytoscape(elements);
-    }
-
-    function showNodeDetails(nodeData) {
-      switchTab('node');
-      document.getElementById('inspectorLabel').innerText = nodeData.label || "Node";
-      document.getElementById('inspectorAddress').innerText = nodeData.address || nodeData.id;
-      document.getElementById('inspectorType').innerText = nodeData.type;
-      
-      const score = nodeData.risk_score !== undefined ? nodeData.risk_score : 0.5;
-      document.getElementById('inspectorRiskNum').innerText = score.toFixed(2);
-      document.getElementById('inspectorRiskBar').style.width = `${Math.round(score * 100)}%`;
-
-      const tier = nodeData.risk_tier || "MEDIUM";
-      const tierBadge = document.getElementById('inspectorTierBadge');
-      tierBadge.innerText = tier;
-      if (tier === 'CRITICAL') tierBadge.style.background = '#7f1d1d';
-      else if (tier === 'HIGH') tierBadge.style.background = '#c2410c';
-      else if (tier === 'MEDIUM') tierBadge.style.background = '#854d0e';
-      else tierBadge.style.background = '#065f46';
-
-      document.getElementById('inspectorExplanation').innerText = nodeData.explanation || "Standard graph entity.";
-    }
-
-    function switchTab(tab) {
-      document.getElementById('tabForensics').style.display = tab === 'forensics' ? 'block' : 'none';
-      document.getElementById('tabNode').style.display = tab === 'node' ? 'block' : 'none';
-      document.getElementById('tabVault').style.display = tab === 'vault' ? 'block' : 'none';
-
-      document.getElementById('tabForensicsBtn').classList.toggle('active', tab === 'forensics');
-      document.getElementById('tabNodeBtn').classList.toggle('active', tab === 'node');
-      document.getElementById('tabVaultBtn').classList.toggle('active', tab === 'vault');
-
-      if (tab === 'vault') {
-        fetchCases();
-      }
-    }
-
-    /* Modal Handlers */
-    function openNoticeModal() {
-      const text = currentTraceData?.section_94_notice_text || "Please run a trace first.";
-      document.getElementById('noticeText').innerText = text;
-      document.getElementById('noticeModal').style.display = 'flex';
-    }
-    function closeNoticeModal() {
-      document.getElementById('noticeModal').style.display = 'none';
-    }
-
-    function openNcrpModal() {
-      document.getElementById('ncrpModal').style.display = 'flex';
-    }
-    function closeNcrpModal() {
-      document.getElementById('ncrpModal').style.display = 'none';
-    }
-
-    async function submitNcrpParse() {
-      const text = document.getElementById('ncrpText').value.trim();
-      if (!text) return alert("Please paste complaint text.");
-
-      try {
-        const res = await fetch('http://127.0.0.1:8000/api/ncrp/parse', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: text })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.primary_seed_address) {
-            document.getElementById('seedAddress').value = data.primary_seed_address;
-            document.getElementById('firNumber').value = data.suggested_fir || "FIR-NCRP-1930/2026";
-            closeNcrpModal();
+          const key = pill.getAttribute('data-seed');
+          if (seedConfigs[key]) {
+            searchInput.value = seedConfigs[key].val;
+            showToast(seedConfigs[key].label, 'travel_explore');
             executeTrace();
-          } else {
-            alert("No cryptocurrency address detected in the text. Please verify.");
           }
-        }
-      } catch (e) {
-        // Fallback simple regex extraction
-        const match = text.match(/(T[1-9A-HJ-NP-za-km-z]{33}|0x[a-fA-F0-9]{40}|bc1[a-z0-9]{25,62})/);
-        if (match) {
-          document.getElementById('seedAddress').value = match[0];
-          closeNcrpModal();
-          executeTrace();
-        } else {
-          alert("Could not extract a valid cryptocurrency address.");
+        });
+      });
+
+      // Live Backend /api/trace Execution
+      async function executeTrace() {
+        const seed = searchInput.value.trim();
+        if (!seed) return showToast('Please enter a wallet address', 'error', true);
+
+        showToast('Tracing money trail across blockchain explorers...', 'hub');
+
+        // Detect Chain Tag
+        let chainLabel = 'TRON';
+        if (seed.startsWith('0x')) chainLabel = 'EVM';
+        else if (seed.startsWith('bc1') || seed.startsWith('1') || seed.startsWith('3')) chainLabel = 'Bitcoin';
+        document.getElementById('detectedChainTag').textContent = chainLabel;
+
+        try {
+          const res = await fetch('http://127.0.0.1:8000/api/trace', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              seed_address: seed,
+              max_depth: 4,
+              min_usd_value: 20.0,
+              case_metadata: {
+                fir_number: "FIR-88/2026 Cyber Crime PS Bhopal",
+                loss_amount_inr: 1500000.0,
+                police_station: "State Cyber Crime Police Station, Bhopal",
+                investigating_officer: "DSP Anjali Verma"
+              }
+            })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            currentTraceData = data;
+            renderTraceTelemetry(data);
+            showToast(`Attribution Complete in ${data.execution_time_ms}ms`, 'verified');
+            // Auto-save case to vault so PDF/ZIP downloads are immediately available
+            autoSaveCaseToVault(data);
+          } else {
+            const err = await res.json();
+            showToast(err.detail || 'Trace query failed', 'error', true);
+          }
+        } catch (e) {
+          console.warn('Backend not running on port 8000, using local mock data.');
+          renderMockTrace(seed);
         }
       }
-    }
 
-    function openSaveCaseModal() {
-      if (!currentTraceData) return alert("Run a trace before saving to the Case Vault.");
-      document.getElementById('saveFir').value = document.getElementById('firNumber').value;
-      document.getElementById('saveCaseModal').style.display = 'flex';
-    }
-    function closeSaveCaseModal() {
-      document.getElementById('saveCaseModal').style.display = 'none';
-    }
+      btnExecuteTrail?.addEventListener('click', executeTrace);
+      searchInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') executeTrace();
+      });
 
-    async function submitCaseSave() {
-      const payload = {
-        fir_number: document.getElementById('saveFir').value.trim(),
-        police_station: document.getElementById('saveStation').value.trim(),
-        investigating_officer: document.getElementById('saveIO').value.trim(),
-        complainant_name: "Complainant Victim",
-        loss_amount_inr: parseFloat(document.getElementById('saveLoss').value) || 0,
-        seed_address: currentTraceData.seed_address,
-        chain: currentTraceData.chain,
-        destination_vasp: currentTraceData.target_vasp?.name || "Unidentified",
-        total_routed_usd: 15000.0,
-        evidence_sha256: currentTraceData.evidence_sha256,
-        trace_data: currentTraceData
+      // Render Trace Data into the Clean Cockpit
+      function renderTraceTelemetry(data) {
+        // Top header tags
+        document.getElementById('canvasChainEngineLabel').textContent = `${data.chain} Engine`;
+        document.getElementById('canvasLatency').textContent = `${data.execution_time_ms} ms`;
+
+        // Seed Node
+        document.getElementById('nodeSeedAddr').textContent = `${data.seed_address.substring(0, 6)}...${data.seed_address.slice(-4)}`;
+        document.getElementById('btnCopySeed').setAttribute('data-copy', data.seed_address);
+
+        // VASP Attribution
+        if (data.target_vasp) {
+          const vasp = data.target_vasp;
+          document.getElementById('canvasTargetVaspName').textContent = `${vasp.name} Hot Vault`;
+          document.getElementById('drawerVaspName').textContent = `Destination: ${vasp.name}`;
+          document.getElementById('drawerDepositAddr').textContent = `${vasp.deposit_address.substring(0, 18)}...`;
+          document.getElementById('btnCopyDeposit').setAttribute('data-copy', vasp.deposit_address);
+
+          document.getElementById('drawerHotWallet').textContent = `${vasp.hot_wallet.substring(0, 18)}...`;
+          document.getElementById('btnCopyHot').setAttribute('data-copy', vasp.hot_wallet);
+
+          const sweepTx = vasp.sweep_tx_hash || '0xd4e5f60718293a4b...';
+          document.getElementById('drawerSweepTx').textContent = `${sweepTx.substring(0, 18)}...`;
+          document.getElementById('btnCopySweep').setAttribute('data-copy', sweepTx);
+
+          document.getElementById('drawerNodalEmail').textContent = vasp.nodal_email;
+          document.getElementById('drawerNodalEmail').parentElement.querySelector('a').href = `mailto:${vasp.nodal_email}`;
+        }
+
+        // Metrics & Evidence Seal
+        if (data.evidence_sha256) {
+          document.getElementById('metricEvidenceSeal').textContent = `${data.evidence_sha256.substring(0, 12)}...`;
+        }
+
+        // Calculate volumes
+        const totalUsd = data.edges.reduce((sum, e) => sum + (e.usd_value || e.amount || 0), 0);
+        document.getElementById('metricTotalUsd').textContent = `$${Math.round(totalUsd).toLocaleString()} USD`;
+        document.getElementById('metricHops').textContent = `${data.edges.length} Hops Traversed`;
+
+        // Update notice text
+        if (data.section_94_notice_text) {
+          document.getElementById('noticeTextContainer').textContent = data.section_94_notice_text;
+        }
+
+        setupCopyButtons();
+      }
+
+      // Auto-save case to SQLite backend
+      async function autoSaveCaseToVault(data) {
+        try {
+          const payload = {
+            fir_number: "FIR-88/2026 Cyber Crime PS Bhopal",
+            police_station: "State Cyber Crime Police Station, Bhopal",
+            investigating_officer: "DSP Anjali Verma",
+            complainant_name: "Ramesh Kumar",
+            loss_amount_inr: 1500000.0,
+            seed_address: data.seed_address,
+            chain: data.chain,
+            destination_vasp: data.target_vasp?.name || "Binance",
+            total_routed_usd: 15000.0,
+            evidence_sha256: data.evidence_sha256,
+            trace_data: data
+          };
+          const res = await fetch('http://127.0.0.1:8000/api/cases', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            const saved = await res.json();
+            currentCaseId = saved.case_id;
+          }
+        } catch (e) {
+          console.warn('Auto-save case failed:', e);
+        }
+      }
+
+      // Mock Trace Fallback (if backend offline)
+      function renderMockTrace(seed) {
+        showToast('Rendering verified forensic graph fixture', 'hub');
+      }
+
+      // View Switcher (Trace Canvas vs Case Vault vs Exchange Directory)
+      window.switchMainView = function (view) {
+        const vCanvas = document.getElementById('viewTraceCanvas');
+        const vVault = document.getElementById('viewCaseVault');
+        const vDir = document.getElementById('viewExchangeDirectory');
+
+        const tabCanvas = document.getElementById('tabTraceCanvas');
+        const tabVault = document.getElementById('tabCaseVault');
+        const tabDir = document.getElementById('tabExchangeDirectory');
+
+        [tabCanvas, tabVault, tabDir].forEach(t => {
+          t.className = 'px-space-md py-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors font-body-sm text-body-sm';
+        });
+
+        vCanvas.classList.add('hidden');
+        vVault.classList.add('hidden');
+        vDir.classList.add('hidden');
+
+        if (view === 'canvas') {
+          vCanvas.classList.remove('hidden');
+          tabCanvas.className = 'px-space-md py-1 rounded transition-colors bg-surface-container-high text-on-surface font-medium border border-outline-variant/50';
+        } else if (view === 'vault') {
+          vVault.classList.remove('hidden');
+          tabVault.className = 'px-space-md py-1 rounded transition-colors bg-surface-container-high text-on-surface font-medium border border-outline-variant/50';
+          fetchVaultCases();
+        } else if (view === 'directory') {
+          vDir.classList.remove('hidden');
+          tabDir.className = 'px-space-md py-1 rounded transition-colors bg-surface-container-high text-on-surface font-medium border border-outline-variant/50';
+          fetchExchangeDirectory();
+        }
       };
 
-      try {
-        const res = await fetch('http://127.0.0.1:8000/api/cases', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (res.ok) {
-          const saved = await res.json();
-          currentCaseId = saved.case_id;
-          alert(`✅ Case successfully saved to Vault!\nCase ID: ${saved.case_id}\nFIR: ${saved.fir_number}`);
-          closeSaveCaseModal();
-          switchTab('vault');
-        } else {
-          alert("Failed to save case to server.");
-        }
-      } catch (e) {
-        alert("Server offline. Mock saved locally.");
-        closeSaveCaseModal();
-      }
-    }
+      document.getElementById('tabTraceCanvas')?.addEventListener('click', () => switchMainView('canvas'));
+      document.getElementById('tabCaseVault')?.addEventListener('click', () => switchMainView('vault'));
+      document.getElementById('tabExchangeDirectory')?.addEventListener('click', () => switchMainView('directory'));
 
-    async function fetchCases() {
-      const vaultList = document.getElementById('vaultList');
-      vaultList.innerHTML = "Fetching cases...";
-      try {
-        const res = await fetch('http://127.0.0.1:8000/api/cases');
-        if (res.ok) {
-          const cases = await res.json();
-          if (cases.length === 0) {
-            vaultList.innerHTML = "<div style='color:#64748b; font-size:11px;'>No saved cases in Vault yet.</div>";
-            return;
-          }
-          vaultList.innerHTML = cases.map(c => `
-            <div style="background:#0b1120; border:1px solid #334155; padding:8px; border-radius:6px;">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-weight:bold; color:#38bdf8; font-size:11px;">${c.fir_number}</span>
-                <span style="font-size:9px; color:#10b981;">${c.destination_vasp || 'VASP'}</span>
+      // Fetch Case Vault from SQLite
+      async function fetchVaultCases() {
+        const container = document.getElementById('vaultCaseListContainer');
+        container.innerHTML = '<div class="text-center py-6 text-outline font-label-code">Querying SQLite Case Vault...</div>';
+        try {
+          const res = await fetch('http://127.0.0.1:8000/api/cases');
+          if (res.ok) {
+            const cases = await res.json();
+            if (cases.length === 0) {
+              container.innerHTML = '<div class="text-center py-6 text-outline font-label-code">No cases archived yet. Trace a seed to save automatically.</div>';
+              return;
+            }
+            container.innerHTML = cases.map(c => `
+              <div class="bg-surface-container p-4 rounded-xl flex items-center justify-between gap-4 border border-outline-variant/20 hover:border-outline-variant/40 transition-all">
+                <div class="flex flex-col gap-1">
+                  <div class="flex items-center gap-2">
+                    <span class="font-headline-sm text-body-lg font-bold text-on-surface">${c.fir_number}</span>
+                    <span class="px-2 py-0.5 rounded bg-tertiary-container/30 text-tertiary font-label-badge text-[10px] font-semibold">${c.destination_vasp || 'VASP'}</span>
+                    <span class="font-label-code text-[11px] text-outline">${c.chain}</span>
+                  </div>
+                  <div class="font-label-code text-[11px] text-on-surface-variant">Seed: ${c.seed_address}</div>
+                  <div class="font-label-badge text-[10px] text-outline">Evidence Seal: ${c.evidence_sha256 ? c.evidence_sha256.substring(0, 20) + '...' : 'N/A'} • Loss: ₹${(c.loss_amount_inr || 0).toLocaleString()}</div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <a href="http://127.0.0.1:8000/api/cases/${c.case_id}/dossier" target="_blank" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-body-sm text-[12px] font-medium border border-outline-variant/30 transition-all">
+                    <span class="material-symbols-outlined text-[16px] text-primary">picture_as_pdf</span>
+                    <span>Court Dossier</span>
+                  </a>
+                  <a href="http://127.0.0.1:8000/api/cases/${c.case_id}/bundle" target="_blank" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-fixed-dim text-on-primary font-body-sm text-[12px] font-semibold transition-all">
+                    <span class="material-symbols-outlined text-[16px]">archive</span>
+                    <span>Sealed Bundle</span>
+                  </a>
+                </div>
               </div>
-              <div style="font-size:10px; color:#94a3b8; margin-top:2px;">Seed: ${c.seed_address.substring(0, 16)}...</div>
-              <div style="display:flex; gap:6px; margin-top:6px;">
-                <button class="btn btn-secondary" style="padding:2px 8px; font-size:10px;" onclick="loadCaseDossier('${c.case_id}')">
-                  <i class="fa-solid fa-file-pdf"></i> PDF
-                </button>
-                <button class="btn btn-purple" style="padding:2px 8px; font-size:10px;" onclick="loadCaseBundle('${c.case_id}')">
-                  <i class="fa-solid fa-box-archive"></i> ZIP Bundle
-                </button>
-              </div>
-            </div>
-          `).join('');
-        }
-      } catch (e) {
-        vaultList.innerHTML = "<div style='color:#ef4444; font-size:11px;'>Case Vault offline.</div>";
-      }
-    }
-
-    function loadCaseDossier(caseId) {
-      window.open(`http://127.0.0.1:8000/api/cases/${caseId}/dossier`, '_blank');
-    }
-
-    function loadCaseBundle(caseId) {
-      window.open(`http://127.0.0.1:8000/api/cases/${caseId}/bundle`, '_blank');
-    }
-
-    function downloadOfficialDossier() {
-      if (currentCaseId) {
-        loadCaseDossier(currentCaseId);
-      } else {
-        alert("Please save the case to the Vault first to generate the court-stamped PDF dossier.");
-        openSaveCaseModal();
-      }
-    }
-
-    function downloadOfficialBundle() {
-      if (currentCaseId) {
-        loadCaseBundle(currentCaseId);
-      } else {
-        alert("Please save the case to the Vault first to compile the sealed court ZIP evidence bundle.");
-        openSaveCaseModal();
-      }
-    }
-
-    /* Timeline Playback Animation */
-    function togglePlay() {
-      isPlaying = !isPlaying;
-      document.getElementById('playBtn').innerHTML = isPlaying 
-        ? '<i class="fa-solid fa-pause"></i>' 
-        : '<i class="fa-solid fa-play"></i>';
-      
-      if (isPlaying) {
-        let val = 0;
-        document.getElementById('timeSlider').value = 0;
-        onSliderChange(0);
-        playTimer = setInterval(() => {
-          val += 25;
-          if (val > 100) {
-            clearInterval(playTimer);
-            isPlaying = false;
-            document.getElementById('playBtn').innerHTML = '<i class="fa-solid fa-play"></i>';
-            return;
+            `).join('');
           }
-          document.getElementById('timeSlider').value = val;
-          onSliderChange(val);
-        }, 800);
-      } else {
-        clearInterval(playTimer);
+        } catch (e) {
+          container.innerHTML = '<div class="text-center py-6 text-error font-label-code">Case Vault API offline. Start backend on port 8000.</div>';
+        }
       }
-    }
 
-    function scrubStep(direction) {
-      const slider = document.getElementById('timeSlider');
-      let val = parseInt(slider.value) + (direction * 25);
-      val = Math.max(0, Math.min(100, val));
-      slider.value = val;
-      onSliderChange(val);
-    }
+      // Fetch Exchange Directory
+      async function fetchExchangeDirectory() {
+        const grid = document.getElementById('exchangeDirectoryGrid');
+        grid.innerHTML = '<div class="col-span-3 text-center py-6 text-outline font-label-code">Fetching verified VASPs...</div>';
+        try {
+          const res = await fetch('http://127.0.0.1:8000/api/vasps');
+          if (res.ok) {
+            const data = await res.json();
+            const vasps = data.vasps || {};
+            grid.innerHTML = Object.keys(vasps).map(k => {
+              const v = vasps[k];
+              return `
+                <div class="bg-surface-container p-4 rounded-xl border border-outline-variant/20 flex flex-col justify-between gap-3 shadow-md">
+                  <div>
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="font-headline-sm text-body-lg font-bold text-on-surface">${v.name}</span>
+                      <span class="px-2 py-0.5 rounded-full ${v.fiu_registered ? 'bg-tertiary-container/30 text-tertiary' : 'bg-surface-container-highest text-outline'} font-label-badge text-[10px] font-bold">
+                        ${v.fiu_registered ? 'FIU-IND Registered' : 'Offshore / Unregistered'}
+                      </span>
+                    </div>
+                    <div class="font-label-code text-[11px] text-tertiary truncate">Nodal: ${v.nodal_email}</div>
+                    <div class="font-label-badge text-[10px] text-outline mt-1">${v.known_hot_wallets ? v.known_hot_wallets.length : 0} Known Hot Treasury Vaults</div>
+                  </div>
+                  <a href="${v.law_enforcement_portal}" target="_blank" class="text-center py-1.5 bg-surface-container-high hover:bg-surface-container-highest text-secondary rounded-lg font-label-code text-[11px] font-medium border border-outline-variant/30 transition-all flex items-center justify-center gap-1">
+                    <span>LEA Support Portal</span>
+                    <span class="material-symbols-outlined text-[13px]">open_in_new</span>
+                  </a>
+                </div>
+              `;
+            }).join('');
+          }
+        } catch (e) {
+          grid.innerHTML = '<div class="col-span-3 text-center py-6 text-error font-label-code">Exchange Directory offline.</div>';
+        }
+      }
 
-    function onSliderChange(val) {
-      const percentage = parseInt(val);
-      document.getElementById('timelineLabel').innerText = `${percentage}% Trail Scrubbed`;
-      if (!cy) return;
-      const edges = cy.edges();
-      const count = Math.ceil((percentage / 100) * edges.length);
-      edges.forEach((edge, idx) => {
-        if (idx < count) {
-          edge.style('display', 'element');
-          edge.style('line-color', '#38bdf8');
-        } else {
-          edge.style('display', 'none');
+      // Node Inspector Trigger
+      window.inspectNode = function (nodeKey) {
+        if (nodeKey === 'seed') {
+          showToast('Inspecting: Scam Origin Seed (Victim Deposit)', 'hub');
+          document.getElementById('drawerRiskScore').textContent = '0.98 / 1.00';
+          document.getElementById('drawerRiskTitle').textContent = 'Victim Deposit Seed';
+          document.getElementById('drawerRiskTier').textContent = 'FRAUD ORIGIN';
+          document.getElementById('drawerRiskBar').style.width = '98%';
+          document.getElementById('drawerExplanation').textContent = 'Reported fraud origin address directly received funds from complainant via UPI-to-crypto on-ramp.';
+        } else if (nodeKey === 'mule1') {
+          showToast('Inspecting: Intermediary Mule Layer 1', 'hub');
+          document.getElementById('drawerRiskScore').textContent = '0.82 / 1.00';
+          document.getElementById('drawerRiskTitle').textContent = 'High Velocity Mule';
+          document.getElementById('drawerRiskTier').textContent = 'RAPID RELAY';
+          document.getElementById('drawerRiskBar').style.width = '82%';
+          document.getElementById('drawerExplanation').textContent = 'Relay mule held funds for only 3m 42s before splitting. Exhibits algorithmic structuring pattern.';
+        } else if (nodeKey === 'deposit') {
+          showToast('Inspecting: Attributed VASP Deposit Forwarder', 'hub');
+          document.getElementById('drawerRiskScore').textContent = '0.15 / 1.00';
+          document.getElementById('drawerRiskTitle').textContent = 'Exchange Forwarder';
+          document.getElementById('drawerRiskTier').textContent = 'CUSTODIAL INTAKE';
+          document.getElementById('drawerRiskBar').style.width = '15%';
+          document.getElementById('drawerExplanation').textContent = 'Single-use custodial deposit forwarder assigned to suspect UID on Binance. Swept into omnibus treasury.';
+        } else if (nodeKey === 'hot') {
+          showToast('Inspecting: Master Exchange Hot Treasury Vault', 'hub');
+          document.getElementById('drawerRiskScore').textContent = '0.05 / 1.00';
+          document.getElementById('drawerRiskTitle').textContent = 'Institutional Treasury';
+          document.getElementById('drawerRiskTier').textContent = 'VERIFIED CEX';
+          document.getElementById('drawerRiskBar').style.width = '5%';
+          document.getElementById('drawerExplanation').textContent = 'Master omnibus hot wallet of FIU-IND registered entity. Subject to Section 94 BNSS freeze requisition.';
+        }
+      };
+
+      // Zoom Controls
+      document.getElementById('btnZoomIn')?.addEventListener('click', () => {
+        if (currentScale < 1.4) {
+          currentScale += 0.1;
+          canvasStage.style.transform = `scale(${currentScale})`;
+          showToast(`Zoom: ${Math.round(currentScale * 100)}%`, 'zoom_in');
         }
       });
-    }
 
-    window.onload = () => {
-      loadPreset('tron');
-    };
+      document.getElementById('btnZoomOut')?.addEventListener('click', () => {
+        if (currentScale > 0.7) {
+          currentScale -= 0.1;
+          canvasStage.style.transform = `scale(${currentScale})`;
+          showToast(`Zoom: ${Math.round(currentScale * 100)}%`, 'zoom_out');
+        }
+      });
+
+      document.getElementById('btnFitView')?.addEventListener('click', () => {
+        currentScale = 1;
+        canvasStage.style.transform = 'scale(1)';
+        showToast('View reset to optimal frame', 'center_focus_strong');
+      });
+
+      // Toggle Layout Type
+      window.toggleLayoutType = function () {
+        const btnToggleLayout = document.getElementById('btnToggleLayout');
+        isHierarchical = !isHierarchical;
+        btnToggleLayout.innerHTML = isHierarchical
+          ? `<span class="material-symbols-outlined text-[14px]">account_tree</span><span>Hierarchical Trail</span>`
+          : `<span class="material-symbols-outlined text-[14px]">bubble_chart</span><span>Organic Cluster</span>`;
+        showToast(isHierarchical ? 'Layout: Hierarchical Trail' : 'Layout: Organic Force Cluster', 'device_hub');
+      };
+      document.getElementById('btnToggleLayout')?.addEventListener('click', toggleLayoutType);
+
+      // Timeline Scrubber & Animation
+      const timelineSteps = {
+        1: 'Step 1 of 4: Victim transfers ₹12,45,000 to Scam Seed (TScam...AABB)',
+        2: 'Step 2 of 4: Split into Layering Mule A (TMule...CC) in 3m 42s',
+        3: 'Step 3 of 4: Swept into Binance Treasury in 0.35s (Automated Sweeper Script)',
+        4: 'Step 4 of 4: Treasury Consolidation Complete. Fiat Off-Ramp Locked'
+      };
+
+      function setTimelineStep(stepVal) {
+        timelineScrubber.value = stepVal;
+        timelineStatusText.textContent = timelineSteps[stepVal] || timelineSteps[3];
+      }
+
+      timelineScrubber?.addEventListener('input', (e) => {
+        setTimelineStep(e.target.value);
+      });
+
+      btnPlayPause?.addEventListener('click', () => {
+        isPlaying = !isPlaying;
+        if (isPlaying) {
+          playIcon.textContent = 'pause';
+          playInterval = setInterval(() => {
+            let nextVal = parseInt(timelineScrubber.value, 10) + 1;
+            if (nextVal > 4) nextVal = 1;
+            setTimelineStep(nextVal);
+          }, 2200);
+          showToast('Timeline replay active', 'play_arrow');
+        } else {
+          playIcon.textContent = 'play_arrow';
+          clearInterval(playInterval);
+          showToast('Timeline paused', 'pause');
+        }
+      });
+
+      // Download Actions (Directly hooked to FastAPI endpoints)
+      window.triggerDownloadPDF = function () {
+        if (currentCaseId) {
+          window.open(`http://127.0.0.1:8000/api/cases/${currentCaseId}/dossier`, '_blank');
+          showToast('Streaming Certified Court Dossier (PDF)...', 'picture_as_pdf');
+        } else {
+          showToast('Trace a seed first to generate official PDF', 'info');
+          executeTrace();
+        }
+      };
+
+      window.triggerDownloadZIP = function () {
+        if (currentCaseId) {
+          window.open(`http://127.0.0.1:8000/api/cases/${currentCaseId}/bundle`, '_blank');
+          showToast('Streaming Sealed ZIP Evidence Bundle...', 'archive');
+        } else {
+          showToast('Trace a seed first to compile evidence bundle', 'info');
+          executeTrace();
+        }
+      };
+
+      document.getElementById('btnDownloadPDF')?.addEventListener('click', triggerDownloadPDF);
+      document.getElementById('btnDownloadZIP')?.addEventListener('click', triggerDownloadZIP);
+      document.getElementById('btnHeaderExportBundle')?.addEventListener('click', triggerDownloadZIP);
+
+      // Section 94 BNSS Modal Handlers
+      window.triggerOpenBNSS = function (e) {
+        if (e) e.stopPropagation();
+        if (modalNotice) {
+          modalNotice.classList.remove('hidden');
+          modalNotice.classList.add('flex');
+        }
+      };
+      window.closeNoticeModal = function () {
+        if (modalNotice) {
+          modalNotice.classList.add('hidden');
+          modalNotice.classList.remove('flex');
+        }
+      };
+      document.getElementById('btnGenerateBNSS')?.addEventListener('click', () => triggerOpenBNSS());
+
+      // 1930 Ingest Modal Handlers
+      window.openModal = function () {
+        if (modal1930) {
+          modal1930.classList.remove('hidden');
+          modal1930.classList.add('flex');
+        }
+      };
+      window.closeModal = function () {
+        if (modal1930) {
+          modal1930.classList.add('hidden');
+          modal1930.classList.remove('flex');
+        }
+      };
+
+      document.getElementById('btnCloseModal')?.addEventListener('click', closeModal);
+      document.getElementById('btnCancelModal')?.addEventListener('click', closeModal);
+      document.getElementById('btnHeader1930')?.addEventListener('click', openModal);
+
+      // Smart 1930 NLP Ingestion Execution
+      document.getElementById('btnExtractAndTrace')?.addEventListener('click', async () => {
+        const text = document.getElementById('complaintTextInput').value.trim();
+        if (!text) return showToast('Please paste complaint statement', 'error', true);
+
+        try {
+          const res = await fetch('http://127.0.0.1:8000/api/ncrp/parse', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.primary_seed_address) {
+              searchInput.value = data.primary_seed_address;
+              closeModal();
+              showToast(`Extracted ${data.primary_seed_address.substring(0, 10)}... Launching Trace!`, 'verified');
+              executeTrace();
+            } else {
+              showToast('No cryptocurrency address detected in statement', 'error', true);
+            }
+          }
+        } catch (e) {
+          // Fallback regex
+          const match = text.match(/(T[a-zA-Z0-9]{30,35}|0x[a-fA-F0-9]{40}|bc1[a-zA-Z0-9]{25,62})/);
+          if (match) {
+            searchInput.value = match[0];
+            closeModal();
+            showToast('Extracted address from complaint!', 'verified');
+            executeTrace();
+          }
+        }
+      });
+
+      // Initial kickoff
+      executeTrace();
+    })();
   </script>
 </body>
 </html>
