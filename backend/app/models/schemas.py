@@ -10,7 +10,7 @@ class CaseMetadata(BaseModel):
     police_station: Optional[str] = Field(default="State Cyber Police Station", description="Station name")
     investigating_officer: Optional[str] = Field(default="Inspector Cyber Cell", description="IO Name/Rank")
     complainant_name: Optional[str] = Field(default="Complainant", description="Victim / Complainant Name")
-    loss_amount_inr: Optional[float] = Field(default=0.0, description="Victim loss in INR")
+    loss_amount_inr: Optional[float] = Field(default=0.0, ge=0.0, description="Victim loss in INR")
 
 class TraceRequest(BaseModel):
     seed_address: str = Field(..., description="Target suspect wallet address (TRON, EVM, BTC)")
@@ -72,7 +72,7 @@ class CaseCreateRequest(BaseModel):
     police_station: str
     investigating_officer: str
     complainant_name: str = "Complainant"
-    loss_amount_inr: float = 0.0
+    loss_amount_inr: float = Field(default=0.0, ge=0.0)
     seed_address: str
     chain: str
     destination_vasp: Optional[str] = None

@@ -34,7 +34,7 @@ FIR_REGEX = re.compile(
     re.IGNORECASE
 )
 INR_AMOUNT_REGEX = re.compile(
-    r'(?:(?:Rs\.?|INR|₹|amount\s+of|lost)\s*[:=]?\s*)([0-9]{1,3}(?:,[0-9]{2,3})*(?:\.[0-9]{2})?|\b[0-9]{4,10}\b)',
+    r'(?:(?:Rs\.?|INR|₹|amount\s+of|lost)\s*[:=]?\s*)([0-9]{1,3}(?:,[0-9]{2,3})+(?:\.[0-9]{2})?|\b[0-9]{3,10}(?:\.[0-9]{2})?\b)',
     re.IGNORECASE
 )
 PHONE_REGEX = re.compile(r'\b(?:\+91[\-\s]?)?[6-9]\d{9}\b')

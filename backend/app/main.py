@@ -13,6 +13,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from pydantic import BaseModel, Field
 import json
 import os
+import re
 from typing import List, Optional, Dict, Any
 
 from app.models.schemas import TraceRequest, TraceResponse, CaseCreateRequest, CaseRecord
@@ -153,7 +154,8 @@ def download_case_dossier(case_id: str):
             detail=f"Case ID '{case_id}' not found in Case Vault."
         )
     pdf_bytes = generate_pdf_dossier(case)
-    fir_clean = case['fir_number'].replace('/', '_').replace(' ', '_')
+    raw_fir = str(case.get('fir_number', 'CASE'))
+    fir_clean = re.sub(r'[^a-zA-Z0-9_\-]', '_', raw_fir).strip('_') or 'CASE'
     filename = f"NIRMAAN_DOSSIER_{fir_clean}.pdf"
     return Response(
         content=pdf_bytes,
@@ -175,7 +177,8 @@ def download_case_evidence_bundle(case_id: str):
             detail=f"Case ID '{case_id}' not found in Case Vault."
         )
     zip_bytes = generate_evidence_bundle_zip(case)
-    fir_clean = case['fir_number'].replace('/', '_').replace(' ', '_')
+    raw_fir = str(case.get('fir_number', 'CASE'))
+    fir_clean = re.sub(r'[^a-zA-Z0-9_\-]', '_', raw_fir).strip('_') or 'CASE'
     filename = f"NIRMAAN_EVIDENCE_BUNDLE_{fir_clean}.zip"
     return Response(
         content=zip_bytes,

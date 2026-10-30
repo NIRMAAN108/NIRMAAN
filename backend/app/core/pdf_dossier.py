@@ -5,6 +5,8 @@ admissible under Section 94 BNSS, 2023 and Section 63 BSA, 2023.
 """
 
 import io
+import html
+import re
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 
@@ -14,6 +16,15 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable, KeepTogether
 )
+
+def _clean_text(val: Any) -> str:
+    """Sanitizes text to prevent Latin-1 encoding crashes in standard PDF fonts and escapes XML tags."""
+    if val is None:
+        return ""
+    text = str(val)
+    # Replace non-latin-1 characters with safe ascii approximations or '?'
+    safe_str = text.encode('latin-1', 'replace').decode('latin-1')
+    return html.escape(safe_str)
 
 def generate_pdf_dossier(case_data: Dict[str, Any]) -> bytes:
     """
@@ -95,22 +106,27 @@ def generate_pdf_dossier(case_data: Dict[str, Any]) -> bytes:
 
     # Section 1: Case Details & Complainant Particulars
     story.append(Paragraph("1. CASE REGISTRATION & INVESTIGATION PARTICULARS", h2_style))
+    fir_clean = _clean_text(case_data.get("fir_number", "N/A"))
+    ps_clean = _clean_text(case_data.get("police_station", "State Cyber Cell"))
+    io_clean = _clean_text(case_data.get("investigating_officer", "Inspector Cyber Cell"))
+    comp_clean = _clean_text(case_data.get("complainant_name", "Victim Complainant"))
+
     case_table_data = [
         [
             Paragraph("<b>FIR / Complaint No.:</b>", body_style),
-            Paragraph(case_data.get("fir_number", "N/A"), body_bold),
+            Paragraph(fir_clean, body_bold),
             Paragraph("<b>Date of Issue:</b>", body_style),
             Paragraph(datetime.now(timezone.utc).strftime("%d-%b-%Y %H:%M UTC"), body_style)
         ],
         [
             Paragraph("<b>Police Station:</b>", body_style),
-            Paragraph(case_data.get("police_station", "State Cyber Cell"), body_style),
+            Paragraph(ps_clean, body_style),
             Paragraph("<b>Investigating Officer:</b>", body_style),
-            Paragraph(case_data.get("investigating_officer", "Inspector Cyber Cell"), body_style)
+            Paragraph(io_clean, body_style)
         ],
         [
             Paragraph("<b>Complainant Name:</b>", body_style),
-            Paragraph(case_data.get("complainant_name", "Victim Complainant"), body_style),
+            Paragraph(comp_clean, body_style),
             Paragraph("<b>Reported Loss:</b>", body_style),
             Paragraph(f"INR {case_data.get('loss_amount_inr', 0.0):,.2f}", body_bold)
         ]
@@ -128,9 +144,9 @@ def generate_pdf_dossier(case_data: Dict[str, Any]) -> bytes:
 
     # Section 2: Destination Exchange & Attribution
     story.append(Paragraph("2. TARGET VASP ATTRIBUTION & LIQUIDATION TRAIL", h2_style))
-    vasp_name = case_data.get("destination_vasp") or "Unidentified / In-Transit"
-    seed_addr = case_data.get("seed_address", "N/A")
-    chain = case_data.get("chain", "TRON (TRC-20)")
+    vasp_name = _clean_text(case_data.get("destination_vasp") or "Unidentified / In-Transit")
+    seed_addr = _clean_text(case_data.get("seed_address", "N/A"))
+    chain = _clean_text(case_data.get("chain", "TRON (TRC-20)"))
     routed_usd = case_data.get("total_routed_usd", 0.0)
 
     vasp_table_data = [
@@ -161,7 +177,7 @@ def generate_pdf_dossier(case_data: Dict[str, Any]) -> bytes:
     # Section 3: Statutory Freeze Order (Section 94 BNSS)
     story.append(Paragraph("3. STATUTORY NOTICE UNDER SECTION 94 BNSS, 2023", h2_style))
     notice_p = Paragraph(
-        f"<b>WHEREAS</b> an investigation into cyber fraud registered under FIR <b>{case_data.get('fir_number', 'N/A')}</b> "
+        f"<b>WHEREAS</b> an investigation into cyber fraud registered under FIR <b>{fir_clean}</b> "
         f"has established that proceeds of crime originating from wallet <b>{seed_addr}</b> have been routed into "
         f"accounts operated on your platform (<b>{vasp_name}</b>).<br/><br/>"
         "<b>NOW THEREFORE</b>, you are hereby commanded under Section 94 of the Bharatiya Nagarik Suraksha Sanhita (BNSS), 2023 "

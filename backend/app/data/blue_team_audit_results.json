@@ -1,0 +1,231 @@
+{
+  "timestamp": "2026-10-30T13:59:52Z",
+  "target_endpoint": "http://127.0.0.1:8000",
+  "summary": {
+    "total": 16,
+    "passed": 16,
+    "failed": 0,
+    "pass_rate_pct": 100.0,
+    "elapsed_seconds": 45.39
+  },
+  "results": [
+    {
+      "test_id": "SEC-01",
+      "name": "API Health & Online Status Check",
+      "status": "PASS",
+      "details": {
+        "http_status": 200,
+        "online": "online",
+        "tracked_vasps": 45
+      },
+      "notes": ""
+    },
+    {
+      "test_id": "SEC-02",
+      "name": "VASP Directory Normalization & Integrity",
+      "status": "PASS",
+      "details": {
+        "tracked_exchanges": [
+          "binance",
+          "coindcx",
+          "wazirx",
+          "coinswitch",
+          "zebpay",
+          "mudrex",
+          "kucoin",
+          "bybit",
+          "okx",
+          "bitget",
+          "mexc",
+          "gateio",
+          "htx"
+        ],
+        "required_verified": [
+          "binance",
+          "bybit",
+          "okx",
+          "coindcx",
+          "wazirx"
+        ]
+      },
+      "notes": ""
+    },
+    {
+      "test_id": "SEC-03",
+      "name": "1930 / NCRP Automated Text Ingestion",
+      "status": "PASS",
+      "details": {
+        "primary_seed": "TScamOriginVictimAddress778899AABB",
+        "primary_chain": "tron",
+        "loss_inr": 1500000.0,
+        "suggested_fir": "FIR-88/2026"
+      },
+      "notes": ""
+    },
+    {
+      "test_id": "FLOW-01",
+      "name": "Preset 1: TRON Demo (\u20b915L Telegram Scam)",
+      "status": "PASS",
+      "details": {
+        "latency_ms": 2662.47,
+        "destination_found": true,
+        "target_vasp": "Binance",
+        "typology": "STANDARD_RAPID_MULE",
+        "nodes_count": 5,
+        "edges_count": 4,
+        "evidence_sha256": "43527adf7d874db4a10f109d13d6ccb7ba177195a8d14892c2da721009ad27ac"
+      },
+      "notes": ""
+    },
+    {
+      "test_id": "FLOW-02",
+      "name": "Preset 2: EVM Demo (\u20b925L CEX Layering)",
+      "status": "PASS",
+      "details": {
+        "latency_ms": 1679.43,
+        "destination_found": true,
+        "target_vasp": "Binance",
+        "nodes_count": 5,
+        "edges_count": 4
+      },
+      "notes": ""
+    },
+    {
+      "test_id": "FLOW-03",
+      "name": "Preset 3: BTC Demo (\u20b950L Pig Butchering UTXO)",
+      "status": "PASS",
+      "details": {
+        "latency_ms": 27386.73,
+        "destination_found": true,
+        "target_vasp": "Binance",
+        "nodes_count": 5,
+        "edges_count": 4
+      },
+      "notes": ""
+    },
+    {
+      "test_id": "FLOW-04",
+      "name": "Preset 4: Live Binance 14 Hot Vault (EVM)",
+      "status": "PASS",
+      "details": {
+        "latency_ms": 1.29,
+        "target_vasp": "Binance",
+        "nodal_email": "compliance-in@binance.com",
+        "fiu_registered": true
+      },
+      "notes": ""
+    },
+    {
+      "test_id": "FLOW-05",
+      "name": "Preset 5: Live WazirX Exploiter (CRITICAL Risk Tier)",
+      "status": "PASS",
+      "details": {
+        "latency_ms": 1359.98,
+        "risk_tier": "CRITICAL",
+        "ml_anomaly_score": 0.85,
+        "flags": [
+          "REPORTED_FRAUD_SEED"
+        ]
+      },
+      "notes": ""
+    },
+    {
+      "test_id": "FLOW-06",
+      "name": "Preset 6: Live Active TRON Wallet (TronGrid Live)",
+      "status": "PASS",
+      "details": {
+        "latency_ms": 9306.14,
+        "nodes_count": 13,
+        "edges_count": 35,
+        "ml_anomaly_score": 0.95
+      },
+      "notes": ""
+    },
+    {
+      "test_id": "CASE-01",
+      "name": "SQLite Case Vault: Case Creation (POST /api/cases)",
+      "status": "PASS",
+      "details": {
+        "case_id": "case_3b0b17f288",
+        "fir_number": "FIR-E2E-AUDIT/2026"
+      },
+      "notes": ""
+    },
+    {
+      "test_id": "CASE-02",
+      "name": "Case Retrieval by ID (GET /api/cases/{id})",
+      "status": "PASS",
+      "details": {
+        "case_id": "case_3b0b17f288",
+        "destination_vasp": "Binance"
+      },
+      "notes": ""
+    },
+    {
+      "test_id": "LEGAL-01",
+      "name": "Court Dossier PDF Generation (GET /api/cases/{id}/dossier)",
+      "status": "PASS",
+      "details": {
+        "bytes_length": 4432,
+        "header_signature": "%PDF-",
+        "content_type": "application/pdf"
+      },
+      "notes": ""
+    },
+    {
+      "test_id": "LEGAL-02",
+      "name": "FIU-IND PMLA STR Reporting (GET /api/cases/{id}/str)",
+      "status": "PASS",
+      "details": {
+        "regulatory_body": "Financial Intelligence Unit - India (FIU-IND)",
+        "reporting_channel": "FINnet 2.0 Electronic Gateway",
+        "aml_indicators_count": 3
+      },
+      "notes": ""
+    },
+    {
+      "test_id": "LEGAL-03",
+      "name": "Court-Sealed ZIP Evidence Bundle & Cryptographic Invariance",
+      "status": "PASS",
+      "details": {
+        "bundle_bytes": 12160,
+        "files_count": 7,
+        "verified_files": [
+          "01_COURT_DOSSIER_FIR-E2E-AUDIT_2026.pdf",
+          "02_SECTION_94_BNSS_NOTICE_FIR-E2E-AUDIT_2026.txt",
+          "03_SECTION_63_BSA_CERTIFICATE_FIR-E2E-AUDIT_2026.txt",
+          "04_FIU_IND_PMLA_STR_REPORT_FIR-E2E-AUDIT_2026.json",
+          "05_FORENSIC_GRAPH_LEDGER_FIR-E2E-AUDIT_2026.json",
+          "06_TRANSACTION_HOPS_LEDGER_FIR-E2E-AUDIT_2026.csv"
+        ],
+        "all_hashes_matched": true,
+        "cryptographic_manifest_lines": 6
+      },
+      "notes": ""
+    },
+    {
+      "test_id": "FRONT-01",
+      "name": "Frontend UI Static Asset & Control Discovery",
+      "status": "PASS",
+      "details": {
+        "html_bytes": 44292,
+        "total_verified_ids": 30,
+        "missing_ids": [],
+        "total_verified_actions": 12,
+        "missing_actions": []
+      },
+      "notes": ""
+    },
+    {
+      "test_id": "DEF-01",
+      "name": "Crawler Fault Tolerance & Circuit Breaker State Machine",
+      "status": "PASS",
+      "details": {
+        "failure_threshold": 3,
+        "recovery_state": "HALF-OPEN -> CLOSED",
+        "zero_crash_guarantee": "VERIFIED"
+      },
+      "notes": ""
+    }
+  ]
+}
