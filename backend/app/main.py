@@ -1,19 +1,24 @@
 """
 NIRMAAN (ChainTrace AI) - FastAPI Entry Point
 Real-Time Fraud-Linked Crypto Exchange Attribution Engine.
-Features standardized enterprise error handling (400, 404, 422, 429, 500, 504).
+Features standardized enterprise error handling (400, 404, 422, 429, 500, 504),
+SQLite Case Vault persistence, ML Risk & Peeling Analytics, and Court-Ready PDF Dossier generation.
 """
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
+from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 import json
 import os
+from typing import List, Optional
 
-from app.models.schemas import TraceRequest, TraceResponse
+from app.models.schemas import TraceRequest, TraceResponse, CaseCreateRequest, CaseRecord
 from app.core.tracer import ForensicTracer
 from app.core.legal_notice import generate_section_94_bnss_notice
+from app.core.pdf_dossier import generate_pdf_dossier
 from app.crawlers.multi_chain_crawler import detect_chain
+from app.db.case_service import save_case, list_cases, get_case
 from app.core.errors import (
     ForensicEngineException,
     InvalidWalletAddressError,
@@ -48,6 +53,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount frontend directory if it exists
+frontend_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "frontend")
+if os.path.exists(frontend_dir):
+    app.mount("/app", StaticFiles(directory=frontend_dir, html=True), name="frontend")
+
 tracer = ForensicTracer()
 
 @app.get("/")
@@ -79,7 +89,7 @@ async def run_trace(req: TraceRequest):
     """
     Main forensic entry point:
     Accepts suspect TRON/EVM/Bitcoin wallet, traces multi-hop flows, runs deposit sweep detection,
-    and returns graph nodes, edges, target VASP, and pre-filled Section 94 BNSS notice.
+    and returns graph nodes with ML risk scoring, edges, target VASP, and pre-filled Section 94 notice.
     """
     chain = detect_chain(req.seed_address)
     if chain == "unknown":
@@ -92,6 +102,47 @@ async def run_trace(req: TraceRequest):
     # Generate legal notice
     response.section_94_notice_text = generate_section_94_bnss_notice(response, req.case_metadata)
     return response
+
+# -------------------------------------------------------------
+# 3. CASE VAULT ENDPOINTS (Vertical 3)
+# -------------------------------------------------------------
+@app.post("/api/cases", response_model=CaseRecord, status_code=status.HTTP_201_CREATED)
+def create_case_record(req: CaseCreateRequest):
+    """Persists an investigated trace into the SQLite Case Vault."""
+    return save_case(req)
+
+@app.get("/api/cases", response_model=List[CaseRecord])
+def get_recent_cases(limit: int = 50):
+    """Lists past investigated cases from the Case Vault."""
+    return list_cases(limit=limit)
+
+@app.get("/api/cases/{case_id}")
+def get_case_details(case_id: str):
+    """Retrieves full case details including raw graph trace data."""
+    case = get_case(case_id)
+    if not case:
+        raise StarletteHTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Case ID '{case_id}' not found in Case Vault."
+        )
+    return case
+
+@app.get("/api/cases/{case_id}/dossier")
+def download_case_dossier(case_id: str):
+    """Generates and streams an official court-admissible PDF evidence dossier."""
+    case = get_case(case_id)
+    if not case:
+        raise StarletteHTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Case ID '{case_id}' not found in Case Vault."
+        )
+    pdf_bytes = generate_pdf_dossier(case)
+    filename = f"NIRMAAN_DOSSIER_{case['fir_number'].replace('/', '_')}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
 
 if __name__ == "__main__":
     import uvicorn
