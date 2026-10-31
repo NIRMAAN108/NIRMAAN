@@ -3,6 +3,7 @@ Section 94 BNSS Legal Notice & Section 63 BSA Electronic Certificate Generator.
 Enforces compliance with Bharatiya Nagarik Suraksha Sanhita, 2023 & Bharatiya Sakshya Adhiniyam, 2023.
 """
 import time
+import json
 import hashlib
 from typing import Optional, Dict, Any, Union
 from app.models.schemas import TraceResponse, CaseMetadata
@@ -12,6 +13,44 @@ def _get_attr(obj: Any, key: str, default: Any = None) -> Any:
     if isinstance(obj, dict):
         return obj.get(key, default)
     return getattr(obj, key, default)
+
+def compute_canonical_evidence_digest(trace: Union[TraceResponse, Dict[str, Any]]) -> str:
+    """
+    Computes a deterministic, tamper-evident SHA-256 digest over the entire canonical
+    transaction graph (all nodes, directed edges, raw transfer amounts, token assets, and tx hashes).
+    Admissible under Section 63(4) Bharatiya Sakshya Adhiniyam (BSA), 2023.
+    """
+    seed_address = _get_attr(trace, "seed_address", "")
+    chain = _get_attr(trace, "chain", "")
+    nodes = _get_attr(trace, "nodes", [])
+    edges = _get_attr(trace, "edges", [])
+
+    canonical_data = {
+        "version": "2.0-CANONICAL-EVIDENCE",
+        "seed_address": str(seed_address),
+        "chain": str(chain),
+        "nodes": sorted([
+            {
+                "id": str(_get_attr(n, "id", "")),
+                "type": str(_get_attr(n, "node_type", "")),
+                "vasp": str(_get_attr(n, "vasp_name", "") or "")
+            }
+            for n in nodes
+        ], key=lambda x: x["id"]),
+        "edges": sorted([
+            {
+                "tx_hash": str(_get_attr(e, "tx_hash", "")),
+                "source": str(_get_attr(e, "source", "")),
+                "target": str(_get_attr(e, "target", "")),
+                "amount": float(_get_attr(e, "amount", 0.0)),
+                "token": str(_get_attr(e, "token", "USDT")),
+                "timestamp": int(_get_attr(e, "timestamp", 0) or 0)
+            }
+            for e in edges
+        ], key=lambda x: x["tx_hash"])
+    }
+    canonical_json = json.dumps(canonical_data, sort_keys=True, separators=(',', ':'))
+    return hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
 
 def generate_section_94_bnss_notice(trace: Union[TraceResponse, Dict[str, Any]], meta: Optional[CaseMetadata] = None) -> str:
     """Generates a court-ready, pre-filled Section 94 BNSS requisition notice."""
@@ -30,38 +69,50 @@ def generate_section_94_bnss_notice(trace: Union[TraceResponse, Dict[str, Any]],
 
     seed_address = _get_attr(trace, "seed_address", "N/A")
     trace_id = _get_attr(trace, "trace_id", "TRACE")
+    chain = _get_attr(trace, "chain", "Multi-Chain")
     edges = _get_attr(trace, "edges", [])
     exec_ms = _get_attr(trace, "execution_time_ms", 350.0)
+    is_synthetic = bool(_get_attr(trace, "is_synthetic", False))
 
-    # Compute SHA-256 evidence hash of graph nodes and edges
-    evidence_payload = f"{seed_address}:{deposit_addr}:{hot_wallet}:{len(edges)}"
-    sha256_hash = hashlib.sha256(evidence_payload.encode()).hexdigest()
+    # Compute deterministic canonical SHA-256 evidence digest across all graph transactions
+    sha256_hash = compute_canonical_evidence_digest(trace)
 
-    notice_template = f"""========================================================================================
-FORM OF STATUTORY NOTICE UNDER SECTION 94 OF THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023
+    demo_watermark = ""
+    if is_synthetic:
+        demo_watermark = """****************************************************************************************
+[DEMONSTRATION ONLY / SYNTHETIC FIXTURE — NOT AN ISSUED STATUTORY NOTICE]
+THIS RECORD WAS GENERATED USING OFFLINE TEST FIXTURES FOR FORENSIC DEMONSTRATION PURPOSES.
+DO NOT TRANSMIT TO ANY FINANCIAL ENTITY, COURT OF LAW, OR VIRTUAL ASSET SERVICE PROVIDER.
+****************************************************************************************
+
+"""
+
+    notice_template = f"""{demo_watermark}========================================================================================
+DRAFT REQUISITION FOR PRODUCTION OF ELECTRONIC RECORDS UNDER SECTION 94 BNSS, 2023
 (Corresponding to Section 91 of the Code of Criminal Procedure, 1973)
-AND REQUISITION FOR IMMEDIATE ASSET PRESERVATION UNDER SECTIONS 106/107 BNSS, 2023
+STATUS: DRAFT FOR INVESTIGATING OFFICER (IO) REVIEW & SIGNATURE — NOT OFFICIALLY ISSUED
 ========================================================================================
 
 NOTICE REFERENCE NO: LEA/CYBER/BNSS94/{trace_id.upper()}
 DATE OF ISSUE: {current_date}
 PRIORITY: HIGH (1930 HELPLINE / GOLDEN HOUR CASE)
+FORM OF STATUTORY NOTICE UNDER SECTION 94 OF THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023
 
 TO:
 The Nodal Officer / Law Enforcement Response Desk
 M/s {vasp_name}
 Official LEA Contact: {nodal_email}
 
-SUBJECT: STATUTORY REQUISITION FOR PRODUCTION OF SUBSCRIBER KYC, TRANSACTION LEDGERS,
-         IP TELEMETRY AND IMMEDIATE FREEZING OF ASSETS LINKED TO FRAUD PROCEEDS IN
-         CASE FIR/NCRP COMPLAINT NO: {meta.fir_number}
+SUBJECT: DRAFT STATUTORY REQUISITION FOR PRODUCTION OF SUBSCRIBER KYC, TRANSACTION LEDGERS,
+         IP TELEMETRY AND ASSET PRESERVATION IN CASE FIR/NCRP COMPLAINT NO: {meta.fir_number}
 
 1. INVESTIGATION PARTICULARS:
    - Investigating Agency: {meta.police_station}
-   - Investigating Officer: {meta.investigating_officer}
+   - Investigating Officer: {meta.investigating_officer} (Reviewing Authority)
    - Statutory Provisions: Sections 316(2), 318(4) Bharatiya Nyaya Sanhita (BNS), 2023 
                            and Section 66D Information Technology Act, 2000.
    - Reported Victim Loss: INR {meta.loss_amount_inr:,.2f}
+   - Blockchain Network:   {chain}
 
 2. FORENSIC BLOCKCHAIN TRAIL SUMMARY:
    Automated multi-hop blockchain tracing on the cryptocurrency ledger originating from 
@@ -74,8 +125,8 @@ SUBJECT: STATUTORY REQUISITION FOR PRODUCTION OF SUBSCRIBER KYC, TRANSACTION LED
    * Identification Timestamp:        {current_time_utc}
    * Execution Traversal Latency:     {exec_ms} ms
 
-3. STATUTORY DIRECTIONS UNDER SECTION 94 BNSS, 2023:
-   By virtue of powers conferred under Section 94 BNSS, you are hereby legally required to 
+3. STATUTORY REQUISITION UNDER SECTION 94 BNSS, 2023:
+   By virtue of powers under Section 94 BNSS, you are hereby requested to 
    furnish the following electronic records to this office within TWENTY-FOUR (24) HOURS:
    
    a) Complete User Profile & KYC: Full legal name, date of birth, residential address, 
@@ -87,16 +138,19 @@ SUBJECT: STATUTORY REQUISITION FOR PRODUCTION OF SUBSCRIBER KYC, TRANSACTION LED
    d) P2P & Banking Off-Ramps: Bank account details (Account No., IFSC, Bank Name) or UPI IDs 
       used for fiat settlement.
 
-4. DIRECTION FOR IMMEDIATE LIEN / ASSET FREEZE (SECTIONS 106 & 107 BNSS):
-   You are directed to place an immediate debit freeze/lien on all crypto balances and 
-   fiat funds held under the target UID to prevent dissipation of crime proceeds.
+4. DIRECTION FOR ASSET PRESERVATION (UNDER SECTIONS 106 & 107 BNSS, 2023):
+   Pending formal judicial warrant/order under Section 107 BNSS, you are requested to 
+   place an immediate administrative debit freeze/lien on the target deposit account and 
+   associated UID to prevent further dispersion of reported crime proceeds.
 
 5. STATUTORY ADMISSIBILITY CERTIFICATE (SECTION 63 BHARATIYA SAKSHYA ADHINIYAM, 2023):
    I certify that the forensic data herein was extracted in the regular course of official 
    duty from immutable public ledgers using verified tracing algorithms.
    * Cryptographic Trace Integrity Seal (SHA-256): {sha256_hash}
+   * Canonical Evidence Serialization: SHA-256 over all {len(edges)} transaction hops and {len(_get_attr(trace, 'nodes', []))} nodes.
 
-Notice Issued By:
+DRAFT NOTICE — FOR REVIEW & SIGNATURE:
+______________________________________
 {meta.investigating_officer}
 {meta.police_station}
 ========================================================================================"""

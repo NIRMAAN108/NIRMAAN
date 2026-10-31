@@ -84,12 +84,23 @@ class EVMCrawler:
                     recipient = item.get("to", {}).get("hash", "")
 
                     if amount > 0 and tx_hash and recipient:
+                        # Parse actual ISO timestamp from Blockscout if present (ERR-08)
+                        ts = 0
+                        raw_ts = item.get("timestamp")
+                        if raw_ts:
+                            try:
+                                from datetime import datetime
+                                dt = datetime.fromisoformat(str(raw_ts).replace("Z", "+00:00"))
+                                ts = int(dt.timestamp())
+                            except Exception:
+                                ts = 0
+
                         transfers.append({
                             "from": sender_hash,
                             "to": recipient,
                             "amount": round(amount, 6),
                             "tx_hash": tx_hash,
-                            "timestamp": int(time.time()),
+                            "timestamp": ts,
                             "token": symbol,
                             "chain": chain
                         })
@@ -126,7 +137,7 @@ class EVMCrawler:
                             "to": recipient,
                             "amount": round(amount, 6),
                             "tx_hash": tx_hash,
-                            "timestamp": ts if ts > 0 else int(time.time()),
+                            "timestamp": ts if ts > 0 else 0,
                             "token": symbol,
                             "chain": chain
                         })

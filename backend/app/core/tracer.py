@@ -16,6 +16,7 @@ import networkx as nx
 from app.models.schemas import TraceRequest, TraceResponse, GraphNode, GraphEdge, TargetVASP
 from app.crawlers.multi_chain_crawler import MultiChainCrawler, detect_chain
 from app.ml.scorer import calculate_node_risk
+from app.core.legal_notice import compute_canonical_evidence_digest
 
 logger = logging.getLogger("nirmaan.core.tracer")
 
@@ -66,7 +67,6 @@ class ForensicTracer:
             "bitcoin": "Bitcoin (UTXO)"
         }.get(chain, "Multi-Chain")
 
-        G = nx.MultiDiGraph()
         queue = [(req.seed_address, 0, "SUSPECT")]
         visited = set()
 
@@ -210,9 +210,13 @@ class ForensicTracer:
                 node.node_type = "MIXER"
                 node.label = f"Mixer Protocol ({risk_profile['mixer_details']['name']})"
 
-        # Generate cryptographic SHA-256 evidence seal over all graph nodes & edges
-        evidence_payload = f"{trace_id}|{req.seed_address}|{len(nodes_map)}|{len(edges_list)}|{found_target_vasp.name if found_target_vasp else 'NONE'}"
-        evidence_sha256 = hashlib.sha256(evidence_payload.encode()).hexdigest()
+        # Generate deterministic canonical SHA-256 evidence digest over all graph nodes & edges (ERR-11)
+        evidence_sha256 = compute_canonical_evidence_digest({
+            "seed_address": req.seed_address,
+            "chain": chain_label,
+            "nodes": list(nodes_map.values()),
+            "edges": edges_list
+        })
 
         exec_time = round((time.time() - start_time) * 1000, 2)
 

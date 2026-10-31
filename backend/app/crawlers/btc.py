@@ -70,19 +70,46 @@ class BitcoinCrawler:
         for tx in txs[:limit]:
             if not isinstance(tx, dict):
                 continue
-            # Check if target address was a sender (in inputs)
+
             inputs = tx.get("vin", [])
-            is_sender = any(vin.get("prevout", {}).get("scriptpubkey_address") == address for vin in inputs if vin.get("prevout"))
-            
+            # Calculate total input satoshis and the target address's contribution
+            my_input_satoshis = sum(
+                vin.get("prevout", {}).get("value", 0)
+                for vin in inputs
+                if vin.get("prevout", {}).get("scriptpubkey_address") == address
+            )
+            total_input_satoshis = sum(
+                vin.get("prevout", {}).get("value", 0)
+                for vin in inputs
+                if vin.get("prevout")
+            )
+
+            is_sender = any(
+                vin.get("prevout", {}).get("scriptpubkey_address") == address
+                for vin in inputs if vin.get("prevout")
+            )
+
+            # Target address participated as an input funder
             if is_sender:
+                # Proportional input ratio if input values are present; otherwise fallback to 1.0
+                if my_input_satoshis > 0 and total_input_satoshis > 0:
+                    input_ratio = my_input_satoshis / total_input_satoshis
+                else:
+                    input_ratio = 1.0
+
                 for vout in tx.get("vout", []):
                     recipient = vout.get("scriptpubkey_address")
+                    # Omit change returns to the same address
                     if recipient and recipient != address:
                         try:
                             satoshis = vout.get("value", 0)
-                            btc_amount = satoshis / 1e8
+                            # Attribute proportional share to avoid multi-input double-counting (ERR-09)
+                            proportional_satoshis = satoshis * input_ratio
+                            btc_amount = proportional_satoshis / 1e8
                             tx_id = tx.get("txid", "")
-                            ts = tx.get("status", {}).get("block_time", int(time.time()))
+                            # Retain raw block time or null; never synthesize time.time() (ERR-08)
+                            raw_ts = tx.get("status", {}).get("block_time")
+                            ts = int(raw_ts) if raw_ts is not None else 0
 
                             if btc_amount > 0 and tx_id:
                                 transfers.append({

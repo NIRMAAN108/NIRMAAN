@@ -126,12 +126,12 @@ async def custom_validation_exception_handler(request: Request, exc: RequestVali
     )
 
 async def generic_unhandled_exception_handler(request: Request, exc: Exception):
-    """Catches any unexpected Python exception to prevent 500 crash or leaking traceback."""
+    """Catches any unexpected Python exception to prevent 500 crash or leaking traceback (ERR-20)."""
     logger.exception(f"Unhandled critical exception at {request.url.path}: {exc}")
     return build_error_response(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         error_code="INTERNAL_SERVER_ERROR",
         message="An unexpected internal error occurred within the forensic engine.",
-        details=str(exc) if not isinstance(exc, AssertionError) else "Assertion failed.",
+        details="Internal server anomaly recorded in audit log. Request reference logged.",
         path=request.url.path
     )
