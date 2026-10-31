@@ -5,6 +5,7 @@ and properly failover between blockchain providers.
 """
 import pytest
 import asyncio
+import os
 from app.crawlers.resilience import CircuitBreaker, ResilientHttpClient
 from app.crawlers.tron import TronCrawler
 from app.crawlers.evm import EVMCrawler
@@ -103,6 +104,10 @@ def test_btc_parser_resilience_to_malformed_payloads():
 # -------------------------------------------------------------
 
 @pytest.mark.asyncio
+@pytest.mark.skipif(
+    os.getenv("RUN_LIVE_CRAWLER_TESTS") != "1",
+    reason="Live-network explorer test; set RUN_LIVE_CRAWLER_TESTS=1 to enable"
+)
 async def test_live_crawlers_zero_unhandled_exceptions():
     """Ensures that calling crawlers on non-existent or inactive addresses returns empty list safely."""
     tron_crawler = TronCrawler()

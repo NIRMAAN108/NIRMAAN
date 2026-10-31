@@ -45,6 +45,26 @@ def test_vasp_directory_integrity():
         assert "law_enforcement_portal" in info
         assert len(info.get("known_hot_wallets", [])) > 0, f"No hot wallets listed for {ex}"
 
+def test_vasp_directory_all_wallets_validated():
+    """P2 item 7: All active known hot wallets in vasp_directory.json must pass strict address format checks, with stubs labeled."""
+    response = client.get("/api/vasps")
+    assert response.status_code == 200
+    vasps = response.json().get("vasps", {})
+    
+    stubs = []
+    active_wallets = []
+    for ex, info in vasps.items():
+        for w in info.get("known_hot_wallets", []):
+            if w.startswith("[TEST_STUB]"):
+                stubs.append((ex, w))
+            else:
+                detected = detect_chain(w)
+                assert detected in ("ethereum", "tron", "bitcoin"), f"Active hot wallet {w} in exchange {ex} failed address validation!"
+                active_wallets.append((ex, w, detected))
+                
+    assert len(stubs) == 4
+    assert len(active_wallets) == 41
+
 # -------------------------------------------------------------
 # 2. CHAIN AUTO-DETECTION ACCURACY & STRICT ADDRESS VALIDATION
 # -------------------------------------------------------------

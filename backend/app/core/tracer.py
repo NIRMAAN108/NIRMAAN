@@ -41,6 +41,8 @@ class ForensicTracer:
                 data = json.load(f)
                 for vasp_key, vasp_info in data.get("vasps", {}).items():
                     for addr in vasp_info.get("known_hot_wallets", []):
+                        if addr.startswith("[TEST_STUB]"):
+                            continue
                         # Store both original and lowercase for EVM addresses
                         normalized_key = addr.lower() if addr.startswith("0x") else addr
                         hot_wallet_index[normalized_key] = {
