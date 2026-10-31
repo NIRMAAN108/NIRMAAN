@@ -74,14 +74,14 @@ def test_ncrp_complaint_parser():
     raw_complaint = (
         "Complainant Suresh Rao reports loss of Rs. 18,50,000 on Telegram task group. "
         "Fraudsters directed him to transfer crypto to suspect wallet "
-        "TScamOriginVictimAddress778899AABB with receipt tx 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890. "
+        "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC with receipt tx 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890. "
         "Complaint registered under FIR-44/2026 Cyber Cell. Phone: +919876543210."
     )
     data = parse_ncrp_complaint(raw_complaint)
     assert len(data.extracted_addresses) == 1
-    assert data.extracted_addresses[0]["address"] == "TScamOriginVictimAddress778899AABB"
+    assert data.extracted_addresses[0]["address"] == "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC"
     assert data.extracted_addresses[0]["chain"] == "tron"
-    assert data.primary_seed_address == "TScamOriginVictimAddress778899AABB"
+    assert data.primary_seed_address == "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC"
     assert data.estimated_loss_inr == 1850000.0
     assert "FIR-44/2026" in data.suggested_fir
 
@@ -93,7 +93,7 @@ def test_fiu_ind_pmla_str_generation():
         "investigating_officer": "DSP Verma",
         "complainant_name": "Ramesh Kumar",
         "loss_amount_inr": 1500000.0,
-        "seed_address": "TScamOriginVictimAddress778899AABB",
+        "seed_address": "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC",
         "chain": "TRON (TRC-20)",
         "destination_vasp": "Binance",
         "total_routed_usd": 15000.0,
@@ -102,7 +102,7 @@ def test_fiu_ind_pmla_str_generation():
             "target_vasp": {
                 "name": "Binance",
                 "fiu_registered": True,
-                "deposit_address": "TBinanceUserDepositForwarder8899ZZ",
+                "deposit_address": "TTpfou5hZarSNUpbaiAWHcCyC4u7ofBMrk",
                 "hot_wallet": "TMuA6YqfCeX8EhbfYEg5y7S4DnxJRB4b7N",
                 "sweep_tx_hash": "d4e5f60718293a4b5c6d7e8f90a1b2c3",
                 "nodal_email": "compliance-in@binance.com"
@@ -124,7 +124,7 @@ def test_court_evidence_bundle_zip_and_manifest():
         "investigating_officer": "DSP Verma",
         "complainant_name": "Ramesh Kumar",
         "loss_amount_inr": 1500000.0,
-        "seed_address": "TScamOriginVictimAddress778899AABB",
+        "seed_address": "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC",
         "chain": "TRON (TRC-20)",
         "destination_vasp": "Binance",
         "total_routed_usd": 15000.0,
@@ -133,7 +133,7 @@ def test_court_evidence_bundle_zip_and_manifest():
             "target_vasp": {
                 "name": "Binance",
                 "fiu_registered": True,
-                "deposit_address": "TBinanceUserDepositForwarder8899ZZ",
+                "deposit_address": "TTpfou5hZarSNUpbaiAWHcCyC4u7ofBMrk",
                 "hot_wallet": "TMuA6YqfCeX8EhbfYEg5y7S4DnxJRB4b7N",
                 "sweep_tx_hash": "d4e5f60718293a4b5c6d7e8f90a1b2c3",
                 "nodal_email": "compliance-in@binance.com"
@@ -161,9 +161,9 @@ async def test_case_vault_api_endpoints():
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         # 1. Test NCRP Parse
-        ncrp_res = await client.post("/api/ncrp/parse", json={"text": "Lost 500000 on TScamOriginVictimAddress778899AABB"})
+        ncrp_res = await client.post("/api/ncrp/parse", json={"text": "Lost 500000 on TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC"})
         assert ncrp_res.status_code == 200
-        assert ncrp_res.json()["primary_seed_address"] == "TScamOriginVictimAddress778899AABB"
+        assert ncrp_res.json()["primary_seed_address"] == "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC"
 
         # 2. Create Case
         payload = {
@@ -172,7 +172,7 @@ async def test_case_vault_api_endpoints():
             "investigating_officer": "Inspector K. Reddy",
             "complainant_name": "Suresh Patel",
             "loss_amount_inr": 2500000.0,
-            "seed_address": "TScamOriginVictimAddress778899AABB",
+            "seed_address": "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC",
             "chain": "TRON (TRC-20)",
             "destination_vasp": "Binance",
             "total_routed_usd": 25000.0,

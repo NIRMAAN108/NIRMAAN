@@ -12,10 +12,10 @@ from app.crawlers.resilience import ResilientHttpClient
 logger = logging.getLogger("nirmaan.crawler.btc")
 
 DEMO_BTC_TRAIL = {
-    "bc1qScamVictimBtcSeedAddress998877AABB": [
+    "bc1qqyqszqgpqyqszqgpqyqszqgpqyqszqgpyfl4f3": [
         {
-            "from": "bc1qScamVictimBtcSeedAddress998877AABB",
-            "to": "bc1qMuleLayer1BtcSplitter223344CCDD",
+            "from": "bc1qqyqszqgpqyqszqgpqyqszqgpqyqszqgpyfl4f3",
+            "to": "bc1qqgpqyqszqgpqyqszqgpqyqszqgpqyqsz4desz8",
             "amount": 0.85,
             "tx_hash": "e1f2a3b4c5d60718293a4b5c6d7e8f90e1f2a3b4c5d60718293a4b5c6d7e8f90",
             "timestamp": int(time.time()) - 3600,
@@ -23,10 +23,10 @@ DEMO_BTC_TRAIL = {
             "chain": "bitcoin"
         }
     ],
-    "bc1qMuleLayer1BtcSplitter223344CCDD": [
+    "bc1qqgpqyqszqgpqyqszqgpqyqszqgpqyqsz4desz8": [
         {
-            "from": "bc1qMuleLayer1BtcSplitter223344CCDD",
-            "to": "bc1qBinanceDepositForwarderBtc556677",
+            "from": "bc1qqgpqyqszqgpqyqszqgpqyqszqgpqyqsz4desz8",
+            "to": "bc1qqvpsxqcrqvpsxqcrqvpsxqcrqvpsxqcr5ac3gx",
             "amount": 0.82,
             "tx_hash": "f2a3b4c5d60718293a4b5c6d7e8f90e1f2a3b4c5d60718293a4b5c6d7e8f90e1",
             "timestamp": int(time.time()) - 2400,
@@ -34,8 +34,8 @@ DEMO_BTC_TRAIL = {
             "chain": "bitcoin"
         },
         {
-            "from": "bc1qMuleLayer1BtcSplitter223344CCDD",
-            "to": "bc1qPeelChangeBurnerBtc99887766",
+            "from": "bc1qqgpqyqszqgpqyqszqgpqyqszqgpqyqsz4desz8",
+            "to": "bc1qqszqgpqyqszqgpqyqszqgpqyqszqgpqy5dl506",
             "amount": 0.03,
             "tx_hash": "a3b4c5d60718293a4b5c6d7e8f90e1f2a3b4c5d60718293a4b5c6d7e8f90e1f2",
             "timestamp": int(time.time()) - 2400,
@@ -43,9 +43,9 @@ DEMO_BTC_TRAIL = {
             "chain": "bitcoin"
         }
     ],
-    "bc1qBinanceDepositForwarderBtc556677": [
+    "bc1qqvpsxqcrqvpsxqcrqvpsxqcrqvpsxqcr5ac3gx": [
         {
-            "from": "bc1qBinanceDepositForwarderBtc556677",
+            "from": "bc1qqvpsxqcrqvpsxqcrqvpsxqcrqvpsxqcr5ac3gx",
             "to": "bc1qm34lsc65zpw79lxes69zkqmk6ee3ewf0j77s3h",  # Known Binance Bitcoin Hot Wallet
             "amount": 0.82,
             "tx_hash": "b4c5d60718293a4b5c6d7e8f90e1f2a3b4c5d60718293a4b5c6d7e8f90e1f2a3",
@@ -53,7 +53,8 @@ DEMO_BTC_TRAIL = {
             "token": "BTC",
             "chain": "bitcoin"
         }
-    ]
+    ],
+    "bc1qqszqgpqyqszqgpqyqszqgpqy5dl506": []
 }
 
 class BitcoinCrawler:

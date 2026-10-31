@@ -9,6 +9,12 @@ import re
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel, Field
 
+from app.crawlers.multi_chain_crawler import (
+    is_valid_tron_address,
+    is_valid_evm_address,
+    is_valid_bitcoin_address
+)
+
 class ExtractedComplaintData(BaseModel):
     raw_text: str
     extracted_addresses: List[Dict[str, str]] = Field(default_factory=list)
@@ -54,21 +60,21 @@ def parse_ncrp_complaint(text: str) -> ExtractedComplaintData:
     # TRON
     for m in TRON_ADDR_REGEX.finditer(text):
         addr = m.group(1)
-        if addr not in seen_addr:
+        if addr not in seen_addr and is_valid_tron_address(addr):
             seen_addr.add(addr)
             addresses.append({"address": addr, "chain": "tron"})
 
     # EVM
     for m in EVM_ADDR_REGEX.finditer(text):
         addr = m.group(1)
-        if addr not in seen_addr:
+        if addr not in seen_addr and is_valid_evm_address(addr):
             seen_addr.add(addr)
             addresses.append({"address": addr, "chain": "ethereum"})
 
     # BTC Bech32
     for m in BTC_BECH32_REGEX.finditer(text):
         addr = m.group(1)
-        if addr not in seen_addr:
+        if addr not in seen_addr and is_valid_bitcoin_address(addr):
             seen_addr.add(addr)
             addresses.append({"address": addr, "chain": "bitcoin"})
 
@@ -76,7 +82,7 @@ def parse_ncrp_complaint(text: str) -> ExtractedComplaintData:
     for m in BTC_LEGACY_REGEX.finditer(text):
         addr = m.group(1)
         # Verify not already caught as TRON
-        if addr not in seen_addr and not addr.startswith("T"):
+        if addr not in seen_addr and not addr.startswith("T") and is_valid_bitcoin_address(addr):
             seen_addr.add(addr)
             addresses.append({"address": addr, "chain": "bitcoin"})
 

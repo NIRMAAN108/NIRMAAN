@@ -12,10 +12,10 @@ from app.crawlers.resilience import ResilientHttpClient
 logger = logging.getLogger("nirmaan.crawler.tron")
 
 DEMO_FIXTURE_TRAIL = {
-    "TScamOriginVictimAddress778899AABB": [
+    "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC": [
         {
-            "from": "TScamOriginVictimAddress778899AABB",
-            "to": "TMuleSplitterLayer1Address445566CC",
+            "from": "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC",
+            "to": "TSGRsppW4vSaWWstQUTa2d4CWJDWBRkWVA",
             "amount": 15000.0,
             "tx_hash": "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
             "timestamp": int(time.time()) - 3600,
@@ -23,10 +23,10 @@ DEMO_FIXTURE_TRAIL = {
             "chain": "tron"
         }
     ],
-    "TMuleSplitterLayer1Address445566CC": [
+    "TSGRsppW4vSaWWstQUTa2d4CWJDWBRkWVA": [
         {
-            "from": "TMuleSplitterLayer1Address445566CC",
-            "to": "TBinanceUserDepositForwarder8899ZZ",
+            "from": "TSGRsppW4vSaWWstQUTa2d4CWJDWBRkWVA",
+            "to": "TTpfou5hZarSNUpbaiAWHcCyC4u7ofBMrk",
             "amount": 14950.0,
             "tx_hash": "b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90a1",
             "timestamp": int(time.time()) - 2400,
@@ -34,8 +34,8 @@ DEMO_FIXTURE_TRAIL = {
             "chain": "tron"
         },
         {
-            "from": "TMuleSplitterLayer1Address445566CC",
-            "to": "TPeelingChangeBurner11223344EEFF",
+            "from": "TSGRsppW4vSaWWstQUTa2d4CWJDWBRkWVA",
+            "to": "TVNujs6Y14Hd12vsM5BaBjHq2iNBsqs5Kd",
             "amount": 50.0,
             "tx_hash": "c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2",
             "timestamp": int(time.time()) - 2400,
@@ -43,9 +43,9 @@ DEMO_FIXTURE_TRAIL = {
             "chain": "tron"
         }
     ],
-    "TBinanceUserDepositForwarder8899ZZ": [
+    "TTpfou5hZarSNUpbaiAWHcCyC4u7ofBMrk": [
         {
-            "from": "TBinanceUserDepositForwarder8899ZZ",
+            "from": "TTpfou5hZarSNUpbaiAWHcCyC4u7ofBMrk",
             "to": "TMuA6YqfCeX8EhbfYEg5y7S4DnxJRB4b7N",  # Known Binance Hot Wallet 1
             "amount": 14950.0,
             "tx_hash": "d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3",
@@ -53,7 +53,8 @@ DEMO_FIXTURE_TRAIL = {
             "token": "USDT",
             "chain": "tron"
         }
-    ]
+    ],
+    "TVNujs6Y14Hd12vsM5BaBjHq2iNBsqs5Kd": []
 }
 
 class TronCrawler:

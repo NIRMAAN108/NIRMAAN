@@ -13,10 +13,10 @@ from app.crawlers.resilience import ResilientHttpClient
 logger = logging.getLogger("nirmaan.crawler.evm")
 
 DEMO_EVM_TRAIL = {
-    "0xScamOriginVictimEther998877AABBCCDDEEFF": [
+    "0x95222290DD7853684454F4275E597E3A63725F78": [
         {
-            "from": "0xScamOriginVictimEther998877AABBCCDDEEFF",
-            "to": "0xMuleSplitterEtherLayer1A1B2C3D4E5F60718",
+            "from": "0x95222290DD7853684454F4275E597E3A63725F78",
+            "to": "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
             "amount": 25000.0,
             "tx_hash": "0x111122223333444455556666777788889999aaaabbbbccccddddeeeeffff0000",
             "timestamp": int(time.time()) - 3600,
@@ -24,10 +24,10 @@ DEMO_EVM_TRAIL = {
             "chain": "ethereum"
         }
     ],
-    "0xMuleSplitterEtherLayer1A1B2C3D4E5F60718": [
+    "0x71C7656EC7ab88b098defB751B7401B5f6d8976F": [
         {
-            "from": "0xMuleSplitterEtherLayer1A1B2C3D4E5F60718",
-            "to": "0xBinanceDepositForwarderEther88776655",
+            "from": "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
+            "to": "0x0bfC924618e950882e70e3025255474B5C6eDb27",
             "amount": 24900.0,
             "tx_hash": "0x22223333444455556666777788889999aaaabbbbccccddddeeeeffff00001111",
             "timestamp": int(time.time()) - 2400,
@@ -35,8 +35,8 @@ DEMO_EVM_TRAIL = {
             "chain": "ethereum"
         },
         {
-            "from": "0xMuleSplitterEtherLayer1A1B2C3D4E5F60718",
-            "to": "0xPeelingBurnerEtherChange99001122",
+            "from": "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
+            "to": "0x8894e0a0c962cb723c1976a4421c95949be2d4e3",
             "amount": 100.0,
             "tx_hash": "0x3333444455556666777788889999aaaabbbbccccddddeeeeffff000011112222",
             "timestamp": int(time.time()) - 2400,
@@ -44,9 +44,9 @@ DEMO_EVM_TRAIL = {
             "chain": "ethereum"
         }
     ],
-    "0xBinanceDepositForwarderEther88776655": [
+    "0x0bfC924618e950882e70e3025255474B5C6eDb27": [
         {
-            "from": "0xBinanceDepositForwarderEther88776655",
+            "from": "0x0bfC924618e950882e70e3025255474B5C6eDb27",
             "to": "0x28C6c06298d514Db089934071355E5743bf21d60",  # Known Binance 14 Master Hot Wallet
             "amount": 24900.0,
             "tx_hash": "0x444455556666777788889999aaaabbbbccccddddeeeeffff0000111122223333",
@@ -54,7 +54,8 @@ DEMO_EVM_TRAIL = {
             "token": "USDT",
             "chain": "ethereum"
         }
-    ]
+    ],
+    "0x8894e0a0c962cb723c1976a4421c95949be2d4e3": []
 }
 
 class EVMCrawler:

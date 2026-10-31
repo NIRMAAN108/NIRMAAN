@@ -95,7 +95,7 @@ async def test_malformed_wallet_inputs(client: httpx.AsyncClient):
 # =========================================================================
 async def test_boundary_values(client: httpx.AsyncClient):
     print(f"\n{CYAN}{BOLD}=== SECTION 2: Boundary Values & Extreme Parameters ==={RESET}")
-    seed = "TScamOriginVictimAddress778899AABB"
+    seed = "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC"
 
     boundary_cases = [
         ("DEPTH_ZERO", "max_depth = 0 (violates ge=1)", {"seed_address": seed, "max_depth": 0}, 422),
@@ -178,8 +178,8 @@ async def test_ncrp_parsing(client: httpx.AsyncClient):
     multi_chain_text = """
     URGENT NCRP TICKET NCRP/DELHI/2026/88912.
     Victim lost INR 1,500,000 in a telegram crypto investment task scam.
-    Victim sent 15,000 USDT to suspect TRON address TScamOriginVictimAddress778899AABB.
-    Additional 5 ETH was sent to Ethereum address 0xScamOriginVictimEther998877AABBCCDDEEFF.
+    Victim sent 15,000 USDT to suspect TRON address TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC.
+    Additional 5 ETH was sent to Ethereum address 0x95222290DD7853684454F4275E597E3A63725F78.
     Suspect also instructed transaction to Bitcoin address 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa and Segwit bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq.
     Victim phone: +919876543210. Transaction hash: 0x111122223333444455556666777788889999aaaabbbbccccddddeeeeffff0000.
     """
@@ -189,7 +189,7 @@ async def test_ncrp_parsing(client: httpx.AsyncClient):
     FIR No: FIR/CYBER/2026/1029. No crypto wallets or blockchain involved in this incident.
     """
 
-    large_text_50k = "NCRP Complaint statement: " + ("The suspect demanded USDT to address TScamOriginVictimAddress778899AABB. Amount Rs 50,000. " * 500)
+    large_text_50k = "NCRP Complaint statement: " + ("The suspect demanded USDT to address TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC. Amount Rs 50,000. " * 500)
     large_text_100k = "NCRP Complaint statement: " + ("Fraud incident details lost Rs 100,000 in crypto. " * 2000)
 
     ncrp_cases = [
@@ -274,7 +274,7 @@ async def test_unicode_case_lifecycle(client: httpx.AsyncClient):
     
     # 1. First run a trace to get realistic graph data
     trace_resp = await client.post(f"{BASE_URL}/api/trace", json={
-        "seed_address": "TScamOriginVictimAddress778899AABB"
+        "seed_address": "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC"
     })
     trace_data = trace_resp.json()
 
@@ -285,7 +285,7 @@ async def test_unicode_case_lifecycle(client: httpx.AsyncClient):
         "investigating_officer": "निरीक्षक राजेश शर्मा (IO-77)",
         "complainant_name": "श्रीमती सुनीता देवी 🇮🇳",
         "loss_amount_inr": 1250000.0,
-        "seed_address": "TScamOriginVictimAddress778899AABB",
+        "seed_address": "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC",
         "chain": "TRON (TRC-20)",
         "destination_vasp": "Binance Holdings Ltd",
         "total_routed_usd": 14950.0,
@@ -342,7 +342,7 @@ async def test_concurrency_probe(num_concurrent: int = 16):
     print(f"\n{CYAN}{BOLD}=== SECTION 6: Concurrency & Load Handling ({num_concurrent} Concurrent Traces) ==={RESET}")
     
     payload = {
-        "seed_address": "TScamOriginVictimAddress778899AABB",
+        "seed_address": "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC",
         "max_depth": 4,
         "min_usd_value": 20.0,
         "case_metadata": {

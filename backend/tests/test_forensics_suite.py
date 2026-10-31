@@ -46,17 +46,38 @@ def test_vasp_directory_integrity():
         assert len(info.get("known_hot_wallets", [])) > 0, f"No hot wallets listed for {ex}"
 
 # -------------------------------------------------------------
-# 2. CHAIN AUTO-DETECTION ACCURACY
+# 2. CHAIN AUTO-DETECTION ACCURACY & STRICT ADDRESS VALIDATION
 # -------------------------------------------------------------
 
 @pytest.mark.parametrize("address,expected_chain", [
-    ("TScamOriginVictimAddress778899AABB", "tron"),
-    ("TMuA6YqfCeX8EhbfYEg5y7S4DnxJRB4b7N", "tron"),
+    # Valid EVM (0x + 40 hex digits)
     ("0x28C6c06298d514Db089934071355E5743bf21d60", "ethereum"),
-    ("0xscamoriginvictimether998877aabbccddeeff", "ethereum"),
-    ("bc1qScamVictimBtcSeedAddress998877AABB", "bitcoin"),
+    ("0x95222290DD7853684454F4275E597E3A63725F78", "ethereum"),
+    # Invalid EVM
+    ("0xscamoriginvictimether998877aabbccddeeff", "unknown"),  # Non-hex characters
+    ("0x28C6c06298d514Db089934071355E5743bf21d6", "unknown"),   # Length 41
+    ("0x28C6c06298d514Db089934071355E5743bf21d6000", "unknown"), # Length 44
+
+    # Valid TRON (T + 33 base58 digits, no 0, O, I, l)
+    ("TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC", "tron"),
+    ("TMuA6YqfCeX8EhbfYEg5y7S4DnxJRB4b7N", "tron"),
+    # Invalid TRON
+    ("TScamOriginVictimAddress778899AABB", "unknown"),  # Contains 'O' (invalid Base58)
+    ("T0iBwkXtUanuNQurYx1tJNJXH4zoUmhUVC", "unknown"),  # Contains '0' (invalid Base58)
+    ("TIiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC", "unknown"),  # Contains 'I' (invalid Base58)
+    ("TliBwkXtUanuNQurYx1tJNJXH4zoUmhUVC", "unknown"),  # Contains 'l' (invalid Base58)
+    ("TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUV", "unknown"),   # Length 33 (must be 34)
+
+    # Valid Bitcoin (Legacy 1..., P2SH 3..., Bech32 bc1...)
     ("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", "bitcoin"),
     ("34xp4vRoCGJym3xR7yCVPFHoCNxv4Twseo", "bitcoin"),
+    ("bc1qm34lsc65zpw79lxes69zkqmk6ee3ewf0j77s3h", "bitcoin"),
+    ("bc1qqyqszqgpqyqszqgpqyqszqgpqyqszqgpyfl4f3", "bitcoin"),
+    # Invalid Bitcoin
+    ("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNb", "unknown"),  # Bad Base58Check checksum
+    ("34xp4vRoCGJym3xR7yCVPFHoCNxv4Twse0", "unknown"),  # Bad Base58Check checksum
+    ("bc1qm34lsc65zpw79lxes69zkqmk6ee3ewf0j77s3z", "unknown"),  # Bad Bech32 checksum
+    ("bc1qScamVictimBtcSeedAddress998877AABB", "unknown"),      # Mixed case & bad checksum
     ("random_invalid_string", "unknown")
 ])
 def test_chain_detection_accuracy(address, expected_chain):
@@ -68,7 +89,7 @@ def test_chain_detection_accuracy(address, expected_chain):
 
 def test_tron_trace_end_to_end():
     payload = {
-        "seed_address": "TScamOriginVictimAddress778899AABB",
+        "seed_address": "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC",
         "max_depth": 4,
         "min_usd_value": 20.0,
         "case_metadata": {
@@ -110,7 +131,7 @@ def test_tron_trace_end_to_end():
 
 def test_evm_trace_end_to_end():
     payload = {
-        "seed_address": "0xScamOriginVictimEther998877AABBCCDDEEFF",
+        "seed_address": "0x95222290DD7853684454F4275E597E3A63725F78",
         "max_depth": 4,
         "min_usd_value": 20.0,
         "case_metadata": {
@@ -133,7 +154,7 @@ def test_evm_trace_end_to_end():
 
 def test_btc_trace_end_to_end():
     payload = {
-        "seed_address": "bc1qScamVictimBtcSeedAddress998877AABB",
+        "seed_address": "bc1qqyqszqgpqyqszqgpqyqszqgpqyqszqgpyfl4f3",
         "max_depth": 4,
         "min_usd_value": 20.0,
         "case_metadata": {
@@ -155,8 +176,8 @@ def test_btc_trace_end_to_end():
 
 def test_evm_case_insensitivity():
     """EVM addresses must match hot wallets whether uppercase, lowercase, or checksum."""
-    lower_addr = "0xscamoriginvictimether998877aabbccddeeff"
-    upper_addr = "0xSCAMORIGINVICTIMETHER998877AABBCCDDEEFF"
+    lower_addr = "0x95222290dd7853684454f4275e597e3a63725f78"
+    upper_addr = "0x95222290DD7853684454F4275E597E3A63725F78"
 
     res_lower = client.post("/api/trace", json={"seed_address": lower_addr})
     res_upper = client.post("/api/trace", json={"seed_address": upper_addr})
@@ -203,7 +224,7 @@ def test_http_422_validation_error():
 
 def test_dead_end_wallet_handling():
     """If an address has 0 outgoing transactions, return cleanly with 0 edges and no crash."""
-    dead_end_tron = "TDeadEndZeroOutgoingTransfersAddress99"
+    dead_end_tron = "TA4Wt1DUCqz6YegbnsmqsWC5uUfbdBqPxm"
     response = client.post("/api/trace", json={"seed_address": dead_end_tron})
     assert response.status_code == 200
     data = response.json()
@@ -213,7 +234,7 @@ def test_dead_end_wallet_handling():
 
 def test_sha256_evidence_seal_format():
     """Verify Section 63 BSA certificate has valid 64-char SHA-256 hex string."""
-    response = client.post("/api/trace", json={"seed_address": "TScamOriginVictimAddress778899AABB"})
+    response = client.post("/api/trace", json={"seed_address": "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC"})
     notice = response.json().get("section_94_notice_text", "")
     match = re.search(r"Cryptographic Trace Integrity Seal \(SHA-256\):\s+([a-f0-9]{64})", notice)
     assert match is not None, "SHA-256 evidence seal was not found or malformed in legal notice"

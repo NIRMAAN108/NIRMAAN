@@ -129,7 +129,7 @@ class ForensicAuditRunner:
     def audit_ncrp_parser(self):
         raw_text = (
             "Complainant Rajesh Kumar reported loss of Rs. 15,00,000 on Telegram task fraud group. "
-            "Suspect instructed transfer to TRON wallet TScamOriginVictimAddress778899AABB. "
+            "Suspect instructed transfer to TRON wallet TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC. "
             "Transaction reference 0x11223344556677889900aabbccddeeff11223344556677889900aabbccddeeff. "
             "Case registered under FIR-88/2026 Bhopal Cyber PS."
         )
@@ -138,7 +138,7 @@ class ForensicAuditRunner:
             data = json.loads(body.decode("utf-8"))
             passed = (
                 status == 200 and
-                data.get("primary_seed_address") == "TScamOriginVictimAddress778899AABB" and
+                data.get("primary_seed_address") == "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC" and
                 data.get("primary_chain") == "tron" and
                 data.get("estimated_loss_inr") == 1500000.0 and
                 data.get("suggested_fir") == "FIR-88/2026"
@@ -157,7 +157,7 @@ class ForensicAuditRunner:
         try:
             t0 = time.time()
             status, body, _ = self.http_post("/api/trace", {
-                "seed_address": "TScamOriginVictimAddress778899AABB",
+                "seed_address": "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC",
                 "max_depth": 4,
                 "min_usd_value": 20.0,
                 "case_metadata": {
@@ -190,7 +190,7 @@ class ForensicAuditRunner:
         try:
             t0 = time.time()
             status, body, _ = self.http_post("/api/trace", {
-                "seed_address": "0xScamOriginVictimEther998877AABBCCDDEEFF",
+                "seed_address": "0x95222290DD7853684454F4275E597E3A63725F78",
                 "max_depth": 4,
                 "min_usd_value": 20.0,
                 "case_metadata": {
@@ -216,7 +216,7 @@ class ForensicAuditRunner:
         try:
             t0 = time.time()
             status, body, _ = self.http_post("/api/trace", {
-                "seed_address": "bc1qScamVictimBtcSeedAddress998877AABB",
+                "seed_address": "bc1qqyqszqgpqyqszqgpqyqszqgpqyqszqgpyfl4f3",
                 "max_depth": 4,
                 "min_usd_value": 20.0,
                 "case_metadata": {
@@ -318,7 +318,7 @@ class ForensicAuditRunner:
         try:
             # Trace first
             _, body, _ = self.http_post("/api/trace", {
-                "seed_address": "TScamOriginVictimAddress778899AABB",
+                "seed_address": "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC",
                 "case_metadata": {
                     "fir_number": "FIR-E2E-AUDIT/2026",
                     "loss_amount_inr": 1850000.0,
