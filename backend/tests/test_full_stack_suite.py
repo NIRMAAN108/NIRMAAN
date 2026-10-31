@@ -211,3 +211,31 @@ async def test_case_vault_api_endpoints():
         str_res = await client.get(f"/api/cases/{case_id}/str")
         assert str_res.status_code == 200
         assert "report_header" in str_res.json()
+
+@pytest.mark.asyncio
+async def test_cors_configuration_explicit_origins():
+    """Regression test: verify CORS does not use wildcard origins when credentials are true."""
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        # Preflight from permitted local origin
+        res_allowed = await client.options(
+            "/api/trace",
+            headers={
+                "Origin": "http://127.0.0.1:8000",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "content-type"
+            }
+        )
+        assert res_allowed.headers.get("access-control-allow-origin") == "http://127.0.0.1:8000"
+        assert res_allowed.headers.get("access-control-allow-credentials") == "true"
+
+        # Preflight from untrusted origin
+        res_blocked = await client.options(
+            "/api/trace",
+            headers={
+                "Origin": "http://malicious-site.example",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "content-type"
+            }
+        )
+        assert res_blocked.headers.get("access-control-allow-origin") != "*"
+        assert res_blocked.headers.get("access-control-allow-origin") != "http://malicious-site.example"
