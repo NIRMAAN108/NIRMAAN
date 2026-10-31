@@ -9,6 +9,9 @@ Integration Test Suite for Full Stack Verticals:
 import os
 import zipfile
 import io
+import re
+import json
+import subprocess
 import pytest
 from httpx import AsyncClient, ASGITransport
 from app.main import app
@@ -271,15 +274,82 @@ def test_frontend_initial_html_neutral_empty_state():
     assert "No Active Trace" in html
     assert "AWAITING TRACE" in html
 
-def test_frontend_xss_sanitization_helpers_present():
-    """Regression test: verify XSS escaping helper is defined and used before DOM innerHTML insertions."""
+def test_frontend_xss_unescaped_innerhtml_scanner():
+    """
+    Grep-style regression test: parses frontend/index.html, identifies all template
+    literals assigned to .innerHTML, and asserts that every dynamic interpolation
+    is wrapped in escapeHtml(), encodeURI(), encodeURIComponent(), or is a safe numeric/static expression.
+    Fails if any unescaped variable/expression is interpolated directly into innerHTML.
+    """
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     html_path = os.path.join(base_dir, "frontend", "index.html")
     with open(html_path, "r", encoding="utf-8") as f:
         html = f.read()
 
-    assert "function escapeHtml(str)" in html
-    assert "${escapeHtml(node.address)}" in html
-    assert "${escapeHtml(edge.tx_hash" in html
-    assert "${escapeHtml(c.fir_number)}" in html
-    assert "${escapeHtml(v.name)}" in html
+    bt = chr(96)  # backtick
+    pattern = re.compile(r'\.innerHTML\s*=\s*' + bt + r'([^' + bt + r']*)' + bt)
+    assignments = pattern.findall(html)
+    assert len(assignments) > 0, "No .innerHTML template literal assignments found in frontend/index.html"
+
+    safe_prefixes = ("escapeHtml(", "encodeURI(", "encodeURIComponent(", "Number(")
+    safe_static_exact = {"idx", "idx + 1", "badgeBg"}
+
+    violations = []
+    for idx_stmt, body in enumerate(assignments, 1):
+        interps = re.findall(r'\$\{([^}]+)\}', body)
+        for expr in interps:
+            e = expr.strip()
+            if any(e.startswith(p) for p in safe_prefixes):
+                continue
+            if e in safe_static_exact:
+                continue
+            if ".length" in e or e.isdigit() or e.startswith("Math."):
+                continue
+            if "v.fiu_registered ?" in e:
+                continue
+
+            violations.append(f"Assignment #{idx_stmt}: '${{{e}}}'")
+
+    assert not violations, f"Detected unescaped innerHTML interpolations susceptible to XSS:\n" + "\n".join(violations)
+
+
+def test_frontend_render_xss_payload_injection():
+    """
+    Regression test: executes the actual escapeHtml function extracted from frontend/index.html
+    against hostile XSS payloads (<img src=x onerror=alert(1)>, <script>, <svg>, etc.)
+    and verifies that all executable tags are sanitized into safe HTML entities.
+    """
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    html_path = os.path.join(base_dir, "frontend", "index.html")
+    with open(html_path, "r", encoding="utf-8") as f:
+        html = f.read()
+
+    fn_match = re.search(r"function escapeHtml\([^\)]*\)\s*\{[\s\S]*?return[\s\S]*?\}", html)
+    assert fn_match is not None, "function escapeHtml() was not found in frontend/index.html"
+    fn_js = fn_match.group(0)
+
+    payloads = [
+        '<img src=x onerror=alert(1)>',
+        '<script>alert("XSS")</script>',
+        '"><svg onload=alert(document.domain)>',
+        "';alert('steal_token');//",
+        '<a href="javascript:alert(1)">Click Me</a>'
+    ]
+
+    test_script = f"""
+    {fn_js}
+    const payloads = {json.dumps(payloads)};
+    const results = payloads.map(p => escapeHtml(p));
+    process.stdout.write(JSON.stringify(results));
+    """
+
+    res = subprocess.run(["node", "-e", test_script], capture_output=True, text=True, check=True)
+    sanitized_results = json.loads(res.stdout)
+
+    for original, sanitized in zip(payloads, sanitized_results):
+        assert "<img" not in sanitized
+        assert "<script" not in sanitized
+        assert "<svg" not in sanitized
+        assert "<" not in sanitized
+        assert ">" not in sanitized
+        assert "&lt;" in sanitized or "&#39;" in sanitized or "&#039;" in sanitized or "&quot;" in sanitized
