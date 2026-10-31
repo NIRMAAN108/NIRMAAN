@@ -142,6 +142,10 @@ class ForensicTracer:
             transfers = await self.crawler.fetch_transfers(curr_addr, chain=chain)
 
             for tx in transfers:
+                tx_hash = tx.get("tx_hash")
+                if not isinstance(tx_hash, str) or not tx_hash.strip():
+                    logger.warning("Skipping transfer with missing or invalid tx_hash from %s", curr_addr)
+                    continue
                 recipient = tx["to"]
                 raw_amount = tx["amount"]
                 token = tx.get("token", "USDT")
@@ -256,12 +260,55 @@ class ForensicTracer:
                 node.node_type = "MIXER"
                 node.label = f"Mixer Protocol ({risk_profile['mixer_details']['name']})"
 
-        # Construct and calculate NetworkX graph centrality metrics (ERR-28)
+        # Construct and calculate NetworkX graph centrality & topology metrics (ERR-28, P2 Item 6)
         G = build_nx_graph([e.model_dump() for e in edges_list])
+        G_undir = G.to_undirected(as_view=True)
+        mixer_nodes = [n.address for n in nodes_map.values() if n.is_mixer or n.node_type == "MIXER"]
+        vasp_nodes = [n.address for n in nodes_map.values() if n.node_type == "VASP_HOT" or n.vasp_name]
+
         for node_id, node in nodes_map.items():
             centrality = calculate_graph_centrality(G, node.address)
             if node.feature_vector and len(node.feature_vector) >= 8:
+                # Dim 3: graph PageRank centrality scaled to [0.0, 1.0]
                 node.feature_vector[3] = min(1.0, centrality.get("pagerank", 0.0) * 10.0)
+
+                # Dim 6: mixer proximity computed from real shortest path to identified mixer
+                if node.is_mixer or node.node_type == "MIXER":
+                    node.feature_vector[6] = 1.0
+                elif mixer_nodes and G.has_node(node.address):
+                    min_mix = None
+                    for m in mixer_nodes:
+                        if G.has_node(m) and nx.has_path(G, node.address, m):
+                            d = nx.shortest_path_length(G, node.address, m)
+                            if min_mix is None or d < min_mix:
+                                min_mix = d
+                        elif G_undir.has_node(m) and nx.has_path(G_undir, node.address, m):
+                            d = nx.shortest_path_length(G_undir, node.address, m) + 1
+                            if min_mix is None or d < min_mix:
+                                min_mix = d
+                    node.feature_vector[6] = round(1.0 / (min_mix + 1), 3) if min_mix is not None else 0.0
+                else:
+                    node.feature_vector[6] = 0.0
+
+                # Dim 7: exchange custody computed from real graph distance to VASP hot wallet
+                if node.node_type == "VASP_HOT":
+                    node.feature_vector[7] = 1.0
+                elif node.node_type == "VASP_DEPOSIT":
+                    node.feature_vector[7] = 0.8
+                elif vasp_nodes and G.has_node(node.address):
+                    min_vasp = None
+                    for v in vasp_nodes:
+                        if G.has_node(v) and nx.has_path(G, node.address, v):
+                            d = nx.shortest_path_length(G, node.address, v)
+                            if min_vasp is None or d < min_vasp:
+                                min_vasp = d
+                        elif G_undir.has_node(v) and nx.has_path(G_undir, node.address, v):
+                            d = nx.shortest_path_length(G_undir, node.address, v) + 1
+                            if min_vasp is None or d < min_vasp:
+                                min_vasp = d
+                    node.feature_vector[7] = round(1.0 / (min_vasp + 1), 3) if min_vasp is not None else 0.0
+                else:
+                    node.feature_vector[7] = 0.0
 
         # Generate deterministic canonical SHA-256 evidence digest over all graph nodes & edges (ERR-11)
         evidence_sha256 = compute_canonical_evidence_digest({

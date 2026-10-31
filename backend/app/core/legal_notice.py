@@ -53,7 +53,7 @@ def compute_canonical_evidence_digest(trace: Union[TraceResponse, Dict[str, Any]
     return hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
 
 def generate_section_94_bnss_notice(trace: Union[TraceResponse, Dict[str, Any]], meta: Optional[CaseMetadata] = None) -> str:
-    """Generates a court-ready, pre-filled Section 94 BNSS requisition notice."""
+    """Generates a draft Section 94 BNSS requisition notice for Investigating Officer (IO) review and statutory verification."""
     if not meta:
         meta = CaseMetadata()
 
@@ -61,12 +61,6 @@ def generate_section_94_bnss_notice(trace: Union[TraceResponse, Dict[str, Any]],
     current_time_utc = time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())
 
     target_vasp = _get_attr(trace, "target_vasp")
-    vasp_name = _get_attr(target_vasp, "name", "Centralized Exchange / VASP") if target_vasp else "Centralized Exchange / VASP"
-    nodal_email = _get_attr(target_vasp, "nodal_email", "compliance@exchange.com") if target_vasp else "compliance@exchange.com"
-    deposit_addr = _get_attr(target_vasp, "deposit_address", "N/A") if target_vasp else "N/A"
-    hot_wallet = _get_attr(target_vasp, "hot_wallet", "N/A") if target_vasp else "N/A"
-    sweep_tx = _get_attr(target_vasp, "sweep_tx_hash", "N/A") if target_vasp else "N/A"
-
     seed_address = _get_attr(trace, "seed_address", "N/A")
     trace_id = _get_attr(trace, "trace_id", "TRACE")
     chain = _get_attr(trace, "chain", "Multi-Chain")
@@ -87,9 +81,83 @@ DO NOT TRANSMIT TO ANY FINANCIAL ENTITY, COURT OF LAW, OR VIRTUAL ASSET SERVICE 
 
 """
 
+    # Check whether an actual transaction edge establishes VASP custody
+    has_target_edge = bool(
+        target_vasp
+        and _get_attr(target_vasp, "sweep_tx_hash")
+        and str(_get_attr(target_vasp, "sweep_tx_hash")).strip()
+        and any(
+            _get_attr(edge, "source") == _get_attr(target_vasp, "deposit_address")
+            and _get_attr(edge, "target") == _get_attr(target_vasp, "hot_wallet")
+            and _get_attr(edge, "tx_hash") == _get_attr(target_vasp, "sweep_tx_hash")
+            for edge in edges
+        )
+    )
+
+    if has_target_edge and target_vasp is not None:
+        vasp_name = _get_attr(target_vasp, "name", "Centralized Exchange / VASP")
+        nodal_email = _get_attr(target_vasp, "nodal_email", "compliance@exchange.com")
+        deposit_addr = _get_attr(target_vasp, "deposit_address", "N/A")
+        hot_wallet = _get_attr(target_vasp, "hot_wallet", "N/A")
+        sweep_tx = _get_attr(target_vasp, "sweep_tx_hash", "N/A")
+
+        subject_line = f"""DRAFT STATUTORY REQUISITION FOR PRODUCTION OF SUBSCRIBER KYC, TRANSACTION LEDGERS,
+         IP TELEMETRY AND ASSET PRESERVATION IN CASE FIR/NCRP COMPLAINT NO: {meta.fir_number}"""
+
+        trail_summary = f"""Automated multi-hop blockchain tracing on the {chain} network originating from 
+   suspect address '{seed_address}' established that illicit proceeds were routed 
+   across {len(edges)} transaction hops and deposited into your exchange infrastructure:
+
+   * Identified User Deposit Address: {deposit_addr}
+   * Associated Exchange Hot Wallet:  {hot_wallet}
+   * Sweeping / Consolidation TxHash: {sweep_tx}
+   * Identification Timestamp:        {current_time_utc}
+   * Execution Traversal Latency:     {exec_ms} ms"""
+
+        production_directions = f"""By virtue of powers conferred under Section 94 BNSS (Production of Documents), 
+   you are hereby requested to furnish the following electronic records within TWENTY-FOUR (24) HOURS:
+   
+   a) Complete User Profile & KYC: Full legal name, date of birth, residential address, 
+      government identity proofs (PAN, Aadhaar, Passport), verified phone number & email.
+   b) Transaction & Ledger History: Complete deposit, withdrawal, and order-book execution 
+      history for the Account UID linked to deposit address '{deposit_addr}'.
+   c) Telemetry & Access Logs: IP address logs with port numbers, timestamps (UTC), login 
+      device IMEI/MAC, and User-Agent strings.
+   d) P2P & Banking Off-Ramps: Bank account details (Account No., IFSC, Bank Name) or UPI IDs 
+      used for fiat settlement."""
+
+        freeze_advisory = """Note: Formal seizure and attachment of property requires judicial authorization under
+   Section 107 BNSS (Warrant for Attachment/Seizure). Pending application to the competent
+   Judicial Magistrate, you are placed on administrative notice to exercise immediate debit lien/
+   preservation on the target deposit account and associated UID to prevent dissipation of crime proceeds."""
+
+    else:
+        vasp_name = "No transaction-supported VASP destination established"
+        nodal_email = "N/A"
+        deposit_addr = "N/A"
+        hot_wallet = "N/A"
+        sweep_tx = "N/A"
+
+        subject_line = f"""FORENSIC TRACE REVIEW: NO TRANSACTION-SUPPORTED EXCHANGE DESTINATION ESTABLISHED
+         CASE FIR/NCRP COMPLAINT NO: {meta.fir_number}"""
+
+        trail_summary = f"""Automated multi-hop blockchain tracing on the {chain} network originating from 
+   suspect address '{seed_address}' did not establish, from transaction edges in this trace, that funds reached a 
+   known exchange or VASP. No exchange deposit address, hot wallet, or sweep transaction hash is identified.
+   * Total Transaction Hops Evaluated: {len(edges)}
+   * Identification Timestamp:         {current_time_utc}
+   * Execution Traversal Latency:      {exec_ms} ms"""
+
+        production_directions = """No exchange-specific production request is generated under Section 94 BNSS 
+   because this trace contains no transaction edge establishing a VASP destination."""
+
+        freeze_advisory = """No exchange-specific asset freeze or lien is requested under Sections 106/107 BNSS 
+   because this trace does not establish a transaction path to a known VASP wallet."""
+
     notice_template = f"""{demo_watermark}========================================================================================
-DRAFT REQUISITION FOR PRODUCTION OF ELECTRONIC RECORDS UNDER SECTION 94 BNSS, 2023
-(Corresponding to Section 91 of the Code of Criminal Procedure, 1973)
+SECTION 94 OF THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023 (BNSS)
+REQUISITION FOR PRODUCTION OF ELECTRONIC DOCUMENTS & KYC RECORDS
+SEPARATE STATUTORY NOTICE FOR ASSET PRESERVATION UNDER SECTIONS 106 & 107 BNSS, 2023
 STATUS: DRAFT FOR INVESTIGATING OFFICER (IO) REVIEW & SIGNATURE — NOT OFFICIALLY ISSUED
 ========================================================================================
 
@@ -103,8 +171,7 @@ The Nodal Officer / Law Enforcement Response Desk
 M/s {vasp_name}
 Official LEA Contact: {nodal_email}
 
-SUBJECT: DRAFT STATUTORY REQUISITION FOR PRODUCTION OF SUBSCRIBER KYC, TRANSACTION LEDGERS,
-         IP TELEMETRY AND ASSET PRESERVATION IN CASE FIR/NCRP COMPLAINT NO: {meta.fir_number}
+SUBJECT: {subject_line}
 
 1. INVESTIGATION PARTICULARS:
    - Investigating Agency: {meta.police_station}
@@ -115,33 +182,13 @@ SUBJECT: DRAFT STATUTORY REQUISITION FOR PRODUCTION OF SUBSCRIBER KYC, TRANSACTI
    - Blockchain Network:   {chain}
 
 2. FORENSIC BLOCKCHAIN TRAIL SUMMARY:
-   Automated multi-hop blockchain tracing on the cryptocurrency ledger originating from 
-   suspect address '{seed_address}' established that illicit proceeds were routed 
-   across {len(edges)} transaction hops and deposited into your exchange infrastructure:
+   {trail_summary}
 
-   * Identified User Deposit Address: {deposit_addr}
-   * Associated Exchange Hot Wallet:  {hot_wallet}
-   * Sweeping / Consolidation TxHash: {sweep_tx}
-   * Identification Timestamp:        {current_time_utc}
-   * Execution Traversal Latency:     {exec_ms} ms
+3. STATUTORY REQUISITION UNDER SECTION 94 BNSS, 2023 (PRODUCTION OF ELECTRONIC DOCUMENTS):
+   {production_directions}
 
-3. STATUTORY REQUISITION UNDER SECTION 94 BNSS, 2023:
-   By virtue of powers under Section 94 BNSS, you are hereby requested to 
-   furnish the following electronic records to this office within TWENTY-FOUR (24) HOURS:
-   
-   a) Complete User Profile & KYC: Full legal name, date of birth, residential address, 
-      government identity proofs (PAN, Aadhaar, Passport), verified phone number & email.
-   b) Transaction & Ledger History: Complete deposit, withdrawal, and order-book execution 
-      history for the Account UID linked to deposit address '{deposit_addr}'.
-   c) Telemetry & Access Logs: IP address logs with port numbers, timestamps (UTC), login 
-      device IMEI/MAC, and User-Agent strings.
-   d) P2P & Banking Off-Ramps: Bank account details (Account No., IFSC, Bank Name) or UPI IDs 
-      used for fiat settlement.
-
-4. DIRECTION FOR ASSET PRESERVATION (UNDER SECTIONS 106 & 107 BNSS, 2023):
-   Pending formal judicial warrant/order under Section 107 BNSS, you are requested to 
-   place an immediate administrative debit freeze/lien on the target deposit account and 
-   associated UID to prevent further dispersion of reported crime proceeds.
+4. ASSET PRESERVATION & SEIZURE SCOPING (SECTIONS 106 & 107 BNSS, 2023):
+   {freeze_advisory}
 
 5. STATUTORY ADMISSIBILITY CERTIFICATE (SECTION 63 BHARATIYA SAKSHYA ADHINIYAM, 2023):
    I certify that the forensic data herein was extracted in the regular course of official 
@@ -149,7 +196,7 @@ SUBJECT: DRAFT STATUTORY REQUISITION FOR PRODUCTION OF SUBSCRIBER KYC, TRANSACTI
    * Cryptographic Trace Integrity Seal (SHA-256): {sha256_hash}
    * Canonical Evidence Serialization: SHA-256 over all {len(edges)} transaction hops and {len(_get_attr(trace, 'nodes', []))} nodes.
 
-DRAFT NOTICE — FOR REVIEW & SIGNATURE:
+Notice Issued By:
 ______________________________________
 {meta.investigating_officer}
 {meta.police_station}

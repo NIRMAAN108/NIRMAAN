@@ -353,3 +353,120 @@ def test_frontend_render_xss_payload_injection():
         assert "<" not in sanitized
         assert ">" not in sanitized
         assert "&lt;" in sanitized or "&#39;" in sanitized or "&#039;" in sanitized or "&quot;" in sanitized
+
+
+def test_legal_notice_statutory_separation_and_negative_branch():
+    """
+    Verify P2 Item 5:
+    1. Removes 'court-ready' claim from Section 94 BNSS requisitions.
+    2. Separates Section 94 (production of documents) from Sections 106 & 107 BNSS (seizure/attachment).
+    3. Emits negative notice when trace contains no VASP destination edge.
+    """
+    from app.core.legal_notice import generate_section_94_bnss_notice
+
+    # Case A: Trace with NO VASP target edge
+    trace_no_vasp = {
+        "trace_id": "test-trace-no-vasp",
+        "seed_address": "0x52908400098527886E0F7030069857D2E4169EE7",
+        "chain": "Ethereum",
+        "nodes": [],
+        "edges": []
+    }
+    notice_neg = generate_section_94_bnss_notice(trace_no_vasp)
+    assert "court-ready" not in notice_neg.lower()
+    assert "SECTION 94 OF THE BHARATIYA NAGARIK SURAKSHA SANHITA" in notice_neg
+    assert "SEPARATE STATUTORY NOTICE FOR ASSET PRESERVATION UNDER SECTIONS 106 & 107 BNSS" in notice_neg
+    assert "No exchange-specific production request is generated" in notice_neg
+    assert "No exchange-specific asset freeze or lien is requested" in notice_neg
+
+    # Case B: Trace with a valid VASP target edge
+    trace_with_vasp = {
+        "trace_id": "test-trace-vasp",
+        "seed_address": "0x52908400098527886E0F7030069857D2E4169EE7",
+        "chain": "Ethereum",
+        "target_vasp": {
+            "name": "Binance",
+            "deposit_address": "0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be",
+            "hot_wallet": "0x28c6c06298d514db089934071355e5743bf21d60",
+            "sweep_tx_hash": "0xabc123456789",
+            "nodal_email": "compliance@binance.com"
+        },
+        "nodes": [
+            {"id": "0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be", "address": "0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be"},
+            {"id": "0x28c6c06298d514db089934071355e5743bf21d60", "address": "0x28c6c06298d514db089934071355e5743bf21d60"}
+        ],
+        "edges": [
+            {
+                "source": "0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be",
+                "target": "0x28c6c06298d514db089934071355e5743bf21d60",
+                "tx_hash": "0xabc123456789",
+                "amount": 1000.0,
+                "token": "USDT",
+                "usd_value": 1000.0,
+                "timestamp": 1700000000
+            }
+        ]
+    }
+    notice_pos = generate_section_94_bnss_notice(trace_with_vasp)
+    assert "court-ready" not in notice_pos.lower()
+    assert "M/s Binance" in notice_pos
+    assert "Section 94 BNSS (Production of Documents)" in notice_pos
+    assert "Section 107 BNSS (Warrant for Attachment/Seizure)" in notice_pos
+
+
+@pytest.mark.asyncio
+async def test_tracer_feature_vector_graph_dimensions_and_tx_hash_guard(monkeypatch):
+    """
+    Verify P2 Item 6 & Resilience:
+    1. tracer.py ignores transactions with empty or whitespace-only tx_hash.
+    2. tracer.py calculates feature vector dimensions 6 (mixer proximity) and 7 (exchange custody)
+       from real graph topology instead of remaining fixed at 0.0.
+    """
+    from app.core.tracer import ForensicTracer
+    from app.models.schemas import TraceRequest
+
+    tracer = ForensicTracer()
+    res = await tracer.trace(TraceRequest(
+        seed_address="0x95222290DD7853684454F4275E597E3A63725F78",
+        chain="ethereum"
+    ))
+
+    # All nodes must have feature_vector of length 8
+    for node in res.nodes:
+        assert node.feature_vector is not None
+        assert len(node.feature_vector) == 8
+
+    # VASP hot wallet must have exchange custody dimension (index 7) == 1.0
+    hot_nodes = [n for n in res.nodes if n.node_type == "VASP_HOT"]
+    assert len(hot_nodes) > 0
+    for hn in hot_nodes:
+        assert hn.feature_vector[7] == 1.0
+
+    # VASP deposit forwarder must have exchange custody dimension == 0.8
+    deposit_nodes = [n for n in res.nodes if n.node_type == "VASP_DEPOSIT"]
+    assert len(deposit_nodes) > 0
+    for dn in deposit_nodes:
+        assert dn.feature_vector[7] == 0.8
+
+    # Intermediate mules and seed routing into deposit must have non-zero exchange custody dimension
+    seed_nodes = [n for n in res.nodes if n.address.lower() == "0x95222290DD7853684454F4275E597E3A63725F78".lower()]
+    assert len(seed_nodes) > 0
+    assert seed_nodes[0].feature_vector[7] > 0.0
+
+    # Test tx_hash guard: transfers with empty or whitespace-only tx_hash must be skipped
+    corrupt_transfers = [
+        {"from": "0x95222290DD7853684454F4275E597E3A63725F78", "to": "0x52908400098527886E0F7030069857D2E4169EE7", "amount": 100.0, "tx_hash": "", "timestamp": 1700000000, "token": "ETH"},
+        {"from": "0x95222290DD7853684454F4275E597E3A63725F78", "to": "0x52908400098527886E0F7030069857D2E4169EE7", "amount": 100.0, "tx_hash": "   ", "timestamp": 1700000000, "token": "ETH"},
+        {"from": "0x95222290DD7853684454F4275E597E3A63725F78", "to": "0x52908400098527886E0F7030069857D2E4169EE7", "amount": 100.0, "tx_hash": None, "timestamp": 1700000000, "token": "ETH"},
+    ]
+    async def mock_fetch_transfers(addr, chain=None):
+        return corrupt_transfers
+
+    monkeypatch.setattr(tracer.crawler, "fetch_transfers", mock_fetch_transfers)
+    corrupt_res = await tracer.trace(TraceRequest(
+        seed_address="0x95222290DD7853684454F4275E597E3A63725F78",
+        chain="ethereum"
+    ))
+    # All corrupt transfers must be rejected, producing 0 edges
+    assert len(corrupt_res.edges) == 0
+
