@@ -60,9 +60,9 @@ async def test_malformed_wallet_inputs(client: httpx.AsyncClient):
         ("NON_STD_PREFIX_XYZ", "Non-standard prefix 'xyz'", "xyz", 400),
         ("NON_STD_PREFIX_BTC", "Non-standard prefix 'BTC_123456789'", "BTC_123456789", 400),
         ("SPECIAL_CHARS", "Special characters and symbols", "!@#$%^&*()_+~|}{[]:;?><,./'", 400),
-        ("TRON_FORMAT_SYMBOLS", "34-char string starting with T but full of symbols", "T" + "!@#$%^&*()_+~|}{[]:;?><,./'1234", [400, 200]),
+        ("TRON_FORMAT_SYMBOLS", "34-char string starting with T but full of symbols", "T" + "!@#$%^&*()_+~|}{[]:;?><,./'1234", 400),
         ("LONG_INPUT_NO_PREFIX", "Excessively long input (10,000 chars of 'A')", "A" * 10000, 400),
-        ("LONG_INPUT_EVM_PREFIX", "Excessively long input (10,000 chars starting with 0x)", "0x" + ("f" * 9998), [400, 200, 504]),
+        ("LONG_INPUT_EVM_PREFIX", "Excessively long input (10,000 chars starting with 0x)", "0x" + ("f" * 9998), 400),
         ("LONG_INPUT_TRON_PREFIX", "Excessively long input (10,000 chars starting with T)", "T" + ("X" * 9999), 400),
     ]
 
@@ -111,7 +111,7 @@ async def test_boundary_values(client: httpx.AsyncClient):
                 "fir_number": "NCRP-TEST/NEG-LOSS",
                 "loss_amount_inr": -100000.0
             }
-        }, [200, 422]),
+        }, 422),
         ("UNICODE_HINDI_METADATA", "Hindi Unicode complainant & FIR", {
             "seed_address": seed,
             "case_metadata": {

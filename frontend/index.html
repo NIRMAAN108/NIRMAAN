@@ -688,6 +688,16 @@ Loading notice content...
   <!-- JAVASCRIPT LOGIC & FORENSICS CONTROLLER -->
   <!-- ======================================================== -->
   <script>
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     let cy = null;
     let currentTrace = null;
     let currentCaseId = null;
@@ -918,7 +928,7 @@ Loading notice content...
       const countBadge = document.getElementById('flowStepCountBadge');
       if (countBadge) countBadge.innerText = '0 Entities';
       const flowCards = document.getElementById('flowCardsContainer');
-      if (flowCards) flowCards.innerHTML = `<div class="p-6 text-center text-rose-400 font-mono text-xs">Investigation failed or timed out: ${reason}</div>`;
+      if (flowCards) flowCards.innerHTML = `<div class="p-6 text-center text-rose-400 font-mono text-xs">Investigation failed or timed out: ${escapeHtml(reason)}</div>`;
       const hopsTable = document.getElementById('hopsTableBody');
       if (hopsTable) hopsTable.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-rose-400 font-mono text-xs">No transaction hops resolved.</td></tr>`;
     }
@@ -1077,11 +1087,11 @@ Loading notice content...
                 <span class="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 font-mono text-[10px] font-bold">HOP</span>
               </div>
               <div class="text-[11px] font-mono break-all text-white">
-                <span class="text-zinc-500 block">TxHash:</span>${edgeData.tx_hash || 'N/A'}
+                <span class="text-zinc-500 block">TxHash:</span>${escapeHtml(edgeData.tx_hash || 'N/A')}
               </div>
               <div class="grid grid-cols-2 gap-2 text-[11px] font-mono pt-1 border-t border-zinc-800">
-                <div><span class="text-zinc-500 block">Amount:</span>${edgeData.amount || '0'}</div>
-                <div><span class="text-zinc-500 block">USD Value:</span>$${(edgeData.usd_value || 0).toLocaleString()}</div>
+                <div><span class="text-zinc-500 block">Amount:</span>${escapeHtml(edgeData.amount || '0')}</div>
+                <div><span class="text-zinc-500 block">USD Value:</span>$${Number(edgeData.usd_value || 0).toLocaleString()}</div>
               </div>
             </div>
           `;
@@ -1166,13 +1176,13 @@ Loading notice content...
         card.innerHTML = `
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded ${badgeBg}">
-              Hop ${idx} • ${node.node_type}
+              Hop ${idx} &bull; ${escapeHtml(node.node_type)}
             </span>
-            <span class="text-[10px] font-mono text-zinc-400">Risk: ${node.risk_tier || 'MED'}</span>
+            <span class="text-[10px] font-mono text-zinc-400">Risk: ${escapeHtml(node.risk_tier || 'MED')}</span>
           </div>
           <div>
-            <div class="text-xs font-semibold text-white">${node.label || node.vasp_name || 'Wallet Node'}</div>
-            <div class="text-[11px] font-mono text-zinc-400 break-all select-all">${node.address}</div>
+            <div class="text-xs font-semibold text-white">${escapeHtml(node.label || node.vasp_name || 'Wallet Node')}</div>
+            <div class="text-[11px] font-mono text-zinc-400 break-all select-all">${escapeHtml(node.address)}</div>
           </div>
         `;
         container.appendChild(card);
@@ -1195,14 +1205,14 @@ Loading notice content...
         tr.innerHTML = `
           <td class="py-2.5 font-bold text-indigo-400">#${idx + 1}</td>
           <td class="py-2.5">
-            <div class="truncate max-w-[200px]" title="${edge.source}">${edge.source.substring(0, 10)}...</div>
-            <div class="text-[10px] text-zinc-500">&darr; ${edge.target.substring(0, 10)}...</div>
+            <div class="truncate max-w-[200px]" title="${escapeHtml(edge.source)}">${escapeHtml(edge.source ? edge.source.substring(0, 10) : '')}...</div>
+            <div class="text-[10px] text-zinc-500">&darr; ${escapeHtml(edge.target ? edge.target.substring(0, 10) : '')}...</div>
           </td>
           <td class="py-2.5 font-bold text-white">
-            ${edge.amount.toLocaleString()} ${edge.token || 'USDT'}
+            ${Number(edge.amount || 0).toLocaleString()} ${escapeHtml(edge.token || 'USDT')}
           </td>
           <td class="py-2.5 text-zinc-400 text-[11px]">
-            <span class="truncate max-w-[140px] block" title="${edge.tx_hash}">${edge.tx_hash.substring(0, 14)}...</span>
+            <span class="truncate max-w-[140px] block" title="${escapeHtml(edge.tx_hash)}">${escapeHtml(edge.tx_hash ? edge.tx_hash.substring(0, 14) : '')}...</span>
           </td>
         `;
         tbody.appendChild(tr);
@@ -1281,22 +1291,22 @@ Loading notice content...
             const dateStr = new Date(c.created_at * 1000).toLocaleString('en-IN', { timeZone: 'UTC', hour12: false });
             tr.innerHTML = `
               <td class="py-3 px-4 font-bold text-white">
-                <div>${c.fir_number}</div>
-                <div class="text-[10px] text-zinc-500 font-mono">${c.case_id}</div>
+                <div>${escapeHtml(c.fir_number)}</div>
+                <div class="text-[10px] text-zinc-500 font-mono">${escapeHtml(c.case_id)}</div>
               </td>
               <td class="py-3 px-4">
-                <span class="truncate max-w-[140px] block" title="${c.seed_address}">${c.seed_address.substring(0, 12)}...</span>
+                <span class="truncate max-w-[140px] block" title="${escapeHtml(c.seed_address)}">${escapeHtml(c.seed_address ? c.seed_address.substring(0, 12) : '')}...</span>
               </td>
-              <td class="py-3 px-4 text-zinc-400">${c.chain}</td>
-              <td class="py-3 px-4 text-emerald-400 font-bold">${c.destination_vasp || 'In-Transit'}</td>
-              <td class="py-3 px-4 text-white font-semibold">₹${c.loss_amount_inr.toLocaleString('en-IN')}</td>
-              <td class="py-3 px-4 text-zinc-400 text-[11px]">${dateStr}</td>
+              <td class="py-3 px-4 text-zinc-400">${escapeHtml(c.chain)}</td>
+              <td class="py-3 px-4 text-emerald-400 font-bold">${escapeHtml(c.destination_vasp || 'In-Transit')}</td>
+              <td class="py-3 px-4 text-white font-semibold">₹${Number(c.loss_amount_inr || 0).toLocaleString('en-IN')}</td>
+              <td class="py-3 px-4 text-zinc-400 text-[11px]">${escapeHtml(dateStr)}</td>
               <td class="py-3 px-4 text-right">
                 <div class="flex items-center justify-end gap-1.5">
-                  <a href="http://127.0.0.1:8000/api/cases/${c.case_id}/dossier" target="_blank" class="px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-sans font-semibold">
+                  <a href="http://127.0.0.1:8000/api/cases/${encodeURIComponent(c.case_id)}/dossier" target="_blank" class="px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-sans font-semibold">
                     PDF
                   </a>
-                  <a href="http://127.0.0.1:8000/api/cases/${c.case_id}/bundle" target="_blank" class="px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-sans font-semibold">
+                  <a href="http://127.0.0.1:8000/api/cases/${encodeURIComponent(c.case_id)}/bundle" target="_blank" class="px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-sans font-semibold">
                     ZIP
                   </a>
                 </div>
@@ -1338,19 +1348,19 @@ Loading notice content...
         card.innerHTML = `
           <div>
             <div class="flex items-center justify-between mb-1.5">
-              <h3 class="text-sm font-bold text-white">${v.name}</h3>
+              <h3 class="text-sm font-bold text-white">${escapeHtml(v.name)}</h3>
               <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ${v.fiu_registered ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-zinc-800 text-zinc-400'}">
                 ${v.fiu_registered ? 'FIU-IND' : 'GLOBAL'}
               </span>
             </div>
             <div class="text-[11px] font-mono text-zinc-400 flex flex-col gap-1 mt-2">
-              <div><span class="text-zinc-500">Nodal:</span> <a href="mailto:${v.nodal_email}" class="text-indigo-400 hover:underline break-all">${v.nodal_email}</a></div>
-              <div><span class="text-zinc-500">Portal:</span> <a href="${v.law_enforcement_portal}" target="_blank" class="text-indigo-400 hover:underline truncate block">${v.law_enforcement_portal.replace('https://', '')}</a></div>
+              <div><span class="text-zinc-500">Nodal:</span> <a href="mailto:${encodeURI(v.nodal_email || '')}" class="text-indigo-400 hover:underline break-all">${escapeHtml(v.nodal_email)}</a></div>
+              <div><span class="text-zinc-500">Portal:</span> <a href="${encodeURI(v.law_enforcement_portal || '')}" target="_blank" class="text-indigo-400 hover:underline truncate block">${escapeHtml((v.law_enforcement_portal || '').replace('https://', ''))}</a></div>
             </div>
           </div>
           <div class="pt-2 border-t border-zinc-800 flex items-center justify-between text-[10px] font-mono text-zinc-500">
             <span>Known Hot Wallets: ${(v.known_hot_wallets || []).length}</span>
-            <button onclick="inspectVaspHotWallets('${key}')" class="text-indigo-400 hover:underline">View Wallets</button>
+            <button onclick="inspectVaspHotWallets('${escapeHtml(key)}')" class="text-indigo-400 hover:underline">View Wallets</button>
           </div>
         `;
         container.appendChild(card);

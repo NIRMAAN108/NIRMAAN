@@ -12,16 +12,16 @@ from app.crawlers.btc import BitcoinCrawler
 def detect_chain(address: str) -> str:
     """
     Deterministic chain detection based on address format:
-    - Starts with 0x / 0X (address 40 to 44 chars) -> EVM (Ethereum / BSC)
-    - Starts with T (Base58, 30 to 38 chars) -> TRON
-    - Starts with 1, 3, or bc1 (26 to 62 chars) -> Bitcoin
+    - Starts with 0x / 0X (address 40 to 44 chars, alphanumeric) -> EVM (Ethereum / BSC)
+    - Starts with T (Base58, 30 to 38 chars, alphanumeric) -> TRON
+    - Starts with 1, 3, or bc1 (26 to 62 chars, alphanumeric) -> Bitcoin
     """
     addr = address.strip()
-    if addr.lower().startswith("0x") and 40 <= len(addr) <= 44:
+    if addr.lower().startswith("0x") and 40 <= len(addr) <= 44 and addr[2:].isalnum():
         return "ethereum"
-    elif addr.startswith("T") and 30 <= len(addr) <= 38:
+    elif addr.startswith("T") and 30 <= len(addr) <= 38 and addr.isalnum():
         return "tron"
-    elif (addr.startswith("bc1") or addr.startswith("1") or addr.startswith("3")) and 26 <= len(addr) <= 62:
+    elif (addr.startswith("bc1") or addr.startswith("1") or addr.startswith("3")) and 26 <= len(addr) <= 62 and addr.isalnum():
         return "bitcoin"
     return "unknown"
 

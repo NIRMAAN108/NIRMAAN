@@ -252,3 +252,16 @@ def test_frontend_initial_html_neutral_empty_state():
     assert "₹14,95,000 Tracked" not in html
     assert "No Active Trace" in html
     assert "AWAITING TRACE" in html
+
+def test_frontend_xss_sanitization_helpers_present():
+    """Regression test: verify XSS escaping helper is defined and used before DOM innerHTML insertions."""
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    html_path = os.path.join(base_dir, "frontend", "index.html")
+    with open(html_path, "r", encoding="utf-8") as f:
+        html = f.read()
+
+    assert "function escapeHtml(str)" in html
+    assert "${escapeHtml(node.address)}" in html
+    assert "${escapeHtml(edge.tx_hash" in html
+    assert "${escapeHtml(c.fir_number)}" in html
+    assert "${escapeHtml(v.name)}" in html
