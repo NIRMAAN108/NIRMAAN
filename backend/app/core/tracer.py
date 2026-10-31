@@ -92,21 +92,16 @@ class ForensicTracer:
                 nodes_map[curr_addr].node_type = "VASP_HOT"
                 nodes_map[curr_addr].label = f"{direct_match['name']} Hot Wallet"
                 nodes_map[curr_addr].vasp_name = direct_match["name"]
-                if not found_target_vasp:
-                    found_target_vasp = TargetVASP(
-                        name=direct_match["name"],
-                        fiu_registered=direct_match["fiu_registered"],
-                        deposit_address=curr_addr,
-                        hot_wallet=curr_addr,
-                        nodal_email=direct_match["nodal_email"],
-                        law_enforcement_portal=direct_match["law_enforcement_portal"]
-                    )
-                continue
 
             # Fetch outbound transfers across appropriate crawler
             transfers = await self.crawler.fetch_transfers(curr_addr, chain=chain)
 
             for tx in transfers:
+                tx_hash = tx.get("tx_hash")
+                if not isinstance(tx_hash, str) or not tx_hash.strip():
+                    logger.warning("Skipping transaction without a non-empty transaction hash")
+                    continue
+
                 recipient = tx["to"]
                 raw_amount = tx["amount"]
                 token = tx.get("token", "USDT")
@@ -131,17 +126,6 @@ class ForensicTracer:
                     recipient_type = "VASP_HOT"
                     recipient_label = f"{vasp_meta['name']} Master Hot Wallet"
                     recipient_vasp = vasp_meta["name"]
-
-                    if not found_target_vasp:
-                        found_target_vasp = TargetVASP(
-                            name=vasp_meta["name"],
-                            fiu_registered=vasp_meta["fiu_registered"],
-                            deposit_address=curr_addr,
-                            hot_wallet=recipient,
-                            sweep_tx_hash=tx["tx_hash"],
-                            nodal_email=vasp_meta["nodal_email"],
-                            law_enforcement_portal=vasp_meta["law_enforcement_portal"]
-                        )
                 else:
                     recipient_type = "MULE"
                     recipient_label = f"Intermediary Mule (Hop {depth + 1})"
@@ -160,13 +144,24 @@ class ForensicTracer:
                 edge_obj = GraphEdge(
                     source=curr_addr,
                     target=recipient,
-                    tx_hash=tx["tx_hash"],
+                    tx_hash=tx_hash,
                     amount=raw_amount,
                     token=token,
                     usd_value=usd_value,
                     timestamp=tx["timestamp"]
                 )
                 edges_list.append(edge_obj)
+
+                if is_known_hot and not found_target_vasp:
+                    found_target_vasp = TargetVASP(
+                        name=vasp_meta["name"],
+                        fiu_registered=vasp_meta["fiu_registered"],
+                        deposit_address=curr_addr,
+                        hot_wallet=recipient,
+                        sweep_tx_hash=tx_hash,
+                        nodal_email=vasp_meta["nodal_email"],
+                        law_enforcement_portal=vasp_meta["law_enforcement_portal"]
+                    )
 
                 if not is_known_hot:
                     queue.append((recipient, depth + 1, "MULE"))

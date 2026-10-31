@@ -7,13 +7,92 @@ import asyncio
 from fastapi.testclient import TestClient
 import json
 import re
+from copy import deepcopy
 
+import httpx
+
+from app import main as app_module
 from app.main import app
-from app.models.schemas import TraceRequest, CaseMetadata
+from app.models.schemas import TraceRequest
 from app.core.tracer import ForensicTracer
+from app.core.legal_notice import generate_section_94_bnss_notice
 from app.crawlers.multi_chain_crawler import detect_chain
+from app.crawlers.tron import TronCrawler
 
 client = TestClient(app)
+
+def _transfer(source, recipient, amount, tx_hash, token="USDT"):
+    return {
+        "from": source,
+        "to": recipient,
+        "amount": amount,
+        "tx_hash": tx_hash,
+        "timestamp": 1700000000,
+        "token": token,
+        "chain": "tron"
+    }
+
+
+@pytest.fixture(autouse=True)
+def mock_api_crawler(monkeypatch):
+    """Keep API trace tests independent of provider availability and wall-clock fixtures."""
+    tron_seed = "TScamOriginVictimAddress778899AABB"
+    tron_mule = "TMuleSplitterLayer1Address445566CC"
+    tron_forwarder = "TBinanceUserDepositForwarder8899ZZ"
+    evm_seed = "0xScamOriginVictimEther998877AABBCCDDEEFF"
+    evm_mule = "0xMuleSplitterEtherLayer1A1B2C3D4E5F60718"
+    evm_forwarder = "0xBinanceDepositForwarderEther88776655"
+    btc_seed = "bc1qScamVictimBtcSeedAddress998877AABB"
+    btc_mule = "bc1qMuleLayer1BtcSplitter223344CCDD"
+    btc_forwarder = "bc1qBinanceDepositForwarderBtc556677"
+    transfers_by_address = {
+        tron_seed.lower(): [
+            _transfer(tron_seed, tron_mule, 15000.0, "tron-seed-to-mule")
+        ],
+        tron_mule.lower(): [
+            _transfer(tron_mule, tron_forwarder, 14950.0, "tron-mule-to-forwarder"),
+            _transfer(tron_mule, "TPeelingChangeBurner11223344EEFF", 50.0, "tron-mule-to-change")
+        ],
+        tron_forwarder.lower(): [
+            _transfer(tron_forwarder, "TMuA6YqfCeX8EhbfYEg5y7S4DnxJRB4b7N", 14950.0, "tron-forwarder-to-hot")
+        ],
+        evm_seed.lower(): [
+            _transfer(evm_seed, evm_mule, 25000.0, "evm-seed-to-mule")
+        ],
+        evm_mule.lower(): [
+            _transfer(evm_mule, evm_forwarder, 24900.0, "evm-mule-to-forwarder"),
+            _transfer(evm_mule, "0xPeelingBurnerEtherChange99001122", 100.0, "evm-mule-to-change")
+        ],
+        evm_forwarder.lower(): [
+            _transfer(evm_forwarder, "0x28C6c06298d514Db089934071355E5743bf21d60", 24900.0, "evm-forwarder-to-hot")
+        ],
+        btc_seed.lower(): [
+            _transfer(btc_seed, btc_mule, 0.85, "btc-seed-to-mule", token="BTC")
+        ],
+        btc_mule.lower(): [
+            _transfer(btc_mule, btc_forwarder, 0.82, "btc-mule-to-forwarder", token="BTC"),
+            _transfer(btc_mule, "bc1qPeelChangeBurnerBtc99887766", 0.03, "btc-mule-to-change", token="BTC")
+        ],
+        btc_forwarder.lower(): [
+            _transfer(btc_forwarder, "bc1qm34lsc65zpw79lxes69zkqmk6ee3ewf0j77s3h", 0.82, "btc-forwarder-to-hot", token="BTC")
+        ],
+    }
+
+    async def fetch_transfers(address, chain=None):
+        return deepcopy(transfers_by_address.get(address.lower(), []))
+
+    monkeypatch.setattr(app_module.tracer.crawler, "fetch_transfers", fetch_transfers)
+
+
+@pytest.fixture
+def mocked_tracer(monkeypatch):
+    tracer = ForensicTracer()
+
+    async def fetch_empty_transfers(address, chain=None):
+        return []
+
+    monkeypatch.setattr(tracer.crawler, "fetch_transfers", fetch_empty_transfers)
+    return tracer
 
 # -------------------------------------------------------------
 # 1. API HEALTH & VASP DIRECTORY INTEGRITY
@@ -104,6 +183,40 @@ def test_tron_trace_end_to_end():
     assert "Binance" in notice
     assert "SHA-256" in notice
 
+
+@pytest.mark.asyncio
+async def test_tron_demo_fixture_trace_makes_no_http_requests(monkeypatch):
+    crawler = ForensicTracer()
+    fetched_addresses = []
+    original_fetch_transfers = TronCrawler.fetch_transfers
+
+    async def track_fixture_fetch(tron_crawler, address, limit=15):
+        fetched_addresses.append(address)
+        return await original_fetch_transfers(tron_crawler, address, limit)
+
+    def reject_http_client(*args, **kwargs):
+        raise AssertionError("Synthetic TRON fixture trace attempted an HTTP request")
+
+    monkeypatch.setattr(TronCrawler, "fetch_transfers", track_fixture_fetch)
+    monkeypatch.setattr(httpx, "AsyncClient", reject_http_client)
+
+    response = await crawler.trace(
+        TraceRequest(seed_address="TScamOriginVictimAddress778899AABB")
+    )
+
+    hot_wallet = "TMuA6YqfCeX8EhbfYEg5y7S4DnxJRB4b7N"
+    expected_hash = "d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3"
+    assert "TPeelingChangeBurner11223344EEFF" in fetched_addresses
+    assert response.destination_found is True
+    assert response.target_vasp is not None
+    assert response.target_vasp.name == "Binance"
+    assert response.target_vasp.hot_wallet == hot_wallet
+    assert response.target_vasp.sweep_tx_hash == expected_hash
+    assert any(
+        edge.target == hot_wallet and edge.tx_hash == expected_hash
+        for edge in response.edges
+    )
+
 # -------------------------------------------------------------
 # 4. END-TO-END EVM (ETHEREUM) TRACING
 # -------------------------------------------------------------
@@ -166,14 +279,94 @@ def test_evm_case_insensitivity():
     assert res_lower.json()["destination_found"] == res_upper.json()["destination_found"]
 
 def test_direct_hot_wallet_input():
-    """If user pastes an address that is ALREADY a known hot wallet, flag immediately."""
+    """A known hot wallet seed is labelled but is not a discovered destination."""
     binance_hot = "TMuA6YqfCeX8EhbfYEg5y7S4DnxJRB4b7N"
     response = client.post("/api/trace", json={"seed_address": binance_hot})
     assert response.status_code == 200
     data = response.json()
-    assert data["destination_found"] is True
-    assert data["target_vasp"]["name"] == "Binance"
+    assert data["destination_found"] is False
+    assert data["target_vasp"] is None
     assert data["nodes"][0]["node_type"] == "VASP_HOT"
+    assert data["nodes"][0]["vasp_name"] == "Binance"
+    assert len(data["edges"]) == 0
+    notice = data["section_94_notice_text"]
+    assert "did not establish" in notice
+    assert "deposited into your exchange infrastructure" not in notice
+
+
+@pytest.mark.asyncio
+async def test_seed_known_vasp_with_no_outgoing_transactions(mocked_tracer):
+    response = await mocked_tracer.trace(TraceRequest(seed_address="TMuA6YqfCeX8EhbfYEg5y7S4DnxJRB4b7N"))
+    assert response.destination_found is False
+    assert response.target_vasp is None
+    assert response.nodes[0].node_type == "VASP_HOT"
+    assert response.nodes[0].vasp_name == "Binance"
+    assert response.edges == []
+
+
+@pytest.mark.asyncio
+async def test_outgoing_transaction_to_known_vasp_requires_and_records_hash(monkeypatch):
+    tracer = ForensicTracer()
+    seed = "TSuspectWalletForVaspTest0000001"
+    hot_wallet = "TMuA6YqfCeX8EhbfYEg5y7S4DnxJRB4b7N"
+    tx = _transfer(seed, hot_wallet, 125.0, "transaction-hash-123")
+
+    async def fetch_transfer(address, chain=None):
+        return [tx] if address == seed else []
+
+    monkeypatch.setattr(tracer.crawler, "fetch_transfers", fetch_transfer)
+    response = await tracer.trace(TraceRequest(seed_address=seed))
+    assert response.destination_found is True
+    assert response.target_vasp.name == "Binance"
+    assert response.target_vasp.sweep_tx_hash == "transaction-hash-123"
+    assert len(response.edges) == 1
+    assert response.edges[0].source == seed
+    assert response.edges[0].target == hot_wallet
+    assert response.edges[0].tx_hash == response.target_vasp.sweep_tx_hash
+
+    tx_without_hash = {key: value for key, value in tx.items() if key != "tx_hash"}
+
+    async def fetch_unhashed_transfer(address, chain=None):
+        return [tx_without_hash] if address == seed else []
+
+    monkeypatch.setattr(tracer.crawler, "fetch_transfers", fetch_unhashed_transfer)
+    response_without_hash = await tracer.trace(TraceRequest(seed_address=seed))
+    assert response_without_hash.destination_found is False
+    assert response_without_hash.target_vasp is None
+    assert response_without_hash.edges == []
+
+
+@pytest.mark.asyncio
+async def test_wallet_without_transactions_or_vasp_match_has_no_destination(mocked_tracer):
+    response = await mocked_tracer.trace(TraceRequest(seed_address="TNoTransactionsNoVaspWallet000001"))
+    assert response.destination_found is False
+    assert response.target_vasp is None
+    assert len(response.nodes) == 1
+    assert response.edges == []
+    notice = generate_section_94_bnss_notice(response)
+    assert "did not establish" in notice
+    assert "No exchange-specific production request is generated" in notice
+    assert "No exchange-specific asset freeze is requested" in notice
+
+
+@pytest.mark.asyncio
+async def test_empty_crawler_response_is_not_a_vasp_destination(mocked_tracer):
+    response = await mocked_tracer.trace(TraceRequest(seed_address="TEmptyCrawlerResponseWallet00001"))
+    assert response.destination_found is False
+    assert response.target_vasp is None
+    assert response.edges == []
+
+
+@pytest.mark.asyncio
+async def test_crawler_failure_is_not_converted_to_empty_trace(monkeypatch):
+    tracer = ForensicTracer()
+
+    async def fail_fetch(address, chain=None):
+        raise RuntimeError("crawler provider failure")
+
+    monkeypatch.setattr(tracer.crawler, "fetch_transfers", fail_fetch)
+    with pytest.raises(RuntimeError, match="crawler provider failure"):
+        await tracer.trace(TraceRequest(seed_address="TProviderFailureWallet0000001"))
 
 def test_invalid_address_rejection():
     """Invalid address format must return HTTP 400 with standardized error payload."""

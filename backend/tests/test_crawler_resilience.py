@@ -5,6 +5,7 @@ and properly failover between blockchain providers.
 """
 import pytest
 import asyncio
+import os
 from app.crawlers.resilience import CircuitBreaker, ResilientHttpClient
 from app.crawlers.tron import TronCrawler
 from app.crawlers.evm import EVMCrawler
@@ -99,25 +100,66 @@ def test_btc_parser_resilience_to_malformed_payloads():
     assert parsed[0]["token"] == "BTC"
 
 # -------------------------------------------------------------
-# 3. LIVE MULTI-CHAIN CRAWLER EXECUTION (RESILIENCE VERIFICATION)
+# 3. MOCKED MULTI-CHAIN CRAWLER EXECUTION (RESILIENCE VERIFICATION)
 # -------------------------------------------------------------
 
+# TODO (coordinate with Dev 1): crawler results currently use [] both for a
+# successful query with no transactions and when all providers fail. Resolving
+# this ambiguity requires a separate crawler contract change.
 @pytest.mark.asyncio
-async def test_live_crawlers_zero_unhandled_exceptions():
-    """Ensures that calling crawlers on non-existent or inactive addresses returns empty list safely."""
+async def test_crawlers_handle_empty_provider_responses(monkeypatch):
+    """Empty provider responses produce empty lists without making live network calls."""
+    tron_crawler = TronCrawler()
+    evm_crawler = EVMCrawler()
+    btc_crawler = BitcoinCrawler()
+    provider_calls = []
+
+    def mock_empty_provider_response(crawler):
+        async def get_with_failover(providers, parser):
+            provider_calls.extend(provider["url"] for provider in providers)
+            return []
+
+        monkeypatch.setattr(crawler.resilient_client, "get_with_failover", get_with_failover)
+
+    mock_empty_provider_response(tron_crawler)
+    mock_empty_provider_response(evm_crawler)
+    mock_empty_provider_response(btc_crawler)
+
+    tron_res = await tron_crawler.fetch_transfers("T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb")
+    assert isinstance(tron_res, list)
+    assert tron_res == []
+
+    evm_res = await evm_crawler.fetch_transfers("0x0000000000000000000000000000000000000000")
+    assert isinstance(evm_res, list)
+    assert evm_res == []
+
+    btc_res = await btc_crawler.fetch_transfers("1111111111111111111114oLvT2")
+    assert isinstance(btc_res, list)
+    assert btc_res == []
+    assert len(provider_calls) == 6
+
+    await tron_crawler.close()
+    await evm_crawler.close()
+    await btc_crawler.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.skipif(
+    os.getenv("RUN_LIVE_CRAWLER_TESTS") != "1",
+    reason="Live-network integration test; set RUN_LIVE_CRAWLER_TESTS=1 to enable",
+)
+async def test_live_crawlers_smoke():
+    """Smoke-test crawler calls against live providers; excluded from offline runs."""
     tron_crawler = TronCrawler()
     evm_crawler = EVMCrawler()
     btc_crawler = BitcoinCrawler()
 
-    # Inactive address on TRON
     tron_res = await tron_crawler.fetch_transfers("T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb")
     assert isinstance(tron_res, list)
 
-    # Inactive address on EVM
     evm_res = await evm_crawler.fetch_transfers("0x0000000000000000000000000000000000000000")
     assert isinstance(evm_res, list)
 
-    # Inactive address on Bitcoin
     btc_res = await btc_crawler.fetch_transfers("1111111111111111111114oLvT2")
     assert isinstance(btc_res, list)
 

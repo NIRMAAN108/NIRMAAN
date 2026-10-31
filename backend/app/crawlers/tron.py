@@ -43,6 +43,7 @@ DEMO_FIXTURE_TRAIL = {
             "chain": "tron"
         }
     ],
+    "TPeelingChangeBurner11223344EEFF": [],
     "TBinanceUserDepositForwarder8899ZZ": [
         {
             "from": "TBinanceUserDepositForwarder8899ZZ",
