@@ -896,14 +896,32 @@ Loading notice content...
           renderTraceResults(data, fir, loss);
           autoSaveCase(data, fir, loss);
         } else {
-          const err = await res.json();
-          alert("Trace Error: " + (err.error?.message || err.detail || "Trace failed"));
+          const err = await res.json().catch(() => ({}));
+          const errMsg = err.error?.message || err.detail || `Server returned HTTP ${res.status}`;
+          alert("Forensic Trace Error: " + errMsg);
+          resetTraceUIState(errMsg);
         }
       } catch (e) {
-        console.warn("Backend request error:", e);
+        console.error("Backend request error:", e);
+        alert("Network Error: Could not connect to the NIRMAAN backend at http://127.0.0.1:8000. Please verify the API server is active.");
+        resetTraceUIState("API Server Unreachable");
       } finally {
         btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">bolt</span><span id="btnTraceText">Run Multi-Hop Forensics</span>`;
       }
+    }
+
+    function resetTraceUIState(reason) {
+      if (cy) cy.elements().remove();
+      const statsBadge = document.getElementById('graphStatsBadge');
+      if (statsBadge) statsBadge.innerText = `Trace Failed: ${reason}`;
+      const chainBadge = document.getElementById('trailChainBadge');
+      if (chainBadge) chainBadge.innerText = 'OFFLINE';
+      const countBadge = document.getElementById('flowStepCountBadge');
+      if (countBadge) countBadge.innerText = '0 Entities';
+      const flowCards = document.getElementById('flowCardsContainer');
+      if (flowCards) flowCards.innerHTML = `<div class="p-6 text-center text-rose-400 font-mono text-xs">Investigation failed or timed out: ${reason}</div>`;
+      const hopsTable = document.getElementById('hopsTableBody');
+      if (hopsTable) hopsTable.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-rose-400 font-mono text-xs">No transaction hops resolved.</td></tr>`;
     }
 
     // -------------------------------------------------------------
@@ -911,6 +929,8 @@ Loading notice content...
     // -------------------------------------------------------------
     function renderTraceResults(data, fir, loss) {
       document.getElementById('graphStatsBadge').innerText = `${data.nodes.length} Nodes • ${data.edges.length} Hops • ${data.execution_time_ms} ms (${data.chain})`;
+      const chainBadge = document.getElementById('trailChainBadge');
+      if (chainBadge) chainBadge.innerText = data.chain;
       document.getElementById('flowStepCountBadge').innerText = `${data.nodes.length} Resolved Entities`;
 
       // 1. Init Cytoscape Graph
@@ -1044,6 +1064,29 @@ Loading notice content...
       cy.on('tap', 'node', function(evt) {
         const raw = evt.target.data('rawNode');
         if (raw) updateInspectorPanel(raw);
+      });
+
+      // Handle Edge Click (ERR-35)
+      cy.on('tap', 'edge', function(evt) {
+        const edgeData = evt.target.data();
+        const inspector = document.getElementById('inspectNodeDetails');
+        if (inspector && edgeData) {
+          inspector.innerHTML = `
+            <div class="p-3 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col gap-2">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-zinc-400 font-medium">Transaction Transfer</span>
+                <span class="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 font-mono text-[10px] font-bold">HOP</span>
+              </div>
+              <div class="text-[11px] font-mono break-all text-white">
+                <span class="text-zinc-500 block">TxHash:</span>${edgeData.tx_hash || 'N/A'}
+              </div>
+              <div class="grid grid-cols-2 gap-2 text-[11px] font-mono pt-1 border-t border-zinc-800">
+                <div><span class="text-zinc-500 block">Amount:</span>${edgeData.amount || '0'}</div>
+                <div><span class="text-zinc-500 block">USD Value:</span>$${(edgeData.usd_value || 0).toLocaleString()}</div>
+              </div>
+            </div>
+          `;
+        }
       });
     }
 
@@ -1339,16 +1382,17 @@ Loading notice content...
     // -------------------------------------------------------------
     async function autoSaveCase(data, fir, loss) {
       try {
+        const totalRouted = (data.edges || []).reduce((acc, e) => acc + (parseFloat(e.usd_value) || 0), 0);
         const payload = {
           fir_number: fir || "FIR-AUTO/2026",
           police_station: "State Cyber Crime Police Station",
           investigating_officer: "DSP Anjali Verma",
           complainant_name: "Complainant Victim",
-          loss_amount_inr: loss || 1500000,
+          loss_amount_inr: parseFloat(loss) || 0.0,
           seed_address: data.seed_address,
           chain: data.chain,
-          destination_vasp: data.target_vasp?.name || "Binance",
-          total_routed_usd: 15000.0,
+          destination_vasp: data.target_vasp?.name || "Unknown / Pending Attribution",
+          total_routed_usd: Math.round(totalRouted * 100) / 100,
           evidence_sha256: data.evidence_sha256,
           trace_data: data
         };

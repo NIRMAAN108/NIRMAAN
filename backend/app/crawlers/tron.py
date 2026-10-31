@@ -87,7 +87,7 @@ class TronCrawler:
                             "to": item.get("to", ""),
                             "amount": round(amount, 6),
                             "tx_hash": tx_id,
-                            "timestamp": ts if ts > 0 else int(time.time()),
+                            "timestamp": ts if ts > 0 else 0,
                             "token": symbol,
                             "chain": "tron"
                         })
@@ -113,7 +113,7 @@ class TronCrawler:
                     raw_val = float(item.get("quant", 0))
                     token_info = item.get("tokenInfo", {})
                     decimals = int(token_info.get("tokenDecimal", 6))
-                    amount = raw_val / (10 ** decimals) if raw_val > 1e4 else raw_val
+                    amount = raw_val / (10 ** decimals) if decimals > 0 else raw_val
                     symbol = token_info.get("tokenAbbr", "USDT")
                     tx_id = item.get("transaction_id", "")
                     ts = int(item.get("block_ts", 0)) // 1000
@@ -124,7 +124,7 @@ class TronCrawler:
                             "to": item.get("to_address", ""),
                             "amount": round(amount, 6),
                             "tx_hash": tx_id,
-                            "timestamp": ts if ts > 0 else int(time.time()),
+                            "timestamp": ts if ts > 0 else 0,
                             "token": symbol,
                             "chain": "tron"
                         })

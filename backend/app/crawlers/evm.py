@@ -4,6 +4,7 @@ Integrates Blockscout Open API + Etherscan V2 + Public RPC Logs + Failover.
 """
 import logging
 import time
+import os
 from typing import List, Dict, Any, Optional
 import httpx
 
@@ -58,7 +59,7 @@ DEMO_EVM_TRAIL = {
 
 class EVMCrawler:
     def __init__(self, api_key: Optional[str] = None, timeout: float = 6.0):
-        self.api_key = api_key
+        self.api_key = api_key or os.getenv("ETHERSCAN_API_KEY", "")
         self.resilient_client = ResilientHttpClient(timeout=timeout)
 
     def _parse_blockscout_response(self, response: httpx.Response, address_lower: str, chain: str) -> List[Dict[str, Any]]:

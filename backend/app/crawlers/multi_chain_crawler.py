@@ -40,7 +40,8 @@ class MultiChainCrawler:
         if target_chain == "tron":
             return await self.tron_crawler.fetch_transfers(address)
         elif target_chain in ("ethereum", "bsc", "evm"):
-            return await self.evm_crawler.fetch_transfers(address, chain="ethereum")
+            evm_network = "bsc" if target_chain == "bsc" else "ethereum"
+            return await self.evm_crawler.fetch_transfers(address, chain=evm_network)
         elif target_chain == "bitcoin":
             return await self.btc_crawler.fetch_transfers(address)
         else:

@@ -111,7 +111,7 @@ SUBJECT: DRAFT STATUTORY REQUISITION FOR PRODUCTION OF SUBSCRIBER KYC, TRANSACTI
    - Investigating Officer: {meta.investigating_officer} (Reviewing Authority)
    - Statutory Provisions: Sections 316(2), 318(4) Bharatiya Nyaya Sanhita (BNS), 2023 
                            and Section 66D Information Technology Act, 2000.
-   - Reported Victim Loss: INR {meta.loss_amount_inr:,.2f}
+   - Reported Victim Loss: INR {(meta.loss_amount_inr or 0.0):,.2f}
    - Blockchain Network:   {chain}
 
 2. FORENSIC BLOCKCHAIN TRAIL SUMMARY:
@@ -172,8 +172,7 @@ def generate_section_63_bsa_certificate(trace: Union[TraceResponse, Dict[str, An
     edges = _get_attr(trace, "edges", [])
     nodes = _get_attr(trace, "nodes", [])
 
-    payload = f"{trace_id}:{seed_address}:{len(nodes)}:{len(edges)}"
-    sha256_hash = hashlib.sha256(payload.encode()).hexdigest()
+    sha256_hash = compute_canonical_evidence_digest(trace)
 
     certificate_text = f"""========================================================================================
 CERTIFICATE OF ELECTRONIC EVIDENCE UNDER SECTION 63 OF THE BHARATIYA SAKSHYA ADHINIYAM, 2023

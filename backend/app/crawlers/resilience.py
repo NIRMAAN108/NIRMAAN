@@ -88,7 +88,10 @@ class ResilientHttpClient:
 
                         if response.status_code == 429:
                             # Cap retry delay to prevent unbounded waits (ERR-22)
-                            retry_after = min(float(response.headers.get("Retry-After", 1.0)), 3.0)
+                            try:
+                                retry_after = min(float(response.headers.get("Retry-After", 1.0)), 3.0)
+                            except (ValueError, TypeError):
+                                retry_after = 1.0
                             logger.warning(f"Rate limited (429) on {host}. Attempt {attempt}/{self.max_retries}. Backing off {retry_after}s.")
                             await asyncio.sleep(retry_after)
                             continue

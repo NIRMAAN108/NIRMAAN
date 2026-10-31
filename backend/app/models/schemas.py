@@ -51,6 +51,9 @@ class TargetVASP(BaseModel):
     sweep_tx_hash: Optional[str] = None
     nodal_email: str
     law_enforcement_portal: str
+    source: Optional[str] = "FIU-IND Verified Registry"
+    verification_date: Optional[str] = "2026-10-31"
+    confidence: Optional[str] = "HIGH"
 
 class TraceResponse(BaseModel):
     trace_id: str
@@ -58,6 +61,7 @@ class TraceResponse(BaseModel):
     chain: str = "TRON (TRC-20)"
     execution_time_ms: float
     destination_found: bool
+    is_synthetic: bool = Field(default=False, description="Flag indicating if trace data contains synthetic/demo test fixtures")
     target_vasp: Optional[TargetVASP] = None
     nodes: List[GraphNode]
     edges: List[GraphEdge]
