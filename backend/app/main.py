@@ -61,7 +61,8 @@ permitted_origins = [orig.strip() for orig in cors_origins_env.split(",") if ori
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:5500",
-    "http://127.0.0.1:5500"
+    "http://127.0.0.1:5500",
+    "null"  # Explicitly supports local browser file:// launches
 ]
 
 app.add_middleware(
@@ -72,10 +73,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount frontend directory if it exists
+# Mount frontend directory if it exists (accessible via /app/ and /frontend/)
 frontend_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "frontend")
 if os.path.exists(frontend_dir):
-    app.mount("/app", StaticFiles(directory=frontend_dir, html=True), name="frontend")
+    app.mount("/app", StaticFiles(directory=frontend_dir, html=True), name="frontend_app")
+    app.mount("/frontend", StaticFiles(directory=frontend_dir, html=True), name="frontend_dir")
 
 tracer = ForensicTracer()
 

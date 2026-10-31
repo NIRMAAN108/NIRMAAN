@@ -229,6 +229,24 @@ async def test_cors_configuration_explicit_origins():
         assert res_allowed.headers.get("access-control-allow-origin") == "http://127.0.0.1:8000"
         assert res_allowed.headers.get("access-control-allow-credentials") == "true"
 
+        # Preflight from file:// local browser context (Origin: null)
+        res_null = await client.options(
+            "/api/trace",
+            headers={
+                "Origin": "null",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "content-type"
+            }
+        )
+        assert res_null.headers.get("access-control-allow-origin") == "null"
+        assert res_null.headers.get("access-control-allow-credentials") == "true"
+
+        # Static mounts check: verify frontend served via /app and /frontend
+        res_app = await client.get("/app/index.html")
+        assert res_app.status_code == 200
+        res_front = await client.get("/frontend/index.html")
+        assert res_front.status_code == 200
+
         # Preflight from untrusted origin
         res_blocked = await client.options(
             "/api/trace",
