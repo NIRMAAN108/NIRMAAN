@@ -6,6 +6,7 @@ Integration Test Suite for Full Stack Verticals:
 - Domain Ingestion: NCRP / 1930 Cybercrime Complaint Parser
 """
 
+import os
 import zipfile
 import io
 import pytest
@@ -239,3 +240,15 @@ async def test_cors_configuration_explicit_origins():
         )
         assert res_blocked.headers.get("access-control-allow-origin") != "*"
         assert res_blocked.headers.get("access-control-allow-origin") != "http://malicious-site.example"
+
+def test_frontend_initial_html_neutral_empty_state():
+    """Regression test: verify frontend landing HTML contains neutral empty state without hardcoded Binance/₹14.95L."""
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    html_path = os.path.join(base_dir, "frontend", "index.html")
+    with open(html_path, "r", encoding="utf-8") as f:
+        html = f.read()
+
+    assert '<h2 class="text-3xl font-extrabold text-white tracking-tight" id="verdictExchangeTitle">Binance</h2>' not in html
+    assert "₹14,95,000 Tracked" not in html
+    assert "No Active Trace" in html
+    assert "AWAITING TRACE" in html

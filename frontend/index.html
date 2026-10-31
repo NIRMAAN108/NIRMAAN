@@ -246,14 +246,14 @@
           <div class="h-6 w-6 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-xs font-mono font-bold">1</div>
           <h2 class="text-sm font-bold text-white tracking-tight">Interactive Multi-Hop Transaction Graph</h2>
           <span class="text-xs text-zinc-500">•</span>
-          <span class="text-xs font-mono text-zinc-400" id="trailLatencyBadge">5 Nodes • 4 Edges • 348 ms</span>
+          <span class="text-xs font-mono text-zinc-400" id="trailLatencyBadge">0 Nodes • 0 Edges • 0 ms</span>
           <span id="graphStatsBadge" class="hidden"></span>
         </div>
 
         <div class="flex items-center gap-2">
           <!-- Chain Badge -->
           <span id="trailChainBadge" class="px-2.5 py-0.5 rounded-full bg-indigo-950 border border-indigo-500/30 text-indigo-300 text-[11px] font-mono font-semibold">
-            TRON (TRC-20)
+            Multi-Chain
           </span>
           <!-- Graph Legend -->
           <div class="hidden md:flex items-center gap-3 text-[10px] font-mono mr-2">
@@ -298,8 +298,8 @@
           <div>
             <div class="flex items-center justify-between pb-2 border-b border-zinc-800/80">
               <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Wallet Inspector</span>
-              <span id="inspectNodeType" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                SUSPECT SEED
+              <span id="inspectNodeType" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">
+                AWAITING SELECTION
               </span>
             </div>
 
@@ -307,8 +307,8 @@
               <div>
                 <span class="text-[10px] text-zinc-500 block uppercase font-mono">Address</span>
                 <div class="flex items-center gap-1.5 mt-0.5">
-                  <span id="inspectAddress" class="text-xs font-mono text-white break-all select-all font-medium">
-                    TScamOriginVictimAddress778899AABB
+                  <span id="inspectAddress" class="text-xs font-mono text-zinc-400 break-all select-all font-medium">
+                    —
                   </span>
                   <button onclick="copyToClipboard(document.getElementById('inspectAddress').innerText)" title="Copy Address" class="text-zinc-500 hover:text-white p-1">
                     <span class="material-symbols-outlined text-[15px]">content_copy</span>
@@ -319,34 +319,33 @@
               <div class="grid grid-cols-2 gap-2 bg-black/40 p-2.5 rounded-lg border border-zinc-800/60 font-mono text-xs">
                 <div>
                   <span class="text-[10px] text-zinc-500 uppercase block">Risk Tier</span>
-                  <span id="inspectRiskTier" class="text-rose-400 font-bold">CRITICAL</span>
+                  <span id="inspectRiskTier" class="text-zinc-400 font-bold">—</span>
                 </div>
                 <div>
                   <span class="text-[10px] text-zinc-500 uppercase block">Risk Score</span>
-                  <span id="inspectRiskScore" class="text-white font-bold">0.92</span>
+                  <span id="inspectRiskScore" class="text-zinc-400 font-bold">0.00</span>
                 </div>
                 <div>
                   <span class="text-[10px] text-zinc-500 uppercase block">Balance</span>
-                  <span id="inspectBalance" class="text-zinc-300">$15,000 USD</span>
+                  <span id="inspectBalance" class="text-zinc-400">$0.00 USD</span>
                 </div>
                 <div>
                   <span class="text-[10px] text-zinc-500 uppercase block">VASP Attribution</span>
-                  <span id="inspectVasp" class="text-emerald-400 font-semibold">Binance</span>
+                  <span id="inspectVasp" class="text-zinc-400 font-semibold">None</span>
                 </div>
               </div>
 
               <div>
                 <span class="text-[10px] text-zinc-500 block uppercase font-mono">Forensic Tags &amp; Heuristic Signals</span>
                 <div id="inspectTagsContainer" class="flex flex-wrap gap-1.5 mt-1">
-                  <span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-mono">REPORTED_FRAUD_SEED</span>
-                  <span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-mono">RAPID_TRANSFER</span>
+                  <span class="px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700 text-[10px] font-mono">NO_TAGS</span>
                 </div>
               </div>
 
               <div>
                 <span class="text-[10px] text-zinc-500 block uppercase font-mono">Forensic Analyst Summary</span>
                 <p id="inspectExplanation" class="text-[11px] text-zinc-400 leading-relaxed mt-0.5 bg-black/20 p-2 rounded-lg border border-zinc-800/40">
-                  Initial victim-facing deposit wallet identified in 1930 incident report. Dispatched funds across intermediary mule hops within 220 seconds.
+                  Select any node in the transaction graph to inspect its wallet address, risk tier, and forensic tags.
                 </p>
               </div>
             </div>
@@ -375,7 +374,7 @@
               <div class="h-6 w-6 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xs font-mono font-bold">2</div>
               <h3 class="text-sm font-bold text-white">Forensic Step-by-Step Laundering Flow</h3>
             </div>
-            <span class="text-[11px] font-mono text-zinc-400" id="flowStepCountBadge">4 Resolved Steps</span>
+            <span class="text-[11px] font-mono text-zinc-400" id="flowStepCountBadge">0 Resolved Steps</span>
           </div>
 
           <!-- Dynamic Flow Cards Container (Filled dynamically by JS) -->
@@ -423,19 +422,19 @@
         <div class="glass-card rounded-2xl p-6 border border-zinc-800 flex flex-col gap-4 bg-gradient-to-b from-zinc-900/80 to-zinc-950">
           <div class="flex items-center justify-between pb-2 border-b border-zinc-800">
             <span class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Identified Target Exchange</span>
-            <span id="verdictFiuBadge" class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold font-mono">
-              FIU-IND REGISTERED
+            <span id="verdictFiuBadge" class="px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 text-[10px] font-bold font-mono">
+              AWAITING TRACE
             </span>
           </div>
 
           <div>
             <div class="flex items-baseline gap-3">
-              <h2 class="text-3xl font-extrabold text-white tracking-tight" id="verdictExchangeTitle">Binance</h2>
-              <span id="verdictExchangeName" class="hidden">Binance</span>
-              <span class="text-xs font-mono text-emerald-400 font-semibold" id="verdictTrackedLoss">₹14,95,000 Tracked</span>
+              <h2 class="text-3xl font-extrabold text-white tracking-tight" id="verdictExchangeTitle">No Active Trace</h2>
+              <span id="verdictExchangeName" class="hidden">None</span>
+              <span class="text-xs font-mono text-zinc-400 font-semibold" id="verdictTrackedLoss">₹0 Tracked</span>
             </div>
             <p class="text-xs text-zinc-400 mt-1 leading-relaxed">
-              Automated deposit sweep detection confirmed consolidation into exchange omnibus hot vault.
+              Initiate an on-chain trace from the search bar to detect consolidation into registered exchange omnibus hot vaults.
             </p>
           </div>
 
@@ -445,14 +444,14 @@
               <span class="text-[10px] font-mono uppercase text-indigo-400 font-semibold flex items-center gap-1">
                 <span class="material-symbols-outlined text-[14px]">psychology</span> Modus Operandi Typology
               </span>
-              <span class="text-[10px] font-mono text-indigo-300 font-bold" id="typologyConfidence">94% Confidence</span>
+              <span class="text-[10px] font-mono text-zinc-400 font-bold" id="typologyConfidence">—</span>
             </div>
-            <div class="text-xs font-bold text-white" id="typologyName">Automated Intermediary Hop Layering</div>
+            <div class="text-xs font-bold text-white" id="typologyName">Awaiting Forensic Traversal</div>
             <div class="text-[11px] text-zinc-400 leading-relaxed" id="typologyDesc">
-              Proceeds dispersed across intermediate mule accounts within rapid 2-5 minute intervals before sweeping into registered exchange.
+              Execute a transaction hop trace or parse an NCRP complaint to evaluate laundering patterns and ML risk profiles.
             </div>
-            <div class="text-[10px] font-mono text-indigo-300 pt-1 border-t border-indigo-500/20" id="typologyViolation">
-              Statutory Violation: Section 318(4) BNS, 2023 &amp; Section 66D IT Act
+            <div class="text-[10px] font-mono text-zinc-400 pt-1 border-t border-indigo-500/20" id="typologyViolation">
+              Statutory Classification: Pending Case Ingestion
             </div>
           </div>
 
@@ -460,26 +459,26 @@
           <div class="grid grid-cols-1 gap-2.5 bg-black/40 p-3.5 rounded-xl border border-zinc-800/80 font-mono text-xs">
             <div>
               <span class="text-[10px] text-zinc-500 uppercase block">Nodal Compliance Officer (FIU-IND)</span>
-              <a href="mailto:compliance-in@binance.com" class="text-indigo-400 hover:underline font-medium text-xs break-all" id="verdictNodalEmail">
-                compliance-in@binance.com
+              <a href="#" class="text-zinc-400 hover:underline font-medium text-xs break-all" id="verdictNodalEmail">
+                —
               </a>
             </div>
             <div>
               <span class="text-[10px] text-zinc-500 uppercase block">Law Enforcement Portal</span>
-              <a href="https://www.binance.com/en/support/law-enforcement" target="_blank" class="text-indigo-400 hover:underline font-medium text-xs truncate block" id="verdictPortalUrl">
-                binance.com/en/support/law-enforcement
+              <a href="#" target="_blank" class="text-zinc-400 hover:underline font-medium text-xs truncate block" id="verdictPortalUrl">
+                —
               </a>
             </div>
             <div>
               <span class="text-[10px] text-zinc-500 uppercase block">Sweeping TxHash</span>
-              <span class="text-zinc-300 text-[11px] font-mono truncate block" id="verdictSweepHash">
-                Verified On-Chain
+              <span class="text-zinc-400 text-[11px] font-mono truncate block" id="verdictSweepHash">
+                —
               </span>
             </div>
             <div>
               <span class="text-[10px] text-zinc-500 uppercase block">Evidence SHA-256 Seal (Sec 63 BSA)</span>
-              <span class="text-emerald-400 text-[11px] font-mono truncate block" id="verdictEvidenceHash">
-                e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+              <span class="text-zinc-400 text-[11px] font-mono truncate block" id="verdictEvidenceHash">
+                —
               </span>
               <span id="verdictEvidenceSeal" class="hidden"></span>
             </div>
@@ -488,10 +487,10 @@
             <div class="flex flex-col gap-1 pt-1 border-t border-zinc-800/80">
               <div class="flex items-center justify-between text-[11px]">
                 <span class="text-zinc-400">Laundering Risk Score:</span>
-                <span id="verdictRiskScore" class="text-rose-400 font-bold">0.85 (CRITICAL)</span>
+                <span id="verdictRiskScore" class="text-zinc-400 font-bold">0.00 (PENDING)</span>
               </div>
               <div class="h-1.5 w-full bg-zinc-900 rounded-full overflow-hidden border border-zinc-800">
-                <div id="verdictRiskBar" class="h-full bg-rose-500 rounded-full w-[85%] transition-all"></div>
+                <div id="verdictRiskBar" class="h-full bg-zinc-700 rounded-full w-[0%] transition-all"></div>
               </div>
             </div>
           </div>
