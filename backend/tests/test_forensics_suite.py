@@ -219,3 +219,16 @@ def test_sha256_evidence_seal_format():
     assert match is not None, "SHA-256 evidence seal was not found or malformed in legal notice"
     hash_val = match.group(1)
     assert len(hash_val) == 64
+
+def test_trace_request_with_explicit_bsc_chain():
+    """Regression test: verify optional chain='bsc' parameter routes to Binance Smart Chain."""
+    payload = {
+        "seed_address": "0x8894e0a0c962cb723c1976a4421c95949be2d4e3",
+        "chain": "bsc",
+        "max_depth": 1
+    }
+    response = client.post("/api/trace", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert "Binance Smart Chain" in data["chain"]
+

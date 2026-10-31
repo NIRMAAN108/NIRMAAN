@@ -14,6 +14,7 @@ class CaseMetadata(BaseModel):
 
 class TraceRequest(BaseModel):
     seed_address: str = Field(..., description="Target suspect wallet address (TRON, EVM, BTC)")
+    chain: Optional[str] = Field(default=None, description="Optional target blockchain override: 'bsc', 'ethereum', 'tron', 'bitcoin'")
     max_depth: int = Field(default=4, ge=1, le=6, description="Maximum BFS traversal depth")
     min_usd_value: float = Field(default=20.0, ge=0.0, description="Minimum USD value threshold to prune dust")
     case_metadata: Optional[CaseMetadata] = Field(default_factory=CaseMetadata)

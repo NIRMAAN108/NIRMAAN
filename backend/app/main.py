@@ -108,7 +108,9 @@ async def run_trace(req: TraceRequest):
     Accepts suspect TRON/EVM/Bitcoin wallet, traces multi-hop flows, runs deposit sweep detection,
     and returns graph nodes with ML risk scoring, edges, target VASP, and pre-filled Section 94 notice.
     """
-    chain = detect_chain(req.seed_address)
+    chain = req.chain.lower() if req.chain else detect_chain(req.seed_address)
+    if chain in ("bsc", "binance", "binancesmartchain"):
+        chain = "bsc"
     if chain == "unknown":
         raise InvalidWalletAddressError(
             address=req.seed_address,

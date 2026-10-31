@@ -66,7 +66,18 @@ class ForensicTracer:
         start_time = time.time()
         trace_id = f"tr_{uuid.uuid4().hex[:8]}"
 
-        chain = detect_chain(req.seed_address)
+        # Determine chain: allow explicit request override if specified, else detect
+        if req.chain and req.chain.lower() in ("bsc", "binance", "binancesmartchain"):
+            chain = "bsc"
+        elif req.chain and req.chain.lower() in ("ethereum", "eth", "tron", "bitcoin", "btc"):
+            chain = req.chain.lower()
+            if chain == "eth":
+                chain = "ethereum"
+            elif chain == "btc":
+                chain = "bitcoin"
+        else:
+            chain = detect_chain(req.seed_address)
+
         chain_label = {
             "tron": "TRON (TRC-20)",
             "ethereum": "Ethereum (ERC-20)",
