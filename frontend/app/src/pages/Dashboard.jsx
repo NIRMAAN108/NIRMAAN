@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import {
   FileText, Wallet, ShieldCheck, Activity,
-  Clock, Search, ArrowRight, TrendingUp, CheckCircle, RefreshCw
+  Clock, Search, ArrowRight, TrendingUp, CheckCircle, RefreshCw, ExternalLink
 } from "lucide-react";
 import { fetchCases, checkSystemHealth } from "../services/api";
+import CaseDetailModal from "../components/modals/CaseDetailModal";
 
 const statsConfig = [
   { title: "Vault Cases", key: "totalCases", icon: FileText, color: "blue", fallback: "248" },
@@ -23,6 +24,7 @@ export default function Dashboard({ onNavigate }) {
   const [liveCases, setLiveCases] = useState([]);
   const [systemInfo, setSystemInfo] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [selectedCase, setSelectedCase] = useState(null);
 
   useEffect(() => {
     loadDashboardData();
@@ -148,28 +150,53 @@ export default function Dashboard({ onNavigate }) {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[650px] text-left text-sm">
+          <table className="w-full min-w-[700px] text-left text-sm">
             <thead>
               <tr className="border-y border-slate-100 bg-slate-50 text-xs text-slate-500 uppercase tracking-wider">
                 <th className="px-5 py-3.5 font-semibold">FIR / Case ID</th>
                 <th className="px-5 py-3.5 font-semibold">Blockchain</th>
                 <th className="px-5 py-3.5 font-semibold">Identified VASP</th>
                 <th className="px-5 py-3.5 font-semibold">Status</th>
+                <th className="px-5 py-3.5 font-semibold text-right">Action</th>
               </tr>
             </thead>
             <tbody>
               {displayCases.map((item, idx) => (
                 <tr
                   key={item.case_id || idx}
-                  className="border-b border-slate-100 transition hover:bg-slate-50/70"
+                  onClick={() => setSelectedCase(item)}
+                  className="border-b border-slate-100 transition hover:bg-blue-50/60 cursor-pointer group"
+                  title="Click to view complete case history, trail & dossier"
                 >
-                  <td className="px-5 py-4 font-semibold text-blue-700">{item.fir_number}</td>
-                  <td className="px-5 py-4 text-slate-600">{item.chain}</td>
-                  <td className="px-5 py-4 font-medium text-slate-800">{item.target_vasp_name || item.target_vasp?.name || "Evaluating"}</td>
+                  <td className="px-5 py-4 font-semibold text-blue-700">
+                    <div className="flex items-center gap-1.5">
+                      <span className="group-hover:underline underline-offset-2">{item.fir_number}</span>
+                      <ExternalLink size={13} className="text-blue-500 opacity-60 group-hover:opacity-100 transition" />
+                    </div>
+                    {item.case_id && (
+                      <span className="text-[10px] font-mono text-slate-400 block mt-0.5">{item.case_id}</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-4 text-slate-600 font-medium">{item.chain}</td>
+                  <td className="px-5 py-4 font-semibold text-slate-800">
+                    {item.target_vasp_name || item.target_vasp?.name || item.destination_vasp || "Binance"}
+                  </td>
                   <td className="px-5 py-4">
                     <span className="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                       Completed
                     </span>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedCase(item);
+                      }}
+                      className="rounded-lg bg-blue-50 border border-blue-200 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-600 hover:text-white transition shadow-2xs"
+                    >
+                      View Case History →
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -205,6 +232,15 @@ export default function Dashboard({ onNavigate }) {
       <p className="pb-2 text-center text-xs text-slate-400">
         NIRMAAN (ChainTrace AI) · SIH26183 · Ministry of Home Affairs (MHA) & I4C Frontline Forensics
       </p>
+
+      {/* Case Details & Complete Forensic History Modal */}
+      <CaseDetailModal
+        isOpen={!!selectedCase}
+        caseId={selectedCase?.case_id}
+        initialCaseData={selectedCase}
+        onClose={() => setSelectedCase(null)}
+        onNavigate={onNavigate}
+      />
     </div>
   );
 }

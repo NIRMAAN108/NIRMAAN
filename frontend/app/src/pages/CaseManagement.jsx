@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { BriefcaseBusiness, FileText, Download, ShieldCheck, Search, ExternalLink } from "lucide-react";
 import { fetchCases, getDossierDownloadUrl, getBundleDownloadUrl } from "../services/api";
+import CaseDetailModal from "../components/modals/CaseDetailModal";
 
 export default function CaseManagement({ onNavigate, title = "Case Management Vault", initialSearch = "" }) {
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(initialSearch || "");
+  const [selectedCase, setSelectedCase] = useState(null);
 
   useEffect(() => {
     if (initialSearch) {
@@ -102,9 +104,17 @@ export default function CaseManagement({ onNavigate, title = "Case Management Va
                     ? new Date(c.created_at).toLocaleDateString("en-IN")
                     : "Recent";
                   return (
-                    <tr key={c.case_id} className="border-b border-slate-100 hover:bg-slate-50/70 transition">
+                    <tr
+                      key={c.case_id}
+                      onClick={() => setSelectedCase(c)}
+                      className="border-b border-slate-100 hover:bg-blue-50/50 cursor-pointer transition group"
+                      title="Click to view complete case history, trail & dossier"
+                    >
                       <td className="px-5 py-4">
-                        <div className="font-semibold text-slate-900">{c.fir_number}</div>
+                        <div className="font-semibold text-blue-700 flex items-center gap-1.5">
+                          <span className="group-hover:underline">{c.fir_number}</span>
+                          <ExternalLink size={12} className="opacity-0 group-hover:opacity-100 transition text-blue-600" />
+                        </div>
                         <div className="text-[10px] text-slate-400 font-mono">{c.case_id}</div>
                       </td>
                       <td className="px-5 py-4 font-mono text-xs text-slate-600 truncate max-w-[140px]" title={c.seed_address}>
@@ -119,7 +129,14 @@ export default function CaseManagement({ onNavigate, title = "Case Management Va
                       </td>
                       <td className="px-5 py-4 text-xs text-slate-500">{dateStr}</td>
                       <td className="px-5 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedCase(c)}
+                            className="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 transition shadow-2xs"
+                          >
+                            View
+                          </button>
                           <a
                             href={getDossierDownloadUrl(c.case_id)}
                             target="_blank"
@@ -148,6 +165,15 @@ export default function CaseManagement({ onNavigate, title = "Case Management Va
           </table>
         </div>
       </div>
+
+      {/* Case Details & Complete Forensic History Modal */}
+      <CaseDetailModal
+        isOpen={!!selectedCase}
+        caseId={selectedCase?.case_id}
+        initialCaseData={selectedCase}
+        onClose={() => setSelectedCase(null)}
+        onNavigate={onNavigate}
+      />
     </div>
   );
 }
