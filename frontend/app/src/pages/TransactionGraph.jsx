@@ -21,25 +21,76 @@ import {
   ChevronDown,
   Layers,
   Sparkles,
+  Share2,
+  Camera,
+  RotateCcw,
+  SlidersHorizontal,
+  Flame,
+  Building2,
+  User,
+  ShieldAlert,
+  Compass,
 } from "lucide-react";
 import cytoscape from "cytoscape";
 import dagre from "cytoscape-dagre";
 import { fetchCases, fetchCaseById, traceWallet } from "../services/api";
 
-// Safely register dagre layout
+// Safely register dagre layout once
 try {
   cytoscape.use(dagre);
 } catch {
   // Ignore if already registered
 }
 
-const NODE_COLORS = {
-  SUSPECT: { bg: "#EF4444", border: "#B91C1C", text: "Suspect Origin", badge: "bg-rose-50 text-rose-700 border-rose-200" },
-  MULE: { bg: "#F59E0B", border: "#D97706", text: "Intermediary Mule", badge: "bg-amber-50 text-amber-700 border-amber-200" },
-  VASP_DEPOSIT: { bg: "#0284C7", border: "#0369A1", text: "VASP Deposit Forwarder", badge: "bg-sky-50 text-sky-700 border-sky-200" },
-  VASP_HOT: { bg: "#10B981", border: "#047857", text: "Exchange Hot Wallet", badge: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  MIXER: { bg: "#8B5CF6", border: "#6D28D9", text: "Obfuscation Mixer", badge: "bg-purple-50 text-purple-700 border-purple-200" },
-  DEFAULT: { bg: "#64748B", border: "#475569", text: "Standard Node", badge: "bg-slate-50 text-slate-700 border-slate-200" },
+const NODE_CONFIGS = {
+  SUSPECT: {
+    bg: "#EF4444",
+    border: "#B91C1C",
+    ring: "#FEE2E2",
+    title: "Suspect Origin",
+    icon: Flame,
+    badge: "bg-rose-50 text-rose-700 border-rose-200",
+  },
+  MULE: {
+    bg: "#F59E0B",
+    border: "#D97706",
+    ring: "#FEF3C7",
+    title: "Intermediary Mule",
+    icon: User,
+    badge: "bg-amber-50 text-amber-700 border-amber-200",
+  },
+  VASP_DEPOSIT: {
+    bg: "#0284C7",
+    border: "#0369A1",
+    ring: "#E0F2FE",
+    title: "VASP Deposit Point",
+    icon: Building2,
+    badge: "bg-sky-50 text-sky-700 border-sky-200",
+  },
+  VASP_HOT: {
+    bg: "#10B981",
+    border: "#047857",
+    ring: "#D1FAE5",
+    title: "Exchange Hot Wallet",
+    icon: ShieldCheck,
+    badge: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  },
+  MIXER: {
+    bg: "#8B5CF6",
+    border: "#6D28D9",
+    ring: "#EDE9FE",
+    title: "Obfuscation Mixer",
+    icon: AlertTriangle,
+    badge: "bg-purple-50 text-purple-700 border-purple-200",
+  },
+  DEFAULT: {
+    bg: "#64748B",
+    border: "#475569",
+    ring: "#F1F5F9",
+    title: "Transit Node",
+    icon: Wallet,
+    badge: "bg-slate-50 text-slate-700 border-slate-200",
+  },
 };
 
 export default function TransactionGraph({
@@ -53,22 +104,22 @@ export default function TransactionGraph({
   const [casesList, setCasesList] = useState([]);
   const [selectedCaseId, setSelectedCaseId] = useState(caseId || "");
   const [activeTrace, setActiveTrace] = useState(traceData || null);
-  const [activeFir, setActiveFir] = useState("Live Investigation");
+  const [activeFir, setActiveFir] = useState("FIR-2026/CYBER");
   const [loading, setLoading] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
   const [selectedEdge, setSelectedEdge] = useState(null);
+  const [inspectorOpen, setInspectorOpen] = useState(true);
   const [search, setSearch] = useState("");
-  const [filterType, setFilterType] = useState("ALL");
   const [layoutName, setLayoutName] = useState("dagre");
   const [copiedKey, setCopiedKey] = useState(null);
+  const [exporting, setExporting] = useState(false);
 
-  // 1. Load cases list for dropdown selection
+  // 1. Fetch case investigations from Case Vault
   useEffect(() => {
     fetchCases()
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           setCasesList(data);
-          // If no caseId was provided and no traceData, default to first case
           if (!selectedCaseId && !traceData) {
             setSelectedCaseId(data[0].case_id);
             setActiveFir(data[0].fir_number);
@@ -78,7 +129,7 @@ export default function TransactionGraph({
       .catch((err) => console.warn("Failed to load cases list:", err));
   }, [traceData]);
 
-  // 2. Load case trace data when selectedCaseId changes
+  // 2. Fetch specific case details on dropdown selection
   useEffect(() => {
     if (!selectedCaseId) return;
 
@@ -96,7 +147,7 @@ export default function TransactionGraph({
       .finally(() => setLoading(false));
   }, [selectedCaseId]);
 
-  // If initial traceData changes from props, use it
+  // 3. React to traceData prop updates
   useEffect(() => {
     if (traceData) {
       setActiveTrace(traceData);
@@ -106,22 +157,21 @@ export default function TransactionGraph({
     }
   }, [traceData]);
 
-  // 3. Initialize or update Cytoscape instance
+  // 4. Construct Cytoscape Graph Elements & High-End Aesthetic Styling
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Build elements from activeTrace
     const elements = [];
     const nodes = activeTrace?.nodes || [];
     const edges = activeTrace?.edges || [];
 
     if (nodes.length === 0) {
-      // Clean fallback demo if completely empty
+      // Clean fallback demo fixtures
       elements.push(
-        { data: { id: "seed", label: "Suspect Origin\nTQiBwk...UmhUVC", address: "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC", node_type: "SUSPECT", balance_usd: 0, risk_score: 0.85, risk_tier: "CRITICAL" } },
-        { data: { id: "mule1", label: "Hop 1 Mule\nTSGRsp...BRkWVA", address: "TSGRsppW4vSaWWstQUTa2d4CWJDWBRkWVA", node_type: "MULE", balance_usd: 15000, risk_score: 0.72, risk_tier: "HIGH" } },
-        { data: { id: "dep1", label: "Binance Deposit\nTTpfou...ofBMrk", address: "TTpfou5hZarSNUpbaiAWHcCyC4u7ofBMrk", node_type: "VASP_DEPOSIT", balance_usd: 14950, risk_score: 0.08, risk_tier: "LOW" } },
-        { data: { id: "hot1", label: "Binance Hot Wallet\nTMuA6Y...RB4b7N", address: "TMuA6YqfCeX8EhbfYEg5y7S4DnxJRB4b7N", node_type: "VASP_HOT", balance_usd: 14950, risk_score: 0.08, risk_tier: "LOW" } }
+        { data: { id: "seed", label: "Suspect Origin\nTQiBwk...UmhUVC", cleanName: "Suspect Origin", address: "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC", node_type: "SUSPECT", balance_usd: 0, risk_score: 0.85, risk_tier: "CRITICAL", color: NODE_CONFIGS.SUSPECT.bg, borderColor: NODE_CONFIGS.SUSPECT.border } },
+        { data: { id: "mule1", label: "Hop 1 Mule\nTSGRsp...BRkWVA", cleanName: "Hop 1 Mule", address: "TSGRsppW4vSaWWstQUTa2d4CWJDWBRkWVA", node_type: "MULE", balance_usd: 15000, risk_score: 0.72, risk_tier: "HIGH", color: NODE_CONFIGS.MULE.bg, borderColor: NODE_CONFIGS.MULE.border } },
+        { data: { id: "dep1", label: "Binance Deposit\nTTpfou...ofBMrk", cleanName: "Binance Deposit", address: "TTpfou5hZarSNUpbaiAWHcCyC4u7ofBMrk", node_type: "VASP_DEPOSIT", balance_usd: 14950, risk_score: 0.08, risk_tier: "LOW", color: NODE_CONFIGS.VASP_DEPOSIT.bg, borderColor: NODE_CONFIGS.VASP_DEPOSIT.border } },
+        { data: { id: "hot1", label: "Binance Hot Wallet\nTMuA6Y...RB4b7N", cleanName: "Binance Hot Wallet", address: "TMuA6YqfCeX8EhbfYEg5y7S4DnxJRB4b7N", node_type: "VASP_HOT", balance_usd: 14950, risk_score: 0.08, risk_tier: "LOW", color: NODE_CONFIGS.VASP_HOT.bg, borderColor: NODE_CONFIGS.VASP_HOT.border } }
       );
       elements.push(
         { data: { id: "e1", source: "seed", target: "mule1", amount: "$15,000 USDT", usd_value: 15000, tx_hash: "a1b2c3d4e5f60718293a4b5c6d7e8f90" } },
@@ -129,20 +179,29 @@ export default function TransactionGraph({
         { data: { id: "e3", source: "dep1", target: "hot1", amount: "$14,950 USDT (Sweep)", usd_value: 14950, tx_hash: "d4e5f60718293a4b5c6d7e8f90a1b2c3" } }
       );
     } else {
-      // Add real nodes from trace
-      nodes.forEach((n) => {
-        const typeInfo = NODE_COLORS[n.node_type] || NODE_COLORS.DEFAULT;
-        let shortAddr = n.address ? `${n.address.substring(0, 6)}...${n.address.substring(n.address.length - 4)}` : n.id;
-        let displayLabel = n.label || shortAddr;
-        if (n.vasp_name) {
-          displayLabel = `${n.vasp_name}\n${shortAddr}`;
+      nodes.forEach((n, idx) => {
+        const typeInfo = NODE_CONFIGS[n.node_type] || NODE_CONFIGS.DEFAULT;
+        const shortAddr = n.address ? `${n.address.substring(0, 6)}...${n.address.substring(n.address.length - 4)}` : n.id;
+        
+        let cleanName = typeInfo.title;
+        if (n.node_type === "SUSPECT") {
+          cleanName = "Suspect Origin";
+        } else if (n.node_type === "MULE") {
+          cleanName = n.label ? n.label.replace(/\(TRON.*?\)/gi, "").trim() : `Hop ${idx} Mule`;
+        } else if (n.node_type === "VASP_DEPOSIT") {
+          cleanName = `${n.vasp_name || "VASP"} Deposit`;
+        } else if (n.node_type === "VASP_HOT") {
+          cleanName = `${n.vasp_name || "VASP"} Hot Wallet`;
         }
+
+        const formattedLabel = `${cleanName}\n${shortAddr}`;
 
         elements.push({
           group: "nodes",
           data: {
             id: n.id || n.address,
-            label: displayLabel,
+            label: formattedLabel,
+            cleanName: cleanName,
             address: n.address,
             node_type: n.node_type || "MULE",
             vasp_name: n.vasp_name || null,
@@ -154,11 +213,11 @@ export default function TransactionGraph({
             typology: n.typology || null,
             color: typeInfo.bg,
             borderColor: typeInfo.border,
+            ringColor: typeInfo.ring,
           },
         });
       });
 
-      // Add real edges from trace
       edges.forEach((e, idx) => {
         elements.push({
           group: "edges",
@@ -175,7 +234,6 @@ export default function TransactionGraph({
       });
     }
 
-    // Destroy prior cytoscape instance if exists
     if (cyRef.current) {
       cyRef.current.destroy();
     }
@@ -192,58 +250,71 @@ export default function TransactionGraph({
             style: {
               "background-color": "data(color)",
               "label": "data(label)",
-              "color": "#1E293B",
-              "font-size": "10px",
+              "color": "#0F172A",
+              "font-size": "10.5px",
               "font-weight": "bold",
-              "font-family": "ui-sans-serif, system-ui, sans-serif",
+              "font-family": "ui-sans-serif, system-ui, -apple-system, sans-serif",
               "text-valign": "bottom",
-              "text-margin-y": 6,
+              "text-margin-y": 8,
               "text-wrap": "wrap",
-              "text-max-width": "120px",
-              "width": 42,
-              "height": 42,
-              "border-width": 3,
+              "text-max-width": "130px",
+              "width": 50,
+              "height": 50,
+              "border-width": 3.5,
               "border-color": "#FFFFFF",
-              "border-opacity": 0.9,
-              "shadow-blur": 8,
-              "shadow-color": "rgba(0,0,0,0.12)",
+              "border-opacity": 1,
+              "shadow-blur": 12,
+              "shadow-color": "rgba(15, 23, 42, 0.12)",
               "shadow-opacity": 0.8,
+              "text-background-color": "#FFFFFF",
+              "text-background-opacity": 0.9,
+              "text-background-padding": 3,
+              "text-background-shape": "roundrectangle",
+              "text-border-color": "#E2E8F0",
+              "text-border-width": 0.8,
+              "text-border-opacity": 0.8,
             },
           },
           {
             selector: "edge",
             style: {
-              "width": 3,
+              "width": 2.5,
               "line-color": "#94A3B8",
               "target-arrow-color": "#64748B",
               "target-arrow-shape": "triangle",
               "arrow-scale": 1.2,
               "curve-style": "bezier",
               "label": "data(amount)",
-              "font-size": "10px",
+              "font-size": "9.5px",
               "font-weight": "bold",
               "font-family": "ui-monospace, SFMono-Regular, monospace",
-              "color": "#0F172A",
+              "color": "#1E293B",
               "text-rotation": "autorotate",
-              "text-margin-y": -10,
-              "text-background-color": "#F8FAFC",
+              "text-margin-y": -9,
+              "text-background-color": "#FFFFFF",
               "text-background-opacity": 0.95,
-              "text-background-padding": 3,
+              "text-background-padding": 4,
               "text-background-shape": "roundrectangle",
               "text-border-color": "#CBD5E1",
               "text-border-width": 1,
-              "text-border-opacity": 0.8,
+              "text-border-opacity": 0.9,
+              "shadow-blur": 6,
+              "shadow-color": "rgba(0,0,0,0.06)",
             },
           },
           {
             selector: "node:selected",
             style: {
-              "border-width": 4,
+              "border-width": 5,
               "border-color": "#2563EB",
               "border-opacity": 1,
-              "shadow-blur": 16,
+              "shadow-blur": 24,
               "shadow-color": "#2563EB",
-              "shadow-opacity": 0.5,
+              "shadow-opacity": 0.6,
+              "text-background-color": "#EFF6FF",
+              "text-border-color": "#2563EB",
+              "text-border-width": 1.2,
+              "color": "#1D4ED8",
             },
           },
           {
@@ -253,36 +324,39 @@ export default function TransactionGraph({
               "line-color": "#2563EB",
               "target-arrow-color": "#2563EB",
               "text-border-color": "#2563EB",
-              "text-color": "#2563EB",
+              "text-background-color": "#EFF6FF",
+              "text-color": "#1D4ED8",
             },
           },
         ],
         layout: {
-          name: layoutName === "dagre" ? "dagre" : layoutName,
+          name: layoutName,
           rankDir: "LR",
-          nodeSep: 60,
-          rankSep: 110,
-          padding: 50,
+          nodeSep: 70,
+          rankSep: 130,
+          padding: 60,
           animate: true,
-          animationDuration: 400,
+          animationDuration: 500,
         },
       });
 
-      // Node click listener
+      // Tap node
       cy.on("tap", "node", (evt) => {
         const nodeData = evt.target.data();
         setSelectedNode(nodeData);
         setSelectedEdge(null);
+        setInspectorOpen(true);
       });
 
-      // Edge click listener
+      // Tap edge
       cy.on("tap", "edge", (evt) => {
         const edgeData = evt.target.data();
         setSelectedEdge(edgeData);
         setSelectedNode(null);
+        setInspectorOpen(true);
       });
 
-      // Background click listener
+      // Tap canvas background
       cy.on("tap", (evt) => {
         if (evt.target === cy) {
           setSelectedNode(null);
@@ -292,14 +366,14 @@ export default function TransactionGraph({
 
       cyRef.current = cy;
 
-      // Select first suspect node by default if available
+      // Select suspect node by default
       const suspectNode = cy.nodes('[node_type = "SUSPECT"]');
       if (suspectNode.length > 0) {
         suspectNode[0].select();
         setSelectedNode(suspectNode[0].data());
       }
     } catch (err) {
-      console.warn("Cytoscape init fallback:", err);
+      console.warn("Cytoscape init error:", err);
     }
 
     return () => {
@@ -310,35 +384,28 @@ export default function TransactionGraph({
     };
   }, [activeTrace, layoutName]);
 
-  // Handle Search Highlighting
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    if (!cyRef.current || !search.trim()) return;
-
-    const q = search.trim().toLowerCase();
-    cyRef.current.batch(() => {
-      cyRef.current.nodes().forEach((n) => {
-        const data = n.data();
-        const match =
-          (data.address && data.address.toLowerCase().includes(q)) ||
-          (data.label && data.label.toLowerCase().includes(q)) ||
-          (data.vasp_name && data.vasp_name.toLowerCase().includes(q));
-
-        if (match) {
-          n.select();
-          setSelectedNode(data);
-          cyRef.current.animate({ center: { eles: n }, zoom: 1.4 });
-        } else {
-          n.unselect();
-        }
-      });
-    });
-  };
-
   // Zoom controls
   const handleZoomIn = () => cyRef.current?.zoom(cyRef.current.zoom() * 1.25);
   const handleZoomOut = () => cyRef.current?.zoom(cyRef.current.zoom() * 0.8);
-  const handleFit = () => cyRef.current?.fit(null, 50);
+  const handleFit = () => cyRef.current?.fit(null, 60);
+
+  // Export Canvas Image
+  const handleExportPNG = () => {
+    if (!cyRef.current) return;
+    setExporting(true);
+    try {
+      const pngUri = cyRef.current.png({ full: true, scale: 2.5, bg: "#F8FAFC" });
+      const link = document.createElement("a");
+      const safeFir = activeFir.replace(/[^a-zA-Z0-9_-]/g, "_");
+      link.download = `NIRMAAN_FORENSIC_GRAPH_${safeFir}.png`;
+      link.href = pngUri;
+      link.click();
+    } catch (err) {
+      console.error("Export PNG failed:", err);
+    } finally {
+      setTimeout(() => setExporting(false), 800);
+    }
+  };
 
   const handleCopy = (text, key) => {
     if (!text) return;
@@ -352,31 +419,71 @@ export default function TransactionGraph({
     onNavigate?.("Investigations", { wallet: address, fir: activeFir });
   };
 
-  const activeNodeColor = selectedNode ? NODE_COLORS[selectedNode.node_type] || NODE_COLORS.DEFAULT : null;
+  // Center on node from breadcrumb
+  const handleCenterNode = (nodeId) => {
+    if (!cyRef.current) return;
+    const n = cyRef.current.nodes(`[id = "${nodeId}"]`);
+    if (n.length > 0) {
+      n.select();
+      setSelectedNode(n[0].data());
+      cyRef.current.animate({ center: { eles: n }, zoom: 1.35, duration: 400 });
+    }
+  };
+
+  // Search in graph
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (!cyRef.current || !search.trim()) return;
+    const q = search.trim().toLowerCase();
+    cyRef.current.batch(() => {
+      cyRef.current.nodes().forEach((n) => {
+        const d = n.data();
+        const match =
+          (d.address && d.address.toLowerCase().includes(q)) ||
+          (d.cleanName && d.cleanName.toLowerCase().includes(q)) ||
+          (d.vasp_name && d.vasp_name.toLowerCase().includes(q));
+
+        if (match) {
+          n.select();
+          setSelectedNode(d);
+          cyRef.current.animate({ center: { eles: n }, zoom: 1.4, duration: 400 });
+        } else {
+          n.unselect();
+        }
+      });
+    });
+  };
+
+  const activeConfig = selectedNode ? NODE_CONFIGS[selectedNode.node_type] || NODE_CONFIGS.DEFAULT : null;
+  const traceNodes = activeTrace?.nodes || [];
+  const traceEdges = activeTrace?.edges || [];
 
   return (
     <div className="flex h-[calc(100vh-76px)] w-full flex-col overflow-hidden bg-[#F8FAFC]">
-      {/* Top Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-5 py-3 shrink-0">
+      {/* Top Professional Command Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-5 py-3 shrink-0 shadow-2xs">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
-            <Network size={18} />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
+            <Network size={20} />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-sm font-bold text-slate-900">Multi-Hop Visual Topology</h1>
+              <h1 className="text-sm font-bold text-slate-900 tracking-tight">Forensic Topology Canvas</h1>
               <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200">
-                Cytoscape DAGRE Engine
+                Hierarchical DAGRE
+              </span>
+              <span className="hidden sm:inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
+                ● Live Interactive
               </span>
             </div>
-            <p className="text-xs text-slate-500 font-mono truncate max-w-md">
-              {activeFir}
+            <p className="text-xs text-slate-500 font-mono truncate max-w-sm mt-0.5">
+              {activeFir} · {traceEdges.length} Hops · {traceNodes.length} Nodes
             </p>
           </div>
         </div>
 
-        {/* Case Selector Dropdown & Search */}
-        <div className="flex items-center gap-2">
+        {/* Controls: Case Selector, Layout, Search, Export */}
+        <div className="flex flex-wrap items-center gap-2">
           {casesList.length > 0 && (
             <div className="relative">
               <select
@@ -395,39 +502,93 @@ export default function TransactionGraph({
             </div>
           )}
 
-          {/* Quick Search */}
+          {/* Layout Selector */}
+          <div className="relative">
+            <select
+              value={layoutName}
+              onChange={(e) => setLayoutName(e.target.value)}
+              className="appearance-none rounded-xl border border-slate-200 bg-slate-50 py-2 pl-3 pr-8 text-xs font-semibold text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-2xs"
+              title="Select Graph Layout Algorithm"
+            >
+              <option value="dagre">Hierarchical (Left-to-Right)</option>
+              <option value="breadthfirst">Tree View (Breadthfirst)</option>
+              <option value="concentric">Concentric Rings</option>
+              <option value="circle">Circular Radial</option>
+            </select>
+            <ChevronDown size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          </div>
+
+          {/* Search Wallet in Canvas */}
           <form onSubmit={handleSearchSubmit} className="relative">
             <input
               type="text"
-              placeholder="Search wallet in graph..."
+              placeholder="Search address / node..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-48 sm:w-60 rounded-xl border border-slate-200 bg-slate-50 py-2 pl-8 pr-3 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+              className="w-44 sm:w-56 rounded-xl border border-slate-200 bg-slate-50 py-2 pl-8 pr-3 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition font-medium"
             />
             <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
           </form>
 
-          {/* Layout Toggle */}
+          {/* High-Resolution PNG Export Button */}
           <button
             type="button"
-            onClick={() => setLayoutName(layoutName === "dagre" ? "circle" : "dagre")}
-            title="Toggle Layout (Hierarchical vs Circular)"
-            className="rounded-xl border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-50 transition"
+            onClick={handleExportPNG}
+            disabled={exporting}
+            title="Download Court Evidence Graph PNG"
+            className="flex items-center gap-1.5 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-800 shadow-sm transition active:scale-95"
           >
-            <Layers size={16} />
+            <Camera size={14} />
+            <span className="hidden sm:inline">{exporting ? "Rendering..." : "Export PNG"}</span>
           </button>
         </div>
       </div>
 
-      {/* Main Canvas Area + Side Inspector */}
+      {/* Main Forensic Canvas Area with Side Inspector */}
       <div className="relative flex flex-1 overflow-hidden">
-        {/* Cytoscape Canvas */}
-        <div className="relative flex-1 bg-white">
-          <div ref={containerRef} className="h-full w-full" />
+        {/* Cytoscape Canvas with High-Tech Grid Pattern */}
+        <div className="relative flex-1 bg-[#F8FAFC] overflow-hidden" style={{
+          backgroundImage: "radial-gradient(#CBD5E1 1.2px, transparent 1.2px)",
+          backgroundSize: "22px 22px",
+        }}>
+          {/* Top Breadcrumb Trail Navigation Bar */}
+          {traceNodes.length > 0 && (
+            <div className="absolute top-4 left-4 right-4 z-10 hidden md:flex items-center gap-1.5 overflow-x-auto rounded-xl border border-slate-200/90 bg-white/95 px-3 py-2 shadow-xs backdrop-blur-md">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 shrink-0 mr-1 flex items-center gap-1">
+                <Compass size={13} className="text-blue-600" /> Trace Path:
+              </span>
+              {traceNodes.map((n, idx) => {
+                const conf = NODE_CONFIGS[n.node_type] || NODE_CONFIGS.DEFAULT;
+                return (
+                  <div key={n.id || idx} className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleCenterNode(n.id || n.address)}
+                      className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+                        selectedNode?.id === (n.id || n.address)
+                          ? "bg-blue-600 text-white shadow-2xs"
+                          : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                      }`}
+                    >
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: conf.bg }} />
+                      <span>{n.vasp_name || (n.node_type === "SUSPECT" ? "Origin" : `Hop ${idx}`)}</span>
+                    </button>
+                    {idx < traceNodes.length - 1 && (
+                      <span className="text-slate-300 text-xs font-bold">→</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
-          {/* Canvas Floating Controls */}
-          <div className="absolute bottom-5 left-5 flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white/95 p-1.5 shadow-md backdrop-blur-xs">
+          {/* Cytoscape Container */}
+          <div ref={containerRef} className="h-full w-full cursor-grab active:cursor-grabbing" />
+
+          {/* Floating Zoom & Fit Action Pills */}
+          <div className="absolute bottom-5 left-5 z-10 flex items-center gap-1 rounded-xl border border-slate-200 bg-white/95 p-1.5 shadow-md backdrop-blur-md">
             <button
+              type="button"
               onClick={handleZoomIn}
               title="Zoom In"
               className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 transition"
@@ -435,6 +596,7 @@ export default function TransactionGraph({
               <ZoomIn size={16} />
             </button>
             <button
+              type="button"
               onClick={handleZoomOut}
               title="Zoom Out"
               className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 transition"
@@ -442,164 +604,239 @@ export default function TransactionGraph({
               <ZoomOut size={16} />
             </button>
             <button
+              type="button"
               onClick={handleFit}
-              title="Fit to Screen"
+              title="Fit to Screen (Reset View)"
               className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 transition"
             >
               <Maximize2 size={16} />
             </button>
           </div>
 
-          {/* Color Legend Badge */}
-          <div className="absolute top-4 left-4 hidden sm:flex items-center gap-2 rounded-xl border border-slate-200 bg-white/90 px-3 py-2 text-[11px] font-semibold text-slate-600 shadow-sm backdrop-blur-xs">
+          {/* Floating Color Legend Pill */}
+          <div className="absolute bottom-5 right-5 z-10 hidden sm:flex items-center gap-3 rounded-xl border border-slate-200 bg-white/95 px-3.5 py-2 text-[11px] font-semibold text-slate-700 shadow-sm backdrop-blur-md">
             <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-rose-500" /> Suspect Seed
+              <span className="h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-rose-200" /> Suspect Seed
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-amber-500" /> Mule Hop
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-amber-200" /> Mule Layer
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-sky-500" /> VASP Deposit
+              <span className="h-2.5 w-2.5 rounded-full bg-sky-500 ring-2 ring-sky-200" /> VASP Deposit
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Hot Wallet
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-200" /> Exchange Hot Wallet
             </span>
           </div>
         </div>
 
-        {/* Node & Edge Inspector Side Drawer */}
-        <div className="w-80 sm:w-96 border-l border-slate-200 bg-white p-5 overflow-y-auto space-y-5 shadow-xs">
-          {selectedNode ? (
-            <div className="space-y-5">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <span className={`rounded-full px-2.5 py-1 text-xs font-bold border ${activeNodeColor?.badge}`}>
-                  {activeNodeColor?.text || selectedNode.node_type}
-                </span>
-                <span className="text-xs font-mono text-slate-400">
-                  Risk Tier: {selectedNode.risk_tier}
-                </span>
+        {/* Right Forensic Node & Edge Inspector (Full-width, zero truncation) */}
+        {inspectorOpen && (
+          <div className="w-[380px] shrink-0 border-l border-slate-200 bg-white flex flex-col h-full shadow-lg overflow-hidden animate-in slide-in-from-right duration-200">
+            {/* Inspector Header */}
+            <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-slate-50/80 px-5 py-4">
+              <div className="flex items-center gap-2">
+                <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
+                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                  {selectedNode ? "Node Particulars" : selectedEdge ? "Transaction Edge" : "Forensic Telemetry"}
+                </h2>
               </div>
+              <button
+                type="button"
+                onClick={() => setInspectorOpen(false)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition"
+                title="Collapse Inspector"
+              >
+                <X size={16} />
+              </button>
+            </div>
 
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Node Identifier</p>
-                <h3 className="mt-1 text-base font-bold text-slate-900 break-words">
-                  {selectedNode.vasp_name || selectedNode.label?.replace("\n", " ") || "Blockchain Node"}
-                </h3>
-              </div>
+            {/* Inspector Content Body */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-5">
+              {selectedNode ? (
+                <div className="space-y-5">
+                  {/* Entity Type Badge & Risk Metric */}
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <span className={`rounded-full px-3 py-1 text-xs font-bold border ${activeConfig?.badge}`}>
+                      {activeConfig?.title || selectedNode.node_type}
+                    </span>
+                    <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-mono font-bold text-slate-700">
+                      Risk Tier: {selectedNode.risk_tier}
+                    </span>
+                  </div>
 
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-1.5">
-                <span className="text-[11px] font-semibold text-slate-500">Wallet Public Address:</span>
-                <div className="flex items-center justify-between gap-2 font-mono text-xs text-slate-800 break-all">
-                  <span>{selectedNode.address || selectedNode.id}</span>
-                  <button
-                    onClick={() => handleCopy(selectedNode.address || selectedNode.id, "nodeAddr")}
-                    className="shrink-0 p-1 text-slate-500 hover:text-blue-600 transition"
-                    title="Copy Address"
-                  >
-                    {copiedKey === "nodeAddr" ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
-                  </button>
+                  {/* Title & Identified Entity */}
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      Identified Node
+                    </span>
+                    <h3 className="text-lg font-bold text-slate-900 mt-0.5 leading-snug">
+                      {selectedNode.cleanName || selectedNode.vasp_name || "Blockchain Address"}
+                    </h3>
+                  </div>
+
+                  {/* Wallet Address with Copy & External Link */}
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 space-y-2">
+                    <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500">
+                      <span>Public Blockchain Address:</span>
+                      <a
+                        href={`https://tronscan.org/#/address/${selectedNode.address || selectedNode.id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 hover:underline flex items-center gap-1 font-sans"
+                      >
+                        TronScan <ExternalLink size={11} />
+                      </a>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 font-mono text-xs text-slate-800 break-all select-all bg-white p-2.5 rounded-lg border border-slate-200">
+                      <span>{selectedNode.address || selectedNode.id}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(selectedNode.address || selectedNode.id, "nodeAddr")}
+                        className="shrink-0 p-1 text-slate-400 hover:text-blue-600 transition"
+                        title="Copy Public Address"
+                      >
+                        {copiedKey === "nodeAddr" ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Balance & Risk Score Cards */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-xl border border-slate-100 bg-slate-50 p-3.5">
+                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                        Ledger Balance
+                      </span>
+                      <span className="text-base font-bold text-slate-900 mt-1 block">
+                        ${Number(selectedNode.balance_usd || 0).toLocaleString()} USDT
+                      </span>
+                    </div>
+                    <div className="rounded-xl border border-slate-100 bg-slate-50 p-3.5">
+                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                        ML Risk Anomaly
+                      </span>
+                      <span className="text-base font-bold text-rose-600 mt-1 block">
+                        {Math.round((selectedNode.risk_score || 0.5) * 100)}% Risk
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Forensic Heuristic Explanation */}
+                  {selectedNode.explanation && (
+                    <div className="rounded-xl border border-slate-200 bg-white p-3.5 space-y-1.5">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                        Forensic Heuristic Note
+                      </span>
+                      <p className="text-xs text-slate-700 leading-relaxed font-medium">
+                        {selectedNode.explanation}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Syndicate Laundering Typology */}
+                  {selectedNode.typology && (
+                    <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-indigo-950">
+                          {selectedNode.typology.typology_name || "Laundering Pattern"}
+                        </span>
+                        <span className="rounded-md bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700">
+                          {selectedNode.typology.typology_code}
+                        </span>
+                      </div>
+                      <p className="text-xs text-indigo-900 leading-relaxed">
+                        {selectedNode.typology.description}
+                      </p>
+                      <p className="text-[11px] font-semibold text-rose-600 pt-1 border-t border-indigo-100">
+                        Statutory Offence: {selectedNode.typology.statutory_violation || "Section 318(4) BNS, 2023"}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Action Button: Trace From This Node */}
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => handleInvestigateNode(selectedNode.address || selectedNode.id)}
+                      className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-xs font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 transition active:scale-98"
+                    >
+                      <Search size={14} /> Trace From This Wallet
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ) : selectedEdge ? (
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 border border-blue-200">
+                      Transaction Transfer
+                    </span>
+                    <span className="text-xs font-mono font-bold text-emerald-600">
+                      {selectedEdge.amount}
+                    </span>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
-                  <span className="text-slate-400 block font-semibold">Ledger Balance:</span>
-                  <span className="mt-1 font-bold text-slate-900 block text-sm">
-                    ${Number(selectedNode.balance_usd || 0).toLocaleString()} USDT
-                  </span>
-                </div>
-                <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
-                  <span className="text-slate-400 block font-semibold">ML Risk Score:</span>
-                  <span className="mt-1 font-bold text-rose-600 block text-sm">
-                    {Math.round((selectedNode.risk_score || 0.5) * 100)}%
-                  </span>
-                </div>
-              </div>
+                  <div>
+                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                      Transfer Value
+                    </span>
+                    <p className="text-2xl font-bold text-slate-900 mt-0.5">
+                      ${Number(selectedEdge.usd_value || 0).toLocaleString()} USDT
+                    </p>
+                  </div>
 
-              {selectedNode.explanation && (
-                <div className="rounded-xl border border-slate-200 bg-white p-3 text-xs">
-                  <span className="font-semibold text-slate-500 block mb-1">Forensic Heuristic Note:</span>
-                  <p className="text-slate-700 leading-relaxed">{selectedNode.explanation}</p>
-                </div>
-              )}
+                  {/* Transaction Hash */}
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 space-y-2">
+                    <span className="text-[11px] font-semibold text-slate-500">
+                      Transaction Hash (TxHash):
+                    </span>
+                    <div className="flex items-center justify-between gap-2 font-mono text-xs text-slate-800 break-all select-all bg-white p-2.5 rounded-lg border border-slate-200">
+                      <span>{selectedEdge.tx_hash || "Synthetic Transaction"}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(selectedEdge.tx_hash, "edgeTx")}
+                        className="shrink-0 p-1 text-slate-400 hover:text-blue-600 transition"
+                        title="Copy TxHash"
+                      >
+                        {copiedKey === "edgeTx" ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+                      </button>
+                    </div>
+                  </div>
 
-              {selectedNode.typology && (
-                <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3 text-xs space-y-1">
-                  <span className="font-bold text-indigo-900 block">
-                    {selectedNode.typology.typology_name || "Laundering Pattern"}
-                  </span>
-                  <p className="text-indigo-800 text-[11px] leading-relaxed">
-                    {selectedNode.typology.description}
+                  {/* Source and Target Addresses */}
+                  <div className="space-y-3 text-xs">
+                    <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                      <span className="text-slate-400 font-semibold block text-[11px]">Source Node:</span>
+                      <p className="font-mono text-slate-800 break-all mt-0.5">{selectedEdge.source}</p>
+                    </div>
+                    <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                      <span className="text-slate-400 font-semibold block text-[11px]">Target Node:</span>
+                      <p className="font-mono text-slate-800 break-all mt-0.5">{selectedEdge.target}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-14 text-center text-slate-400 space-y-2">
+                  <Network size={36} className="mx-auto text-slate-300" />
+                  <p className="text-xs font-semibold text-slate-600">Select any node or arrow</p>
+                  <p className="text-[11px] text-slate-400 max-w-xs mx-auto leading-relaxed">
+                    Click any wallet circle or transfer line in the canvas to inspect ledger balances, dwell time, and statutory evidence particulars.
                   </p>
-                  <span className="font-semibold text-rose-600 block text-[11px] pt-1">
-                    Offence: {selectedNode.typology.statutory_violation || "Sec 318(4) BNS, 2023"}
-                  </span>
                 </div>
               )}
-
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => handleInvestigateNode(selectedNode.address || selectedNode.id)}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition"
-                >
-                  <Search size={14} /> Trace From This Wallet
-                </button>
-              </div>
             </div>
-          ) : selectedEdge ? (
-            <div className="space-y-5">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 border border-blue-200">
-                  Transaction Edge
-                </span>
-                <span className="text-xs font-mono text-emerald-600 font-bold">
-                  {selectedEdge.amount}
-                </span>
-              </div>
+          </div>
+        )}
 
-              <div className="space-y-1">
-                <span className="text-[11px] font-semibold text-slate-400">Transfer Value</span>
-                <p className="text-xl font-bold text-slate-900">
-                  ${Number(selectedEdge.usd_value || 0).toLocaleString()} USDT
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-1.5">
-                <span className="text-[11px] font-semibold text-slate-500">Transaction Hash (TxHash):</span>
-                <div className="flex items-center justify-between gap-2 font-mono text-xs text-slate-800 break-all">
-                  <span>{selectedEdge.tx_hash || "Synthetic Transaction"}</span>
-                  <button
-                    onClick={() => handleCopy(selectedEdge.tx_hash, "edgeTx")}
-                    className="shrink-0 p-1 text-slate-500 hover:text-blue-600 transition"
-                    title="Copy TxHash"
-                  >
-                    {copiedKey === "edgeTx" ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-2 text-xs">
-                <div>
-                  <span className="text-slate-400">Source Node:</span>
-                  <p className="font-mono text-slate-700 truncate">{selectedEdge.source}</p>
-                </div>
-                <div>
-                  <span className="text-slate-400">Target Node:</span>
-                  <p className="font-mono text-slate-700 truncate">{selectedEdge.target}</p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="py-12 text-center text-slate-400 space-y-2">
-              <Network size={32} className="mx-auto text-slate-300" />
-              <p className="text-xs font-semibold text-slate-600">Select any node or transaction edge</p>
-              <p className="text-[11px] text-slate-400 max-w-xs mx-auto">
-                Click any wallet circle or connecting transfer arrow to inspect real balances, risk scoring, and evidence particulars.
-              </p>
-            </div>
-          )}
-        </div>
+        {/* Toggle to reopen inspector if closed */}
+        {!inspectorOpen && (
+          <button
+            type="button"
+            onClick={() => setInspectorOpen(true)}
+            className="absolute top-5 right-5 z-20 flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white/95 px-3 py-2 text-xs font-semibold text-slate-700 shadow-md backdrop-blur-md hover:bg-slate-50 transition"
+          >
+            <SlidersHorizontal size={14} /> Inspect Node
+          </button>
+        )}
       </div>
     </div>
   );
