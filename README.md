@@ -266,15 +266,3 @@ npm install
 npm run dev
 # Live Application: http://localhost:3000
 ```
-
----
-
-## 🏆 SIH Team & Attribution
-
-* **Team Name:** NIRMAAN / ChainTrace AI
-* **Hackathon:** Smart India Hackathon (SIH) 2024
-* **Problem Statement:** SIH26183 — *Real-Time Identification of Fraud-Linked Cryptocurrency Exchanges from Victim-Reported Suspect Wallet Addresses through Automated Blockchain Analytics*
-* **Target Agencies:** Ministry of Home Affairs (MHA), Indian Cybercrime Coordination Centre (I4C), State Cyber Police Stations, and NCRP 1930 Nodal Officers.
-* **Core Repositories:**
-  * Primary: [https://github.com/somil71/NIRMAAN](https://github.com/somil71/NIRMAAN)
-  * Upstream: [https://github.com/NIRMAAN108/NIRMAAN](https://github.com/NIRMAAN108/NIRMAAN)
