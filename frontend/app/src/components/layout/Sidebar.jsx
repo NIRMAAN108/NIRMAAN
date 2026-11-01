@@ -133,8 +133,13 @@ export default function Sidebar({
           <>
             <button
               type="button"
+              onClick={() => onNavigate?.("Settings")}
               title="Settings"
-              className="group relative flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition"
+              className={`group relative flex h-10 w-10 items-center justify-center rounded-xl transition ${
+                activePage === "Settings"
+                  ? "bg-[#0866D9] text-white shadow-md shadow-blue-500/25"
+                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+              }`}
             >
               <Settings size={18} />
               <span className="pointer-events-none absolute left-full ml-3 z-50 hidden whitespace-nowrap rounded-md bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white shadow-lg group-hover:block">
@@ -143,12 +148,17 @@ export default function Sidebar({
             </button>
             <button
               type="button"
+              onClick={() => onNavigate?.("Help & Docs")}
               title="Help & Documentation"
-              className="group relative flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition"
+              className={`group relative flex h-10 w-10 items-center justify-center rounded-xl transition ${
+                activePage === "Help & Docs" || activePage === "Help"
+                  ? "bg-[#0866D9] text-white shadow-md shadow-blue-500/25"
+                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+              }`}
             >
               <CircleHelp size={18} />
               <span className="pointer-events-none absolute left-full ml-3 z-50 hidden whitespace-nowrap rounded-md bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white shadow-lg group-hover:block">
-                Help
+                Help & Docs
               </span>
             </button>
           </>
@@ -156,14 +166,24 @@ export default function Sidebar({
           <>
             <button
               type="button"
-              className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
+              onClick={() => onNavigate?.("Settings")}
+              className={`flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+                activePage === "Settings"
+                  ? "bg-[#0866D9] text-white shadow-md shadow-blue-500/20"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
             >
               <Settings size={18} className="shrink-0" />
               <span>Settings</span>
             </button>
             <button
               type="button"
-              className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
+              onClick={() => onNavigate?.("Help & Docs")}
+              className={`flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+                activePage === "Help & Docs" || activePage === "Help"
+                  ? "bg-[#0866D9] text-white shadow-md shadow-blue-500/20"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
             >
               <CircleHelp size={18} className="shrink-0" />
               <span>Help & Docs</span>

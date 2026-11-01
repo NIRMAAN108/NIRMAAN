@@ -284,17 +284,56 @@ export default function Investigation({ onNavigate, initialWallet = "", initialF
         </div>
       )}
 
-      {/* Feature Pillar Cards */}
+      {/* Feature Pillar Cards (Interactive Shortcuts) */}
       <div className="grid sm:grid-cols-3 gap-5">
         {[
-          [ShieldCheck, "Automated Section 94 BNSS", "Drafts court-ready legal notices to exchange nodal officers within 24 hours."],
-          [Network, "Peeling & Mixer Detection", "Machine learning heuristic layer flags smurfing, peeling ratios, and coin mixers."],
-          [FileText, "Section 63 BSA Certification", "Produces cryptographically verified digital evidence certificates with SHA-256."],
-        ].map(([Icon, title, desc]) => (
-          <div key={title} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-            <Icon className="text-blue-600 mb-3" size={24} />
-            <h3 className="font-bold text-slate-900 text-sm">{title}</h3>
-            <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">{desc}</p>
+          {
+            icon: ShieldCheck,
+            title: "Automated Section 94 BNSS",
+            desc: "Drafts court-ready legal notices to exchange nodal officers within 24 hours.",
+            badge: "Open Legal Dossiers →",
+            target: "Legal Dossiers",
+          },
+          {
+            icon: Network,
+            title: "Peeling & Mixer Detection",
+            desc: "Machine learning heuristic layer flags smurfing, peeling ratios, and coin mixers.",
+            badge: "Open Visual Graph →",
+            target: "Transaction Graph",
+          },
+          {
+            icon: FileText,
+            title: "Section 63 BSA Certification",
+            desc: "Produces cryptographically verified digital evidence certificates with SHA-256.",
+            badge: "Open Evidence Vault →",
+            target: "Case Management",
+          },
+        ].map(({ icon: Icon, title, desc, badge, target }) => (
+          <div
+            key={title}
+            onClick={() => onNavigate && onNavigate(target)}
+            className="group cursor-pointer bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:border-blue-400 hover:shadow-md transition duration-200 flex flex-col justify-between"
+            role="button"
+            tabIndex={0}
+            title={`Click to open ${title}`}
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition">
+                  <Icon size={22} />
+                </div>
+                <ArrowRight size={16} className="text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition" />
+              </div>
+              <h3 className="font-bold text-slate-900 text-sm group-hover:text-blue-600 transition">
+                {title}
+              </h3>
+              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                {desc}
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-blue-600">
+              <span>{badge}</span>
+            </div>
           </div>
         ))}
       </div>

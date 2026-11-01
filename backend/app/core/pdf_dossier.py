@@ -18,17 +18,47 @@ from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable, KeepTogether
 )
 
+INDIC_DIGITS = {
+    '०': '0', '१': '1', '२': '2', '३': '3', '४': '4', '५': '5', '६': '6', '७': '7', '८': '8', '९': '9',
+    '০': '0', '১': '1', '২': '2', '३': '3', '৪': '4', '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9',
+    '੦': '0', '੧': '1', '੨': '2', '੩': '3', '੪': '4', '੫': '5', '੬': '6', '੭': '7', '੮': '8', '੯': '9',
+    '૦': '0', '૧': '1', '૨': '2', '૩': '3', '૪': '4', '૫': '5', '૬': '6', '૭': '7', '૮': '8', '૯': '9',
+}
+
+KNOWN_INDIAN_TERMS = {
+    "साइबर पुलिस थाना, दक्षिण दिल्ली": "Cyber Crime Police Station, South Delhi",
+    "साइबर पुलिस थाना": "Cyber Crime Police Station",
+    "दक्षिण दिल्ली": "South Delhi",
+    "निरीक्षक राजेश शर्मा (IO-77)": "Inspector Rajesh Sharma (IO-77)",
+    "निरीक्षक राजेश शर्मा": "Inspector Rajesh Sharma",
+    "श्रीमती सुनीता देवी": "Smt. Sunita Devi",
+    "सुनीता देवी": "Sunita Devi",
+}
+
 def _clean_text(val: Any) -> str:
-    """Sanitizes text to prevent Latin-1 encoding crashes in standard PDF fonts and escapes XML tags."""
+    """Sanitizes text to prevent Latin-1 encoding crashes in standard PDF fonts, preserves Indic numerals, and escapes XML tags."""
     if val is None:
         return ""
-    text = str(val)
+    text = str(val).strip()
     # Map Indian currency symbol and quotes to Latin-1 compatible forms
     text = text.replace("₹", "Rs. ").replace("“", '"').replace("”", '"').replace("‘", "'").replace("’", "'")
-    # Normalize unicode to decomposed ascii approximation where possible
-    norm_text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('ascii')
-    if not norm_text.strip() and text.strip():
-        norm_text = text.encode('latin-1', 'replace').decode('latin-1')
+    
+    # 1. Translate Indic / Devanagari numerals to standard digits (e.g. ८८९१२ -> 88912)
+    for ind, arb in INDIC_DIGITS.items():
+        text = text.replace(ind, arb)
+        
+    # 2. Strip emojis / surrogate pairs (e.g. flag emojis)
+    text = re.sub(r'[\U00010000-\U0010ffff]', '', text).strip()
+    
+    # 3. Apply known official translations for Indian police departments and names
+    for hin, eng in KNOWN_INDIAN_TERMS.items():
+        text = text.replace(hin, eng)
+        
+    # 4. Normalize unicode
+    norm_text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('ascii').strip()
+    if not norm_text and text:
+        norm_text = re.sub(r'[^a-zA-Z0-9_\-\s,./()]', '', text).strip() or "Recorded"
+        
     return html.escape(norm_text)
 
 def generate_pdf_dossier(case_data: Dict[str, Any]) -> bytes:

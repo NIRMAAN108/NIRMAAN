@@ -7,6 +7,9 @@ import TransactionGraph from "./pages/TransactionGraph";
 import WalletDetails from "./pages/WalletDetails";
 import VASPAttribution from "./pages/VASPAttribution";
 import CaseManagement from "./pages/CaseManagement";
+import IntelligenceAlerts from "./pages/IntelligenceAlerts";
+import Settings from "./pages/Settings";
+import HelpDocs from "./pages/HelpDocs";
 
 export default function App() {
   const [activePage, setActivePage] = useState("Dashboard");
@@ -84,6 +87,16 @@ export default function App() {
             initialSearch={navParams.search || ""}
           />
         );
+
+      case "Intelligence & Alerts":
+        return <IntelligenceAlerts onNavigate={navigateTo} />;
+
+      case "Settings":
+        return <Settings />;
+
+      case "Help":
+      case "Help & Docs":
+        return <HelpDocs />;
 
       default:
         return (
