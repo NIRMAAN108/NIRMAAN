@@ -251,27 +251,36 @@ export default function Investigation({ onNavigate, initialWallet = "", initialF
             </div>
           )}
 
-          {/* Download Official Legal Artifacts */}
-          {caseId && (
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              <a
-                href={getDossierDownloadUrl(caseId)}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition"
-              >
-                <Download size={14} /> Download Court PDF Dossier
-              </a>
-              <a
-                href={getBundleDownloadUrl(caseId)}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold shadow-sm transition"
-              >
-                <Download size={14} /> Download Section 63 ZIP Bundle
-              </a>
-            </div>
-          )}
+          {/* Download Official Legal Artifacts & Open Graph */}
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => onNavigate?.("Transaction Graph", { traceData: traceResult, caseId: caseId })}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition"
+            >
+              <Network size={14} /> Open Visual Graph Topology
+            </button>
+            {caseId && (
+              <>
+                <a
+                  href={getDossierDownloadUrl(caseId)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition"
+                >
+                  <Download size={14} /> Download Court PDF Dossier
+                </a>
+                <a
+                  href={getBundleDownloadUrl(caseId)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold shadow-sm transition"
+                >
+                  <Download size={14} /> Download Section 63 ZIP Bundle
+                </a>
+              </>
+            )}
+          </div>
         </div>
       )}
 

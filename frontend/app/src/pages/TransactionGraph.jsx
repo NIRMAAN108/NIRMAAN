@@ -1,5 +1,4 @@
-
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import {
   Network,
   Search,
@@ -14,467 +13,592 @@ import {
   AlertTriangle,
   Activity,
   X,
+  ExternalLink,
+  Copy,
+  Check,
+  RefreshCw,
+  FolderOpen,
+  ChevronDown,
+  Layers,
+  Sparkles,
 } from "lucide-react";
+import cytoscape from "cytoscape";
+import dagre from "cytoscape-dagre";
+import { fetchCases, fetchCaseById, traceWallet } from "../services/api";
 
-const nodes = [
-  { id: "W1", x: 100, y: 220, label: "Source Wallet", address: "TQ8...9K2", amount: "$25,000", type: "source", risk: "High" },
-  { id: "W2", x: 310, y: 105, label: "Wallet 02", address: "TR7...4M1", amount: "$12,000", type: "normal", risk: "Medium" },
-  { id: "W3", x: 310, y: 335, label: "Wallet 03", address: "TX2...8P5", amount: "$8,000", type: "normal", risk: "Low" },
-  { id: "W4", x: 540, y: 105, label: "Wallet 04", address: "TB5...2N7", amount: "$9,500", type: "normal", risk: "Medium" },
-  { id: "W5", x: 540, y: 335, label: "Wallet 05", address: "TC4...6R3", amount: "$5,500", type: "normal", risk: "High" },
-  { id: "W6", x: 770, y: 220, label: "Exchange", address: "Binance (Demo)", amount: "$15,000", type: "exchange", risk: "Medium" },
-];
+// Safely register dagre layout
+try {
+  cytoscape.use(dagre);
+} catch {
+  // Ignore if already registered
+}
 
-const edges = [
-  { from: "W1", to: "W2", label: "$12,000", x1: 125, y1: 205, x2: 285, y2: 120 },
-  { from: "W1", to: "W3", label: "$8,000", x1: 125, y1: 235, x2: 285, y2: 320 },
-  { from: "W2", to: "W4", label: "$9,500", x1: 335, y1: 105, x2: 515, y2: 105 },
-  { from: "W3", to: "W5", label: "$5,500", x1: 335, y1: 335, x2: 515, y2: 335 },
-  { from: "W4", to: "W6", label: "$9,500", x1: 565, y1: 120, x2: 745, y2: 205 },
-  { from: "W5", to: "W6", label: "$5,500", x1: 565, y1: 320, x2: 745, y2: 235 },
-];
+const NODE_COLORS = {
+  SUSPECT: { bg: "#EF4444", border: "#B91C1C", text: "Suspect Origin", badge: "bg-rose-50 text-rose-700 border-rose-200" },
+  MULE: { bg: "#F59E0B", border: "#D97706", text: "Intermediary Mule", badge: "bg-amber-50 text-amber-700 border-amber-200" },
+  VASP_DEPOSIT: { bg: "#0284C7", border: "#0369A1", text: "VASP Deposit Forwarder", badge: "bg-sky-50 text-sky-700 border-sky-200" },
+  VASP_HOT: { bg: "#10B981", border: "#047857", text: "Exchange Hot Wallet", badge: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  MIXER: { bg: "#8B5CF6", border: "#6D28D9", text: "Obfuscation Mixer", badge: "bg-purple-50 text-purple-700 border-purple-200" },
+  DEFAULT: { bg: "#64748B", border: "#475569", text: "Standard Node", badge: "bg-slate-50 text-slate-700 border-slate-200" },
+};
 
-export default function TransactionGraph() {
-  const [selectedNode, setSelectedNode] = useState("W1");
+export default function TransactionGraph({
+  caseId = null,
+  traceData = null,
+  onNavigate,
+}) {
+  const containerRef = useRef(null);
+  const cyRef = useRef(null);
+
+  const [casesList, setCasesList] = useState([]);
+  const [selectedCaseId, setSelectedCaseId] = useState(caseId || "");
+  const [activeTrace, setActiveTrace] = useState(traceData || null);
+  const [activeFir, setActiveFir] = useState("Live Investigation");
+  const [loading, setLoading] = useState(false);
+  const [selectedNode, setSelectedNode] = useState(null);
+  const [selectedEdge, setSelectedEdge] = useState(null);
   const [search, setSearch] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
-  const [riskFilter, setRiskFilter] = useState("All");
-  const [typeFilter, setTypeFilter] = useState("All");
-  const [zoom, setZoom] = useState(1);
-  const graphRef = useRef(null);
+  const [filterType, setFilterType] = useState("ALL");
+  const [layoutName, setLayoutName] = useState("dagre");
+  const [copiedKey, setCopiedKey] = useState(null);
 
-  const visibleNodes = useMemo(() => {
-    return nodes.filter((node) => {
-      const matchesSearch =
-        `${node.id} ${node.label} ${node.address}`
-          .toLowerCase()
-          .includes(search.toLowerCase());
+  // 1. Load cases list for dropdown selection
+  useEffect(() => {
+    fetchCases()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setCasesList(data);
+          // If no caseId was provided and no traceData, default to first case
+          if (!selectedCaseId && !traceData) {
+            setSelectedCaseId(data[0].case_id);
+            setActiveFir(data[0].fir_number);
+          }
+        }
+      })
+      .catch((err) => console.warn("Failed to load cases list:", err));
+  }, [traceData]);
 
-      const matchesRisk =
-        riskFilter === "All" || node.risk === riskFilter;
+  // 2. Load case trace data when selectedCaseId changes
+  useEffect(() => {
+    if (!selectedCaseId) return;
 
-      const matchesType =
-        typeFilter === "All" || node.type === typeFilter;
+    setLoading(true);
+    fetchCaseById(selectedCaseId)
+      .then((res) => {
+        if (res.trace_data) {
+          setActiveTrace(res.trace_data);
+          setActiveFir(res.fir_number || `Case ${selectedCaseId}`);
+        }
+      })
+      .catch((err) => {
+        console.warn("Failed to load case trace:", err);
+      })
+      .finally(() => setLoading(false));
+  }, [selectedCaseId]);
 
-      return matchesSearch && matchesRisk && matchesType;
-    });
-  }, [search, riskFilter, typeFilter]);
-
-  const visibleNodeIds = new Set(visibleNodes.map((node) => node.id));
-  const selected = visibleNodes.find((node) => node.id === selectedNode);
-
-  const nodeColor = (type) => {
-    if (type === "source") return "#2563EB";
-    if (type === "exchange") return "#16A34A";
-    return "#64748B";
-  };
-
-  const changeZoom = (amount) => {
-    setZoom((current) =>
-      Math.min(1.8, Math.max(0.6, Number((current + amount).toFixed(2))))
-    );
-  };
-
-  const toggleFullscreen = async () => {
-    try {
-      if (!document.fullscreenElement) {
-        await graphRef.current?.requestFullscreen();
-      } else {
-        await document.exitFullscreen();
+  // If initial traceData changes from props, use it
+  useEffect(() => {
+    if (traceData) {
+      setActiveTrace(traceData);
+      if (traceData.seed_address) {
+        setActiveFir(`Investigation: ${traceData.seed_address.substring(0, 10)}...`);
       }
-    } catch (error) {
-      console.error("Fullscreen is not available:", error);
     }
+  }, [traceData]);
+
+  // 3. Initialize or update Cytoscape instance
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    // Build elements from activeTrace
+    const elements = [];
+    const nodes = activeTrace?.nodes || [];
+    const edges = activeTrace?.edges || [];
+
+    if (nodes.length === 0) {
+      // Clean fallback demo if completely empty
+      elements.push(
+        { data: { id: "seed", label: "Suspect Origin\nTQiBwk...UmhUVC", address: "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC", node_type: "SUSPECT", balance_usd: 0, risk_score: 0.85, risk_tier: "CRITICAL" } },
+        { data: { id: "mule1", label: "Hop 1 Mule\nTSGRsp...BRkWVA", address: "TSGRsppW4vSaWWstQUTa2d4CWJDWBRkWVA", node_type: "MULE", balance_usd: 15000, risk_score: 0.72, risk_tier: "HIGH" } },
+        { data: { id: "dep1", label: "Binance Deposit\nTTpfou...ofBMrk", address: "TTpfou5hZarSNUpbaiAWHcCyC4u7ofBMrk", node_type: "VASP_DEPOSIT", balance_usd: 14950, risk_score: 0.08, risk_tier: "LOW" } },
+        { data: { id: "hot1", label: "Binance Hot Wallet\nTMuA6Y...RB4b7N", address: "TMuA6YqfCeX8EhbfYEg5y7S4DnxJRB4b7N", node_type: "VASP_HOT", balance_usd: 14950, risk_score: 0.08, risk_tier: "LOW" } }
+      );
+      elements.push(
+        { data: { id: "e1", source: "seed", target: "mule1", amount: "$15,000 USDT", usd_value: 15000, tx_hash: "a1b2c3d4e5f60718293a4b5c6d7e8f90" } },
+        { data: { id: "e2", source: "mule1", target: "dep1", amount: "$14,950 USDT", usd_value: 14950, tx_hash: "b2c3d4e5f60718293a4b5c6d7e8f90a1" } },
+        { data: { id: "e3", source: "dep1", target: "hot1", amount: "$14,950 USDT (Sweep)", usd_value: 14950, tx_hash: "d4e5f60718293a4b5c6d7e8f90a1b2c3" } }
+      );
+    } else {
+      // Add real nodes from trace
+      nodes.forEach((n) => {
+        const typeInfo = NODE_COLORS[n.node_type] || NODE_COLORS.DEFAULT;
+        let shortAddr = n.address ? `${n.address.substring(0, 6)}...${n.address.substring(n.address.length - 4)}` : n.id;
+        let displayLabel = n.label || shortAddr;
+        if (n.vasp_name) {
+          displayLabel = `${n.vasp_name}\n${shortAddr}`;
+        }
+
+        elements.push({
+          group: "nodes",
+          data: {
+            id: n.id || n.address,
+            label: displayLabel,
+            address: n.address,
+            node_type: n.node_type || "MULE",
+            vasp_name: n.vasp_name || null,
+            balance_usd: n.balance_usd || 0,
+            risk_score: n.risk_score || 0.5,
+            risk_tier: n.risk_tier || "MEDIUM",
+            flags: n.flags || [],
+            explanation: n.explanation || "",
+            typology: n.typology || null,
+            color: typeInfo.bg,
+            borderColor: typeInfo.border,
+          },
+        });
+      });
+
+      // Add real edges from trace
+      edges.forEach((e, idx) => {
+        elements.push({
+          group: "edges",
+          data: {
+            id: `edge_${idx}_${e.source}_${e.target}`,
+            source: e.source,
+            target: e.target,
+            amount: `$${Number(e.usd_value || e.amount || 0).toLocaleString()} ${e.token || "USDT"}`,
+            usd_value: e.usd_value || e.amount || 0,
+            tx_hash: e.tx_hash || "",
+            timestamp: e.timestamp || null,
+          },
+        });
+      });
+    }
+
+    // Destroy prior cytoscape instance if exists
+    if (cyRef.current) {
+      cyRef.current.destroy();
+    }
+
+    try {
+      const cy = cytoscape({
+        container: containerRef.current,
+        elements: elements,
+        boxSelectionEnabled: false,
+        autounselectify: false,
+        style: [
+          {
+            selector: "node",
+            style: {
+              "background-color": "data(color)",
+              "label": "data(label)",
+              "color": "#1E293B",
+              "font-size": "10px",
+              "font-weight": "bold",
+              "font-family": "ui-sans-serif, system-ui, sans-serif",
+              "text-valign": "bottom",
+              "text-margin-y": 6,
+              "text-wrap": "wrap",
+              "text-max-width": "120px",
+              "width": 42,
+              "height": 42,
+              "border-width": 3,
+              "border-color": "#FFFFFF",
+              "border-opacity": 0.9,
+              "shadow-blur": 8,
+              "shadow-color": "rgba(0,0,0,0.12)",
+              "shadow-opacity": 0.8,
+            },
+          },
+          {
+            selector: "edge",
+            style: {
+              "width": 3,
+              "line-color": "#94A3B8",
+              "target-arrow-color": "#64748B",
+              "target-arrow-shape": "triangle",
+              "arrow-scale": 1.2,
+              "curve-style": "bezier",
+              "label": "data(amount)",
+              "font-size": "10px",
+              "font-weight": "bold",
+              "font-family": "ui-monospace, SFMono-Regular, monospace",
+              "color": "#0F172A",
+              "text-rotation": "autorotate",
+              "text-margin-y": -10,
+              "text-background-color": "#F8FAFC",
+              "text-background-opacity": 0.95,
+              "text-background-padding": 3,
+              "text-background-shape": "roundrectangle",
+              "text-border-color": "#CBD5E1",
+              "text-border-width": 1,
+              "text-border-opacity": 0.8,
+            },
+          },
+          {
+            selector: "node:selected",
+            style: {
+              "border-width": 4,
+              "border-color": "#2563EB",
+              "border-opacity": 1,
+              "shadow-blur": 16,
+              "shadow-color": "#2563EB",
+              "shadow-opacity": 0.5,
+            },
+          },
+          {
+            selector: "edge:selected",
+            style: {
+              "width": 4,
+              "line-color": "#2563EB",
+              "target-arrow-color": "#2563EB",
+              "text-border-color": "#2563EB",
+              "text-color": "#2563EB",
+            },
+          },
+        ],
+        layout: {
+          name: layoutName === "dagre" ? "dagre" : layoutName,
+          rankDir: "LR",
+          nodeSep: 60,
+          rankSep: 110,
+          padding: 50,
+          animate: true,
+          animationDuration: 400,
+        },
+      });
+
+      // Node click listener
+      cy.on("tap", "node", (evt) => {
+        const nodeData = evt.target.data();
+        setSelectedNode(nodeData);
+        setSelectedEdge(null);
+      });
+
+      // Edge click listener
+      cy.on("tap", "edge", (evt) => {
+        const edgeData = evt.target.data();
+        setSelectedEdge(edgeData);
+        setSelectedNode(null);
+      });
+
+      // Background click listener
+      cy.on("tap", (evt) => {
+        if (evt.target === cy) {
+          setSelectedNode(null);
+          setSelectedEdge(null);
+        }
+      });
+
+      cyRef.current = cy;
+
+      // Select first suspect node by default if available
+      const suspectNode = cy.nodes('[node_type = "SUSPECT"]');
+      if (suspectNode.length > 0) {
+        suspectNode[0].select();
+        setSelectedNode(suspectNode[0].data());
+      }
+    } catch (err) {
+      console.warn("Cytoscape init fallback:", err);
+    }
+
+    return () => {
+      if (cyRef.current) {
+        cyRef.current.destroy();
+        cyRef.current = null;
+      }
+    };
+  }, [activeTrace, layoutName]);
+
+  // Handle Search Highlighting
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (!cyRef.current || !search.trim()) return;
+
+    const q = search.trim().toLowerCase();
+    cyRef.current.batch(() => {
+      cyRef.current.nodes().forEach((n) => {
+        const data = n.data();
+        const match =
+          (data.address && data.address.toLowerCase().includes(q)) ||
+          (data.label && data.label.toLowerCase().includes(q)) ||
+          (data.vasp_name && data.vasp_name.toLowerCase().includes(q));
+
+        if (match) {
+          n.select();
+          setSelectedNode(data);
+          cyRef.current.animate({ center: { eles: n }, zoom: 1.4 });
+        } else {
+          n.unselect();
+        }
+      });
+    });
   };
 
-  const resetFilters = () => {
-    setRiskFilter("All");
-    setTypeFilter("All");
-    setSearch("");
+  // Zoom controls
+  const handleZoomIn = () => cyRef.current?.zoom(cyRef.current.zoom() * 1.25);
+  const handleZoomOut = () => cyRef.current?.zoom(cyRef.current.zoom() * 0.8);
+  const handleFit = () => cyRef.current?.fit(null, 50);
+
+  const handleCopy = (text, key) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
   };
+
+  const handleInvestigateNode = (address) => {
+    if (!address) return;
+    onNavigate?.("Investigations", { wallet: address, fir: activeFir });
+  };
+
+  const activeNodeColor = selectedNode ? NODE_COLORS[selectedNode.node_type] || NODE_COLORS.DEFAULT : null;
 
   return (
-    <div className="min-h-full space-y-6 p-5 md:p-8">
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-        <div>
-          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-blue-600">
-            <Network size={16} />
-            BLOCKCHAIN FORENSICS
+    <div className="flex h-[calc(100vh-76px)] w-full flex-col overflow-hidden bg-[#F8FAFC]">
+      {/* Top Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-5 py-3 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
+            <Network size={18} />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
-            Transaction Graph
-          </h1>
-          <p className="mt-2 text-sm text-slate-500">
-            Visualize wallet connections and trace the flow of funds.
-          </p>
-        </div>
-
-        <button
-          onClick={() => window.print()}
-          className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
-        >
-          <Download size={17} />
-          Export Graph
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {[
-          { label: "Total Wallets", value: "06", icon: Wallet },
-          { label: "Transactions", value: "06", icon: Activity },
-          { label: "Total Volume", value: "$25,000", icon: ArrowUpRight },
-          { label: "Risk Alerts", value: "02", icon: AlertTriangle },
-        ].map((item) => {
-          const Icon = item.icon;
-          return (
-            <div
-              key={item.label}
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-            >
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-slate-500">{item.label}</p>
-                <div className="rounded-xl bg-blue-50 p-2.5 text-blue-600">
-                  <Icon size={19} />
-                </div>
-              </div>
-              <h2 className="mt-3 text-2xl font-bold text-slate-900">
-                {item.value}
-              </h2>
-              <p className="mt-1 text-xs text-slate-400">
-                Simulated demo data
-              </p>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-3 border-b border-slate-100 p-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="font-bold text-slate-900">
-              Wallet Network Visualization
-            </h2>
-            <p className="mt-1 text-xs text-slate-500">
-              Investigation ID: FIR-88/2026 · Demo Network
+            <div className="flex items-center gap-2">
+              <h1 className="text-sm font-bold text-slate-900">Multi-Hop Visual Topology</h1>
+              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200">
+                Cytoscape DAGRE Engine
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 font-mono truncate max-w-md">
+              {activeFir}
             </p>
           </div>
+        </div>
 
-          <div className="flex flex-wrap gap-2">
-            <div className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2">
-              <Search size={15} className="text-slate-400" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search wallet..."
-                className="w-32 text-sm outline-none md:w-40"
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  aria-label="Clear search"
-                >
-                  <X size={14} className="text-slate-400" />
-                </button>
-              )}
+        {/* Case Selector Dropdown & Search */}
+        <div className="flex items-center gap-2">
+          {casesList.length > 0 && (
+            <div className="relative">
+              <select
+                value={selectedCaseId}
+                onChange={(e) => setSelectedCaseId(e.target.value)}
+                className="appearance-none rounded-xl border border-slate-200 bg-slate-50 py-2 pl-3 pr-8 text-xs font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-2xs"
+                title="Select Case Investigation from Vault"
+              >
+                {casesList.map((c) => (
+                  <option key={c.case_id} value={c.case_id}>
+                    {c.fir_number} · {c.destination_vasp || "In-Transit"} (${Number(c.total_routed_usd || 0).toLocaleString()} USDT)
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
             </div>
+          )}
 
+          {/* Quick Search */}
+          <form onSubmit={handleSearchSubmit} className="relative">
+            <input
+              type="text"
+              placeholder="Search wallet in graph..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-48 sm:w-60 rounded-xl border border-slate-200 bg-slate-50 py-2 pl-8 pr-3 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            />
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          </form>
+
+          {/* Layout Toggle */}
+          <button
+            type="button"
+            onClick={() => setLayoutName(layoutName === "dagre" ? "circle" : "dagre")}
+            title="Toggle Layout (Hierarchical vs Circular)"
+            className="rounded-xl border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-50 transition"
+          >
+            <Layers size={16} />
+          </button>
+        </div>
+      </div>
+
+      {/* Main Canvas Area + Side Inspector */}
+      <div className="relative flex flex-1 overflow-hidden">
+        {/* Cytoscape Canvas */}
+        <div className="relative flex-1 bg-white">
+          <div ref={containerRef} className="h-full w-full" />
+
+          {/* Canvas Floating Controls */}
+          <div className="absolute bottom-5 left-5 flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white/95 p-1.5 shadow-md backdrop-blur-xs">
             <button
-              onClick={() => setShowFilters((current) => !current)}
-              className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
-                showFilters || riskFilter !== "All" || typeFilter !== "All"
-                  ? "border-blue-300 bg-blue-50 text-blue-700"
-                  : "border-slate-200 text-slate-600"
-              }`}
+              onClick={handleZoomIn}
+              title="Zoom In"
+              className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 transition"
             >
-              <Filter size={15} />
-              Filters
+              <ZoomIn size={16} />
             </button>
+            <button
+              onClick={handleZoomOut}
+              title="Zoom Out"
+              className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 transition"
+            >
+              <ZoomOut size={16} />
+            </button>
+            <button
+              onClick={handleFit}
+              title="Fit to Screen"
+              className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 transition"
+            >
+              <Maximize2 size={16} />
+            </button>
+          </div>
+
+          {/* Color Legend Badge */}
+          <div className="absolute top-4 left-4 hidden sm:flex items-center gap-2 rounded-xl border border-slate-200 bg-white/90 px-3 py-2 text-[11px] font-semibold text-slate-600 shadow-sm backdrop-blur-xs">
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-rose-500" /> Suspect Seed
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-500" /> Mule Hop
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-sky-500" /> VASP Deposit
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Hot Wallet
+            </span>
           </div>
         </div>
 
-        {showFilters && (
-          <div className="flex flex-wrap items-end gap-4 border-b border-slate-100 bg-slate-50 p-4">
-            <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
-              Risk Level
-              <select
-                value={riskFilter}
-                onChange={(e) => setRiskFilter(e.target.value)}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-normal outline-none"
-              >
-                <option value="All">All Risks</option>
-                <option value="High">High</option>
-                <option value="Medium">Medium</option>
-                <option value="Low">Low</option>
-              </select>
-            </label>
-
-            <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">
-              Wallet Type
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-normal outline-none"
-              >
-                <option value="All">All Types</option>
-                <option value="source">Source Wallet</option>
-                <option value="normal">Normal Wallet</option>
-                <option value="exchange">Exchange</option>
-              </select>
-            </label>
-
-            <button
-              onClick={resetFilters}
-              className="rounded-lg px-3 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50"
-            >
-              Reset Filters
-            </button>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px]">
-          <div
-            ref={graphRef}
-            className="min-w-0 border-b border-slate-100 bg-white xl:border-b-0 xl:border-r"
-          >
-            <div className="flex flex-wrap items-center gap-4 border-b border-slate-100 bg-white px-4 py-3 text-xs text-slate-500">
-              <span className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-blue-600" />
-                Source Wallet
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-slate-500" />
-                Wallet
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-green-600" />
-                Exchange
-              </span>
-              <span className="ml-auto text-xs font-medium text-slate-400">
-                Zoom: {Math.round(zoom * 100)}%
-              </span>
-            </div>
-
-            <div className="relative min-h-[420px] overflow-auto bg-slate-50/70 p-3">
-              {visibleNodes.length > 0 ? (
-                <svg
-                  viewBox="0 0 870 440"
-                  className="h-[420px] min-w-[700px] w-full"
-                  style={{
-                    transform: `scale(${zoom})`,
-                    transformOrigin: "center center",
-                    transition: "transform 180ms ease",
-                  }}
-                >
-                  {edges
-                    .filter(
-                      (edge) =>
-                        visibleNodeIds.has(edge.from) &&
-                        visibleNodeIds.has(edge.to)
-                    )
-                    .map((edge) => (
-                      <g key={`${edge.from}-${edge.to}`}>
-                        <line
-                          x1={edge.x1}
-                          y1={edge.y1}
-                          x2={edge.x2}
-                          y2={edge.y2}
-                          stroke="#CBD5E1"
-                          strokeWidth="2.5"
-                        />
-                        <rect
-                          x={(edge.x1 + edge.x2) / 2 - 30}
-                          y={(edge.y1 + edge.y2) / 2 - 12}
-                          width="60"
-                          height="23"
-                          rx="7"
-                          fill="white"
-                          stroke="#E2E8F0"
-                        />
-                        <text
-                          x={(edge.x1 + edge.x2) / 2}
-                          y={(edge.y1 + edge.y2) / 2 + 4}
-                          textAnchor="middle"
-                          fontSize="10"
-                          fill="#475569"
-                          fontWeight="600"
-                        >
-                          {edge.label}
-                        </text>
-                      </g>
-                    ))}
-
-                  {visibleNodes.map((node) => (
-                    <g
-                      key={node.id}
-                      onClick={() => setSelectedNode(node.id)}
-                      className="cursor-pointer"
-                    >
-                      <circle
-                        cx={node.x}
-                        cy={node.y}
-                        r={selectedNode === node.id ? 27 : 23}
-                        fill={nodeColor(node.type)}
-                        stroke={selectedNode === node.id ? "#BFDBFE" : "white"}
-                        strokeWidth={selectedNode === node.id ? 7 : 4}
-                      />
-                      <text
-                        x={node.x}
-                        y={node.y + 4}
-                        textAnchor="middle"
-                        fontSize="12"
-                        fill="white"
-                        fontWeight="700"
-                      >
-                        {node.id}
-                      </text>
-                      <text
-                        x={node.x}
-                        y={node.y + 48}
-                        textAnchor="middle"
-                        fontSize="12"
-                        fill="#334155"
-                        fontWeight="600"
-                      >
-                        {node.label}
-                      </text>
-                      <text
-                        x={node.x}
-                        y={node.y + 64}
-                        textAnchor="middle"
-                        fontSize="10"
-                        fill="#94A3B8"
-                      >
-                        {node.address}
-                      </text>
-                    </g>
-                  ))}
-                </svg>
-              ) : (
-                <div className="flex min-h-[390px] items-center justify-center text-center">
-                  <div>
-                    <Search className="mx-auto mb-3 text-slate-300" size={32} />
-                    <p className="font-semibold text-slate-700">
-                      No wallets found
-                    </p>
-                    <p className="mt-1 text-sm text-slate-400">
-                      Try changing your search or filters.
-                    </p>
-                    <button
-                      onClick={resetFilters}
-                      className="mt-3 text-sm font-semibold text-blue-600"
-                    >
-                      Clear all filters
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <div className="absolute bottom-5 right-5 flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                <button
-                  onClick={() => changeZoom(0.2)}
-                  disabled={zoom >= 1.8}
-                  title="Zoom in"
-                  aria-label="Zoom in"
-                  className="p-2.5 text-slate-600 hover:bg-slate-50 disabled:opacity-30"
-                >
-                  <ZoomIn size={17} />
-                </button>
-                <div className="h-px bg-slate-100" />
-                <button
-                  onClick={() => changeZoom(-0.2)}
-                  disabled={zoom <= 0.6}
-                  title="Zoom out"
-                  aria-label="Zoom out"
-                  className="p-2.5 text-slate-600 hover:bg-slate-50 disabled:opacity-30"
-                >
-                  <ZoomOut size={17} />
-                </button>
-                <div className="h-px bg-slate-100" />
-                <button
-                  onClick={toggleFullscreen}
-                  title="Toggle fullscreen"
-                  aria-label="Toggle fullscreen"
-                  className="p-2.5 text-slate-600 hover:bg-slate-50"
-                >
-                  <Maximize2 size={17} />
-                </button>
+        {/* Node & Edge Inspector Side Drawer */}
+        <div className="w-80 sm:w-96 border-l border-slate-200 bg-white p-5 overflow-y-auto space-y-5 shadow-xs">
+          {selectedNode ? (
+            <div className="space-y-5">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <span className={`rounded-full px-2.5 py-1 text-xs font-bold border ${activeNodeColor?.badge}`}>
+                  {activeNodeColor?.text || selectedNode.node_type}
+                </span>
+                <span className="text-xs font-mono text-slate-400">
+                  Risk Tier: {selectedNode.risk_tier}
+                </span>
               </div>
-            </div>
-          </div>
 
-          <div className="p-5">
-            <div className="flex items-center gap-2">
-              <Wallet size={18} className="text-blue-600" />
-              <h3 className="font-bold text-slate-900">Node Details</h3>
-            </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Node Identifier</p>
+                <h3 className="mt-1 text-base font-bold text-slate-900 break-words">
+                  {selectedNode.vasp_name || selectedNode.label?.replace("\n", " ") || "Blockchain Node"}
+                </h3>
+              </div>
 
-            {selected ? (
-              <div className="mt-5 space-y-4">
-                <div className="rounded-xl bg-slate-50 p-4">
-                  <p className="text-xs text-slate-500">Selected Wallet</p>
-                  <h4 className="mt-1 font-bold text-slate-900">
-                    {selected.label}
-                  </h4>
-                  <p className="mt-1 break-all text-xs text-slate-500">
-                    {selected.address}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs text-slate-500">Wallet ID</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-800">
-                    {selected.id}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs text-slate-500">Transaction Amount</p>
-                  <p className="mt-1 text-xl font-bold text-slate-900">
-                    {selected.amount}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-xs text-slate-500">Risk Classification</p>
-                  <span
-                    className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                      selected.risk === "High"
-                        ? "bg-red-50 text-red-600"
-                        : selected.risk === "Medium"
-                        ? "bg-amber-50 text-amber-700"
-                        : "bg-green-50 text-green-700"
-                    }`}
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-1.5">
+                <span className="text-[11px] font-semibold text-slate-500">Wallet Public Address:</span>
+                <div className="flex items-center justify-between gap-2 font-mono text-xs text-slate-800 break-all">
+                  <span>{selectedNode.address || selectedNode.id}</span>
+                  <button
+                    onClick={() => handleCopy(selectedNode.address || selectedNode.id, "nodeAddr")}
+                    className="shrink-0 p-1 text-slate-500 hover:text-blue-600 transition"
+                    title="Copy Address"
                   >
-                    {selected.risk} Risk
+                    {copiedKey === "nodeAddr" ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+                  <span className="text-slate-400 block font-semibold">Ledger Balance:</span>
+                  <span className="mt-1 font-bold text-slate-900 block text-sm">
+                    ${Number(selectedNode.balance_usd || 0).toLocaleString()} USDT
                   </span>
                 </div>
-
-                <div className="rounded-xl border border-blue-100 bg-blue-50 p-3">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-blue-800">
-                    <ShieldCheck size={16} />
-                    Investigation Note
-                  </div>
-                  <p className="mt-2 text-xs leading-5 text-blue-700">
-                    This is simulated wallet information for UI demonstration.
-                    No live blockchain verification has been performed.
-                  </p>
+                <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+                  <span className="text-slate-400 block font-semibold">ML Risk Score:</span>
+                  <span className="mt-1 font-bold text-rose-600 block text-sm">
+                    {Math.round((selectedNode.risk_score || 0.5) * 100)}%
+                  </span>
                 </div>
               </div>
-            ) : (
-              <p className="mt-5 text-sm text-slate-500">
-                Select a visible wallet to view details.
-              </p>
-            )}
-          </div>
-        </div>
 
-        <div className="flex flex-col gap-2 border-t border-slate-100 bg-slate-50 px-5 py-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-          <span>
-            Showing {visibleNodes.length} of {nodes.length} demo wallets
-          </span>
-          <span className="font-medium text-amber-600">
-            Demo visualization · Not live blockchain data
-          </span>
+              {selectedNode.explanation && (
+                <div className="rounded-xl border border-slate-200 bg-white p-3 text-xs">
+                  <span className="font-semibold text-slate-500 block mb-1">Forensic Heuristic Note:</span>
+                  <p className="text-slate-700 leading-relaxed">{selectedNode.explanation}</p>
+                </div>
+              )}
+
+              {selectedNode.typology && (
+                <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3 text-xs space-y-1">
+                  <span className="font-bold text-indigo-900 block">
+                    {selectedNode.typology.typology_name || "Laundering Pattern"}
+                  </span>
+                  <p className="text-indigo-800 text-[11px] leading-relaxed">
+                    {selectedNode.typology.description}
+                  </p>
+                  <span className="font-semibold text-rose-600 block text-[11px] pt-1">
+                    Offence: {selectedNode.typology.statutory_violation || "Sec 318(4) BNS, 2023"}
+                  </span>
+                </div>
+              )}
+
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => handleInvestigateNode(selectedNode.address || selectedNode.id)}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition"
+                >
+                  <Search size={14} /> Trace From This Wallet
+                </button>
+              </div>
+            </div>
+          ) : selectedEdge ? (
+            <div className="space-y-5">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 border border-blue-200">
+                  Transaction Edge
+                </span>
+                <span className="text-xs font-mono text-emerald-600 font-bold">
+                  {selectedEdge.amount}
+                </span>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-[11px] font-semibold text-slate-400">Transfer Value</span>
+                <p className="text-xl font-bold text-slate-900">
+                  ${Number(selectedEdge.usd_value || 0).toLocaleString()} USDT
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-1.5">
+                <span className="text-[11px] font-semibold text-slate-500">Transaction Hash (TxHash):</span>
+                <div className="flex items-center justify-between gap-2 font-mono text-xs text-slate-800 break-all">
+                  <span>{selectedEdge.tx_hash || "Synthetic Transaction"}</span>
+                  <button
+                    onClick={() => handleCopy(selectedEdge.tx_hash, "edgeTx")}
+                    className="shrink-0 p-1 text-slate-500 hover:text-blue-600 transition"
+                    title="Copy TxHash"
+                  >
+                    {copiedKey === "edgeTx" ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2 text-xs">
+                <div>
+                  <span className="text-slate-400">Source Node:</span>
+                  <p className="font-mono text-slate-700 truncate">{selectedEdge.source}</p>
+                </div>
+                <div>
+                  <span className="text-slate-400">Target Node:</span>
+                  <p className="font-mono text-slate-700 truncate">{selectedEdge.target}</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="py-12 text-center text-slate-400 space-y-2">
+              <Network size={32} className="mx-auto text-slate-300" />
+              <p className="text-xs font-semibold text-slate-600">Select any node or transaction edge</p>
+              <p className="text-[11px] text-slate-400 max-w-xs mx-auto">
+                Click any wallet circle or connecting transfer arrow to inspect real balances, risk scoring, and evidence particulars.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

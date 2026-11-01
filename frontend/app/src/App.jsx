@@ -53,7 +53,13 @@ export default function App() {
         );
 
       case "Transaction Graph":
-        return <TransactionGraph />;
+        return (
+          <TransactionGraph
+            caseId={navParams.caseId || null}
+            traceData={navParams.traceData || null}
+            onNavigate={navigateTo}
+          />
+        );
 
       case "Wallet Details":
         return <WalletDetails />;

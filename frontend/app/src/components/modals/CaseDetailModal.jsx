@@ -95,7 +95,7 @@ export default function CaseDetailModal({
 
   const handleViewInGraph = () => {
     onClose?.();
-    onNavigate?.("Transaction Graph");
+    onNavigate?.("Transaction Graph", { caseId: data.case_id, traceData: data.trace_data });
   };
 
   return (
