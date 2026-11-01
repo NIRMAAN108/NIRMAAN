@@ -12,7 +12,7 @@ export default function App() {
   const [activePage, setActivePage] = useState("Dashboard");
   const [pageHistory, setPageHistory] = useState([]);
   const [navParams, setNavParams] = useState({});
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const navigateTo = (page, params = {}) => {
     if (page === activePage) {
@@ -24,7 +24,6 @@ export default function App() {
     setPageHistory((prev) => [...prev, { page: activePage, params: navParams }]);
     setActivePage(page);
     setNavParams(params);
-    setSidebarOpen(false);
   };
 
   const goBack = () => {
@@ -96,32 +95,21 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#F8FAFC]">
-      {/* Desktop Persistent Sidebar */}
-      <aside className="hidden h-screen w-[280px] shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white md:flex">
+      {/* Permanent In-Layout Sidebar (Always on screen; Collapsible to Icon Rail) */}
+      <aside
+        className={`h-screen shrink-0 border-r border-slate-200 bg-white transition-all duration-300 ease-in-out flex flex-col overflow-hidden ${
+          sidebarCollapsed ? "w-[72px]" : "w-[260px]"
+        }`}
+      >
         <Sidebar
           activePage={activePage}
           onNavigate={navigateTo}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
         />
       </aside>
 
-      {/* Mobile / Scaled Screen Slide-over Drawer */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-50 flex md:hidden" role="dialog" aria-modal="true">
-          <div
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity"
-            onClick={() => setSidebarOpen(false)}
-          />
-          <div className="relative flex w-[280px] max-w-xs flex-1 flex-col bg-white shadow-2xl">
-            <Sidebar
-              activePage={activePage}
-              onNavigate={navigateTo}
-              onClose={() => setSidebarOpen(false)}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Main Content Area */}
+      {/* Main Content Area (Permanently visible alongside sidebar, never obscured by backdrops) */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <div className="shrink-0">
           <Header
@@ -129,7 +117,8 @@ export default function App() {
             onNavigate={navigateTo}
             onGoBack={goBack}
             canGoBack={pageHistory.length > 0 || activePage !== "Dashboard"}
-            onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+            onToggleSidebar={() => setSidebarCollapsed((prev) => !prev)}
+            sidebarCollapsed={sidebarCollapsed}
           />
         </div>
 

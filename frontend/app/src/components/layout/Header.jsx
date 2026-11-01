@@ -10,7 +10,8 @@ export default function Header({
   onNavigate,
   onGoBack,
   canGoBack = false,
-  onToggleSidebar
+  onToggleSidebar,
+  sidebarCollapsed = false
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAppsMenu, setShowAppsMenu] = useState(false);
@@ -119,11 +120,12 @@ export default function Header({
     <header className="h-[76px] bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 lg:px-8 sticky top-0 z-30 shadow-xs">
       {/* Left: Navigation Controls & Breadcrumbs */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0 mr-4">
-        {/* Toggle Sidebar Button (Always accessible) */}
+        {/* Toggle Sidebar Button (Collapse / Expand) */}
         <button
           type="button"
           onClick={onToggleSidebar}
-          title="Toggle Navigation Sidebar"
+          title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          aria-label={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           className="p-2 rounded-xl text-slate-600 hover:text-blue-600 hover:bg-slate-100 transition active:scale-95"
         >
           <Menu size={20} />
