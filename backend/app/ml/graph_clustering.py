@@ -20,7 +20,7 @@ def _safe_amount(tx: Dict[str, Any]) -> Optional[float]:
         value = float(raw)
     except (TypeError, ValueError, OverflowError):
         return None
-    if not math.isfinite(value) or value <= 0 or not value.is_integer():
+    if not math.isfinite(value) or value <= 0:
         return None
     return value
 
@@ -152,7 +152,7 @@ def calculate_dispersion_entropy(outgoing_transfers: List[Dict[str, Any]]) -> fl
 
     probabilities = [value / total for value in values]
     entropy = -sum(p * math.log2(p) for p in probabilities if p > 0)
-    return round(entropy, 3)
+    return max(0.0, round(entropy, 3))
 
 
 def compute_transfer_velocity(

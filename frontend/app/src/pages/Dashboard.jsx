@@ -94,7 +94,7 @@ export default function Dashboard({ onNavigate }) {
       <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {statsConfig.map(({ title, fallback, icon: Icon, color, key }) => {
           let val = fallback;
-          if (key === "totalCases" && liveCases.length > 0) val = liveCases.length.toString();
+          if (key === "totalCases" && Array.isArray(liveCases)) val = liveCases.length.toString();
           if (key === "vaspCount" && systemInfo?.tracked_vasps_count) val = systemInfo.tracked_vasps_count.toString();
 
           return (

@@ -72,8 +72,9 @@ def generate_fiu_ind_str(case_data: Dict[str, Any]) -> Dict[str, Any]:
             f"were fraudulently acquired from complainant {case_data.get('complainant_name', 'Complainant')} "
             f"and transferred from seed address {case_data.get('seed_address')}. Funds were actively layered "
             f"across {len(nodes)} addresses before undergoing automated deposit sweep consolidation into custodial "
-            f"wallets operated by {target_vasp.get('name', 'the exchange')}. Immediate freezing under Section 5 PMLA "
-            f"and Section 106/107 BNSS, 2023 is requested."
+            f"wallets operated by {target_vasp.get('name', 'the exchange')}. Immediate freezing and preservation "
+            f"under Sections 106/107 BNSS, 2023 and Section 66D IT Act is requested, with AML/CFT referral transmitted "
+            f"under PMLA guidelines to FIU-IND for statutory intelligence dissemination."
         )
     }
     return str_payload

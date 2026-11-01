@@ -40,7 +40,9 @@ export async function traceWallet({
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.detail || `Trace request failed with status ${res.status}`);
+    const message = errorData.error?.message || errorData.detail || `Trace request failed with status ${res.status}`;
+    const details = errorData.error?.details ? ` (${typeof errorData.error.details === 'object' ? JSON.stringify(errorData.error.details) : errorData.error.details})` : '';
+    throw new Error(`${message}${details}`);
   }
 
   return res.json();
@@ -50,13 +52,21 @@ export async function parseNcrpText(complaintText) {
   const res = await fetch(`${API_BASE}/api/ncrp/parse`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ complaint_text: complaintText })
+    body: JSON.stringify({ text: complaintText })
   });
 
   if (!res.ok) {
-    throw new Error(`NCRP parsing failed with status ${res.status}`);
+    const errorData = await res.json().catch(() => ({}));
+    const message = errorData.error?.message || errorData.detail || `NCRP parsing failed with status ${res.status}`;
+    throw new Error(message);
   }
 
+  return res.json();
+}
+
+export async function fetchVasps() {
+  const res = await fetch(`${API_BASE}/api/vasps`);
+  if (!res.ok) throw new Error(`Failed to fetch VASPs: ${res.status}`);
   return res.json();
 }
 

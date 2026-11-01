@@ -2,13 +2,6 @@
 Unified Multi-Chain Crawler Router
 Auto-detects blockchain address format and routes requests across TRON, EVM, and Bitcoin.
 """
-import re
-from typing import List, Dict, Any, Optional
-
-from app.crawlers.tron import TronCrawler
-from app.crawlers.evm import EVMCrawler
-from app.crawlers.btc import BitcoinCrawler
-
 import hashlib
 import re
 from typing import List, Dict, Any, Optional
@@ -84,10 +77,10 @@ def _verify_bech32(bech: str) -> bool:
 def is_valid_evm_address(address: str) -> bool:
     """
     Validates EVM address:
-    Must start with 0x followed by exactly 40 hexadecimal characters (total 42 characters).
+    Must start with 0x or 0X followed by exactly 40 hexadecimal characters (total 42 characters).
     """
     addr = address.strip()
-    return bool(re.match(r"^0x[0-9a-fA-F]{40}$", addr))
+    return bool(re.match(r"^0[xX][0-9a-fA-F]{40}$", addr))
 
 
 def is_valid_tron_address(address: str, verify_checksum: bool = False) -> bool:

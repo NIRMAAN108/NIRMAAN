@@ -75,24 +75,25 @@ class TronCrawler:
             if item.get("from") == address:
                 try:
                     raw_val = float(item.get("value", 0))
-                    token_info = item.get("token_info", {})
-                    decimals = int(token_info.get("decimals", 6))
-                    amount = raw_val / (10 ** decimals)
-                    symbol = token_info.get("symbol", "USDT")
+                    token_info = item.get("token_info") or {}
+                    decimals = int(token_info.get("decimals", 6)) if isinstance(token_info, dict) else 6
+                    amount = raw_val / (10 ** decimals) if decimals > 0 else raw_val
+                    symbol = token_info.get("symbol", "USDT") if isinstance(token_info, dict) else "USDT"
                     tx_id = item.get("transaction_id", "")
                     ts = int(item.get("block_timestamp", 0)) // 1000
+                    recipient = (item.get("to") or "").strip()
 
-                    if amount > 0 and tx_id:
+                    if amount > 0 and tx_id and recipient:
                         transfers.append({
                             "from": address,
-                            "to": item.get("to", ""),
+                            "to": recipient,
                             "amount": round(amount, 6),
                             "tx_hash": tx_id,
                             "timestamp": ts if ts > 0 else 0,
                             "token": symbol,
                             "chain": "tron"
                         })
-                except (ValueError, TypeError, ZeroDivisionError) as err:
+                except (ValueError, TypeError, ZeroDivisionError, AttributeError) as err:
                     logger.debug(f"Skipping malformed TRON transaction record: {err}")
                     continue
 
@@ -112,17 +113,18 @@ class TronCrawler:
             if item.get("from_address") == address:
                 try:
                     raw_val = float(item.get("quant", 0))
-                    token_info = item.get("tokenInfo", {})
-                    decimals = int(token_info.get("tokenDecimal", 6))
+                    token_info = item.get("tokenInfo") or {}
+                    decimals = int(token_info.get("tokenDecimal", 6)) if isinstance(token_info, dict) else 6
                     amount = raw_val / (10 ** decimals) if decimals > 0 else raw_val
-                    symbol = token_info.get("tokenAbbr", "USDT")
+                    symbol = token_info.get("tokenAbbr", "USDT") if isinstance(token_info, dict) else "USDT"
                     tx_id = item.get("transaction_id", "")
                     ts = int(item.get("block_ts", 0)) // 1000
+                    recipient = (item.get("to_address") or "").strip()
 
-                    if amount > 0 and tx_id:
+                    if amount > 0 and tx_id and recipient:
                         transfers.append({
                             "from": address,
-                            "to": item.get("to_address", ""),
+                            "to": recipient,
                             "amount": round(amount, 6),
                             "tx_hash": tx_id,
                             "timestamp": ts if ts > 0 else 0,
@@ -169,7 +171,7 @@ class TronCrawler:
     async def fetch_energy_delegator(self, address: str) -> Optional[str]:
         """Inspects TRON Stake 2.0 Energy Delegations to find exchange parent."""
         url = "https://api.trongrid.io/wallet/getdelegatedresource"
-        payload = {"fromAddress": "", "toAddress": address}
+        payload = {"fromAddress": "", "toAddress": address, "visible": True}
         data = await self.resilient_client.post_json(url, payload, timeout=4.0)
         if data and isinstance(data, dict):
             delegated_list = data.get("delegatedResource", [])

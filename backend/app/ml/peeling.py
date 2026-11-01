@@ -10,6 +10,8 @@ import math
 def _get_valid_amount(tx: Dict[str, Any]) -> Optional[float]:
     """Return a finite positive amount, or None when the value is invalid."""
     raw = tx.get("usd_value")
+    if raw is None:
+        raw = tx.get("amount")
 
     if isinstance(raw, bool) or raw is None:
         return None

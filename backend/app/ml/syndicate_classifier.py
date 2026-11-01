@@ -49,7 +49,7 @@ def classify_syndicate_typology(
     if is_mixer:
         typ = "MIXER_OBSCURATION"
         confidence = 0.96
-    elif is_peeling and ("TRON" in chain.upper() or "TRC" in chain.upper()):
+    elif is_peeling and ("TRON" in (chain or "").upper() or "TRC" in (chain or "").upper()):
         typ = "TELEGRAM_TASK_FRAUD"
         confidence = 0.94
     elif is_structuring:

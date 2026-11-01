@@ -470,3 +470,53 @@ async def test_tracer_feature_vector_graph_dimensions_and_tx_hash_guard(monkeypa
     # All corrupt transfers must be rejected, producing 0 edges
     assert len(corrupt_res.edges) == 0
 
+
+def test_audit_remediation_regressions():
+    """
+    Verify regression fixes from ruthless independent audit:
+    1. _safe_amount in graph_clustering accepts fractional/decimal crypto amounts.
+    2. multi_chain_crawler accepts uppercase '0X' prefix in EVM addresses.
+    3. ncrp_parser detects USDT tokens and applies proper INR valuation.
+    4. evidence_bundle ZIP includes 00_CANONICAL_EVIDENCE_SPEC.
+    """
+    from app.ml.graph_clustering import _safe_amount, calculate_dispersion_entropy
+    from app.crawlers.multi_chain_crawler import is_valid_evm_address
+    from app.core.ncrp_parser import parse_ncrp_complaint
+    from app.core.evidence_bundle import generate_evidence_bundle_zip
+
+    # 1. Decimal crypto amounts in graph clustering
+    assert _safe_amount({"amount": 10.50}) == 10.50
+    assert _safe_amount({"usd_value": 0.025}) == 0.025
+    assert _safe_amount({"amount": 100}) == 100.0
+    # Shannon entropy non-negative
+    entropy = calculate_dispersion_entropy([{"usd_value": 500.0}])
+    assert entropy >= 0.0
+    assert str(entropy) != "-0.0"
+
+    # 2. Uppercase 0X EVM prefix
+    assert is_valid_evm_address("0X95222290DD7853684454F4275E597E3A63725F78") is True
+    assert is_valid_evm_address("0x95222290DD7853684454F4275E597E3A63725F78") is True
+
+    # 3. NCRP USDT valuation
+    complaint = parse_ncrp_complaint("Complainant was defrauded of 15000 USDT transferred to TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC")
+    assert complaint.primary_seed_address == "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC"
+    assert complaint.estimated_loss_inr == 1350000.0  # 15000 * 90
+
+    # 4. Canonical evidence spec in ZIP bundle
+    mock_case = {
+        "fir_number": "FIR-REG/2026",
+        "police_station": "Cyber PS",
+        "investigating_officer": "IO Test",
+        "seed_address": "0x95222290DD7853684454F4275E597E3A63725F78",
+        "chain": "ethereum",
+        "loss_amount_inr": 100000.0,
+        "total_routed_usd": 1000.0,
+        "evidence_sha256": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+        "trace_data": {"nodes": [], "edges": []}
+    }
+    bundle = generate_evidence_bundle_zip(mock_case)
+    with zipfile.ZipFile(io.BytesIO(bundle), "r") as zf:
+        namelist = zf.namelist()
+        assert any("00_CANONICAL_EVIDENCE_SPEC" in n for n in namelist)
+
+

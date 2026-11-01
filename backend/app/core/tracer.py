@@ -106,6 +106,7 @@ class ForensicTracer:
             )
         }
         edges_list: List[GraphEdge] = []
+        seen_edges = set()
         found_target_vasp: Optional[TargetVASP] = None
 
         while queue:
@@ -152,11 +153,11 @@ class ForensicTracer:
                 
                 # Multi-Asset USD conversion with spot heuristics (ERR-07)
                 token_upper = token.upper()
-                if token_upper == "BTC":
+                if token_upper in ("BTC", "WBTC"):
                     usd_rate = 65000.0
-                elif token_upper == "ETH":
+                elif token_upper in ("ETH", "WETH"):
                     usd_rate = 2600.0
-                elif token_upper == "BNB":
+                elif token_upper in ("BNB", "WBNB"):
                     usd_rate = 580.0
                 elif token_upper == "TRX":
                     usd_rate = 0.16
@@ -209,17 +210,25 @@ class ForensicTracer:
                         vasp_name=recipient_vasp,
                         balance_usd=usd_value
                     )
+                else:
+                    if is_known_hot and nodes_map[recipient].node_type != "VASP_HOT":
+                        nodes_map[recipient].node_type = "VASP_HOT"
+                        nodes_map[recipient].label = recipient_label
+                        nodes_map[recipient].vasp_name = recipient_vasp
 
-                edge_obj = GraphEdge(
-                    source=curr_addr,
-                    target=recipient,
-                    tx_hash=tx["tx_hash"],
-                    amount=raw_amount,
-                    token=token,
-                    usd_value=usd_value,
-                    timestamp=tx["timestamp"]
-                )
-                edges_list.append(edge_obj)
+                edge_key = (curr_addr, recipient, tx["tx_hash"])
+                if edge_key not in seen_edges:
+                    seen_edges.add(edge_key)
+                    edge_obj = GraphEdge(
+                        source=curr_addr,
+                        target=recipient,
+                        tx_hash=tx["tx_hash"],
+                        amount=raw_amount,
+                        token=token,
+                        usd_value=usd_value,
+                        timestamp=tx["timestamp"]
+                    )
+                    edges_list.append(edge_obj)
 
                 if not is_known_hot:
                     queue.append((recipient, depth + 1, "MULE"))
@@ -269,9 +278,6 @@ class ForensicTracer:
         for node_id, node in nodes_map.items():
             centrality = calculate_graph_centrality(G, node.address)
             if node.feature_vector and len(node.feature_vector) >= 8:
-                # Dim 3: graph PageRank centrality scaled to [0.0, 1.0]
-                node.feature_vector[3] = min(1.0, centrality.get("pagerank", 0.0) * 10.0)
-
                 # Dim 6: mixer proximity computed from real shortest path to identified mixer
                 if node.is_mixer or node.node_type == "MIXER":
                     node.feature_vector[6] = 1.0

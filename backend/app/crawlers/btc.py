@@ -73,21 +73,22 @@ class BitcoinCrawler:
                 continue
 
             inputs = tx.get("vin", [])
+            target_addr_lower = address.lower()
             # Calculate total input satoshis and the target address's contribution
             my_input_satoshis = sum(
-                vin.get("prevout", {}).get("value", 0)
+                (vin.get("prevout") or {}).get("value", 0)
                 for vin in inputs
-                if vin.get("prevout", {}).get("scriptpubkey_address") == address
+                if isinstance(vin, dict) and ((vin.get("prevout") or {}).get("scriptpubkey_address") or "").lower() == target_addr_lower
             )
             total_input_satoshis = sum(
-                vin.get("prevout", {}).get("value", 0)
+                (vin.get("prevout") or {}).get("value", 0)
                 for vin in inputs
-                if vin.get("prevout")
+                if isinstance(vin, dict) and vin.get("prevout")
             )
 
             is_sender = any(
-                vin.get("prevout", {}).get("scriptpubkey_address") == address
-                for vin in inputs if vin.get("prevout")
+                ((vin.get("prevout") or {}).get("scriptpubkey_address") or "").lower() == target_addr_lower
+                for vin in inputs if isinstance(vin, dict) and vin.get("prevout")
             )
 
             # Target address participated as an input funder
@@ -101,7 +102,7 @@ class BitcoinCrawler:
                 for vout in tx.get("vout", []):
                     recipient = vout.get("scriptpubkey_address")
                     # Omit change returns to the same address
-                    if recipient and recipient != address:
+                    if recipient and recipient.lower() != target_addr_lower:
                         try:
                             satoshis = vout.get("value", 0)
                             # Attribute proportional share to avoid multi-input double-counting (ERR-09)

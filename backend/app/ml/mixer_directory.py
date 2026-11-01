@@ -42,6 +42,7 @@ def _normalize_chain(chain: Any) -> Optional[str]:
         "ethereum (erc-20)": "ethereum", "bep20": "bsc", "bep-20": "bsc",
         "bsc (bep-20)": "bsc", "binance": "bsc",
         "binance smart chain": "bsc", "bnb chain": "bsc",
+        "binance smart chain (bep-20)": "bsc",
         "arb": "arbitrum", "arbitrum one": "arbitrum",
         "trx": "tron", "tron trc20": "tron", "tron (trc-20)": "tron",
         "btc": "bitcoin", "bitcoin mainnet": "bitcoin",
@@ -71,7 +72,8 @@ def identify_mixer_entity(address: str, chain: Optional[str] = None) -> Optional
         if not _chain_matches(chain, supported_chains):
             continue
         is_evm_entry = any(_normalize_chain(item) in EVM_CHAINS for item in supported_chains if isinstance(item, str))
-        matched = candidate.lower() == registered_address.lower() if is_evm_entry else candidate == registered_address
+        is_case_insensitive = is_evm_entry or registered_address.lower().startswith("bc1")
+        matched = candidate.lower() == registered_address.lower() if is_case_insensitive else candidate == registered_address
         if matched:
             return dict(metadata)
     return None

@@ -74,16 +74,19 @@ class EVMCrawler:
         for item in items:
             if not isinstance(item, dict):
                 continue
-            sender_hash = item.get("from", {}).get("hash", "").lower()
+            from_obj = item.get("from") or {}
+            sender_hash = from_obj.get("hash", "").lower() if isinstance(from_obj, dict) else ""
             if sender_hash == address_lower:
                 try:
-                    token_info = item.get("token", {})
-                    raw_val = float(item.get("total", {}).get("value", 0))
-                    decimals = int(token_info.get("decimals", 6))
-                    amount = raw_val / (10 ** decimals)
-                    symbol = token_info.get("symbol", "USDT")
+                    token_info = item.get("token") or {}
+                    total_info = item.get("total") or {}
+                    raw_val = float(total_info.get("value", 0)) if isinstance(total_info, dict) else 0.0
+                    decimals = int(token_info.get("decimals", 6)) if isinstance(token_info, dict) else 6
+                    amount = raw_val / (10 ** decimals) if decimals > 0 else raw_val
+                    symbol = token_info.get("symbol", "USDT") if isinstance(token_info, dict) else "USDT"
                     tx_hash = item.get("transaction_hash", "")
-                    recipient = item.get("to", {}).get("hash", "")
+                    to_obj = item.get("to") or {}
+                    recipient = to_obj.get("hash", "") if isinstance(to_obj, dict) else ""
 
                     if amount > 0 and tx_hash and recipient:
                         # Parse actual ISO timestamp from Blockscout if present (ERR-08)
@@ -203,11 +206,15 @@ class EVMCrawler:
                     txs = r.json().get("items", [])
                     address_lower = address.lower()
                     for tx in txs:
-                        to_addr = tx.get("to", {}).get("hash", "").lower()
+                        if not isinstance(tx, dict):
+                            continue
+                        to_obj = tx.get("to") or {}
+                        to_addr = to_obj.get("hash", "").lower() if isinstance(to_obj, dict) else ""
                         if to_addr == address_lower:
                             val = float(tx.get("value", 0))
                             if 0.0005 <= (val / 1e18) <= 0.10:
-                                return tx.get("from", {}).get("hash")
+                                from_obj = tx.get("from") or {}
+                                return from_obj.get("hash") if isinstance(from_obj, dict) else None
         except Exception as e:
             logger.debug(f"Gas funder query silent skip: {e}")
         return None

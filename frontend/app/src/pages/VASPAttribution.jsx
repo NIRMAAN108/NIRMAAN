@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Building2,
   Search,
@@ -14,6 +14,7 @@ import {
   Plus,
   RotateCcw,
 } from "lucide-react";
+import { fetchVasps } from "../services/api";
 
 const initialRecords = [
   {
@@ -72,6 +73,31 @@ export default function VASPAttribution() {
   const [filter, setFilter] = useState("All");
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
+
+  useEffect(() => {
+    fetchVasps()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const formatted = data.map((v, i) => ({
+            id: `VASP-${String(i + 1).padStart(3, "0")}`,
+            name: v.name || "Exchange",
+            category: "Centralized Exchange",
+            wallet: v.hot_wallet || v.address || "Active Hot Wallet",
+            network: v.chain ? v.chain.toUpperCase() : "MULTI-CHAIN",
+            confidence: v.fiu_registered ? 98 : 88,
+            risk: v.fiu_registered ? "Low" : "High",
+            status: "Identified",
+            volume: "$100,000+",
+            evidence: `Verified ${v.fiu_registered ? "FIU-IND Registered" : "Global"} VASP Registry`
+          }));
+          setRecords(formatted);
+          if (formatted.length > 0) {
+            setSelectedId(formatted[0].id);
+          }
+        }
+      })
+      .catch((err) => console.debug("Could not fetch live VASPs:", err));
+  }, []);
 
   const selected = records.find((record) => record.id === selectedId);
 

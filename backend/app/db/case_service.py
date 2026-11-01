@@ -8,7 +8,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 
-from app.db.database import get_connection
+from app.db.database import get_db
 from app.models.schemas import CaseCreateRequest, CaseRecord
 
 def save_case(req: CaseCreateRequest) -> CaseRecord:
@@ -17,7 +17,7 @@ def save_case(req: CaseCreateRequest) -> CaseRecord:
     now_iso = datetime.now(timezone.utc).isoformat()
     trace_json = json.dumps(req.trace_data)
 
-    with get_connection() as conn:
+    with get_db() as conn:
         cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO cases (
@@ -60,7 +60,7 @@ def save_case(req: CaseCreateRequest) -> CaseRecord:
 
 def list_cases(limit: int = 50) -> List[CaseRecord]:
     """Retrieves the list of recent cases from the Case Vault."""
-    with get_connection() as conn:
+    with get_db() as conn:
         cursor = conn.cursor()
         cursor.execute("""
             SELECT case_id, fir_number, police_station, investigating_officer,
@@ -91,7 +91,7 @@ def list_cases(limit: int = 50) -> List[CaseRecord]:
 
 def get_case(case_id: str) -> Optional[Dict[str, Any]]:
     """Retrieves full case details including raw trace data."""
-    with get_connection() as conn:
+    with get_db() as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM cases WHERE case_id = ?", (case_id,))
         row = cursor.fetchone()

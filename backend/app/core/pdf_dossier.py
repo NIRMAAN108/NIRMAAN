@@ -7,6 +7,7 @@ admissible under Section 94 BNSS, 2023 and Section 63 BSA, 2023.
 import io
 import html
 import re
+import unicodedata
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 
@@ -22,9 +23,13 @@ def _clean_text(val: Any) -> str:
     if val is None:
         return ""
     text = str(val)
-    # Replace non-latin-1 characters with safe ascii approximations or '?'
-    safe_str = text.encode('latin-1', 'replace').decode('latin-1')
-    return html.escape(safe_str)
+    # Map Indian currency symbol and quotes to Latin-1 compatible forms
+    text = text.replace("₹", "Rs. ").replace("“", '"').replace("”", '"').replace("‘", "'").replace("’", "'")
+    # Normalize unicode to decomposed ascii approximation where possible
+    norm_text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('ascii')
+    if not norm_text.strip() and text.strip():
+        norm_text = text.encode('latin-1', 'replace').decode('latin-1')
+    return html.escape(norm_text)
 
 def generate_pdf_dossier(case_data: Dict[str, Any]) -> bytes:
     """
@@ -174,17 +179,19 @@ def generate_pdf_dossier(case_data: Dict[str, Any]) -> bytes:
     story.append(t2)
     story.append(Spacer(1, 12))
 
-    # Section 3: Statutory Freeze Order (Section 94 BNSS)
-    story.append(Paragraph("3. STATUTORY NOTICE UNDER SECTION 94 BNSS, 2023", h2_style))
+    # Section 3: Statutory Requisitions (Sections 94, 106 & 107 BNSS)
+    story.append(Paragraph("3. STATUTORY REQUISITIONS UNDER SECTIONS 94, 106 & 107 BNSS, 2023", h2_style))
     notice_p = Paragraph(
         f"<b>WHEREAS</b> an investigation into cyber fraud registered under FIR <b>{fir_clean}</b> "
         f"has established that proceeds of crime originating from wallet <b>{seed_addr}</b> have been routed into "
         f"accounts operated on your platform (<b>{vasp_name}</b>).<br/><br/>"
-        "<b>NOW THEREFORE</b>, you are hereby commanded under Section 94 of the Bharatiya Nagarik Suraksha Sanhita (BNSS), 2023 "
-        "and Section 106/107 BNSS to immediately:<br/>"
-        "1. <b>FREEZE & RESTRICT WITHDRAWALS</b> on the recipient deposit wallet and any associated KYC account.<br/>"
-        "2. Produce complete KYC records, registered email, phone number, login IP access logs, and linked bank accounts.<br/>"
-        "3. Provide confirmation of compliance within 24 hours to the investigating officer.",
+        "<b>A. REQUISITION FOR PRODUCTION OF RECORDS (SECTION 94 BNSS, 2023):</b><br/>"
+        "You are hereby commanded to immediately produce complete KYC records, registered email, phone number, "
+        "login IP access logs, linked bank accounts, and complete transaction/ledger history for the identified account.<br/><br/>"
+        "<b>B. ASSET PRESERVATION & SEIZURE DIRECTIVE (SECTIONS 106 & 107 BNSS, 2023):</b><br/>"
+        "You are further directed to immediately secure, restrict withdrawals, and mark a statutory lien on the "
+        "recipient deposit wallet and any associated KYC account pending final judicial attachment order under Section 107 BNSS.<br/><br/>"
+        "<b>C. COMPLIANCE TIMELINE:</b> Provide written confirmation of compliance within 24 hours to the investigating officer.",
         legal_quote
     )
     story.append(notice_p)
@@ -192,7 +199,14 @@ def generate_pdf_dossier(case_data: Dict[str, Any]) -> bytes:
 
     # Section 4: Electronic Certificate (Section 63 BSA) & SHA-256 Seal
     story.append(Paragraph("4. CERTIFICATE OF ELECTRONIC EVIDENCE (SECTION 63 BSA, 2023)", h2_style))
-    sha_hash = case_data.get("evidence_sha256") or "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    sha_hash = case_data.get("evidence_sha256")
+    if not sha_hash or sha_hash == "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855":
+        from app.core.legal_notice import compute_canonical_evidence_digest
+        trace_data = case_data.get("trace_data") or {}
+        if trace_data:
+            sha_hash = compute_canonical_evidence_digest(trace_data)
+        else:
+            sha_hash = "PENDING_VERIFIED_CHAIN_OF_CUSTODY"
     bsa_p = Paragraph(
         "I hereby certify that the cryptocurrency transaction ledger and graph traversal data contained in this dossier "
         "were produced by an automated forensic system during the ordinary course of lawful cyber investigation. "

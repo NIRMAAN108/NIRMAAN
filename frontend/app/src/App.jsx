@@ -7,6 +7,7 @@ import Investigation from "./pages/Investigation";
 import TransactionGraph from "./pages/TransactionGraph";
 import WalletDetails from "./pages/WalletDetails";
 import VASPAttribution from "./pages/VASPAttribution";
+import CaseManagement from "./pages/CaseManagement";
 
 export default function App() {
   const [activePage, setActivePage] = useState("Dashboard");
@@ -27,6 +28,12 @@ export default function App() {
 
       case "VASP Attribution":
         return <VASPAttribution />;
+
+      case "Legal Dossiers":
+        return <CaseManagement onNavigate={setActivePage} title="Legal Evidence Dossiers & Certificates" />;
+
+      case "Case Management":
+        return <CaseManagement onNavigate={setActivePage} title="Case Management Vault" />;
 
       default:
         return (

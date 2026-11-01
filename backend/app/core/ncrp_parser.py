@@ -40,9 +40,17 @@ FIR_REGEX = re.compile(
     re.IGNORECASE
 )
 INR_AMOUNT_REGEX = re.compile(
-    r'(?:(?:Rs\.?|INR|₹|amount\s+of|lost)\s*[:=]?\s*)([0-9]{1,3}(?:,[0-9]{2,3})+(?:\.[0-9]{2})?|\b[0-9]{3,10}(?:\.[0-9]{2})?\b)',
+    r'(?:(?:Rs\.?|INR|₹|amount\s+of|lost)\s*[:=]?\s*)([0-9]{1,3}(?:,[0-9]{2,3})+(?:\.[0-9]{2})?|\b[0-9]{3,10}(?:\.[0-9]{2})?\b)(?!\s*(?:USDT|USDC|USD|BTC|ETH|TRX))',
     re.IGNORECASE
 )
+CRYPTO_AMOUNT_REGEX = re.compile(
+    r'\b([0-9]{1,3}(?:,[0-9]{2,3})+(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)\s*(USDT|USDC|USD|\$|BTC|ETH|TRX)\b',
+    re.IGNORECASE
+)
+CRYPTO_TO_INR_RATES = {
+    "USDT": 90.0, "USDC": 90.0, "USD": 90.0, "$": 90.0,
+    "BTC": 5800000.0, "ETH": 230000.0, "TRX": 14.5
+}
 PHONE_REGEX = re.compile(r'\b(?:\+91[\-\s]?)?[6-9]\d{9}\b')
 
 def parse_ncrp_complaint(text: str) -> ExtractedComplaintData:
@@ -101,8 +109,19 @@ def parse_ncrp_complaint(text: str) -> ExtractedComplaintData:
         if any(c.isdigit() for c in fir) and fir not in fir_numbers:
             fir_numbers.append(fir)
 
-    # 4. Extract Amounts
+    # 4. Extract Amounts (Crypto spot conversions & INR sums)
     amounts: List[float] = []
+    for m in CRYPTO_AMOUNT_REGEX.finditer(text):
+        raw_val = m.group(1).replace(",", "")
+        unit = m.group(2).upper()
+        rate = CRYPTO_TO_INR_RATES.get(unit, 90.0)
+        try:
+            val = float(raw_val) * rate
+            if val >= 500:
+                amounts.append(round(val, 2))
+        except ValueError:
+            pass
+
     for m in INR_AMOUNT_REGEX.finditer(text):
         raw_val = m.group(1).replace(",", "")
         try:

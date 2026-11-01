@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 import json
 import os
 import re
@@ -35,7 +35,16 @@ from app.core.errors import (
 )
 
 class NCRPParseRequest(BaseModel):
-    text: str = Field(..., description="Unstructured 1930 Helpline or NCRP complaint text")
+    text: Optional[str] = Field(None, description="Unstructured 1930 Helpline or NCRP complaint text")
+    complaint_text: Optional[str] = Field(None, description="Alternative field alias for complaint text")
+
+    @model_validator(mode="after")
+    def populate_text(self):
+        if not self.text and not self.complaint_text:
+            raise ValueError("Complaint text must be provided in 'text' or 'complaint_text' field.")
+        if not self.text:
+            self.text = self.complaint_text
+        return self
 
 app = FastAPI(
     title="NIRMAAN Forensic Tracing Engine",
@@ -92,6 +101,10 @@ def health_check():
         "tracked_vasps_count": len(tracer.vasp_db)
     }
 
+@app.get("/api/health")
+def api_health():
+    return health_check()
+
 @app.get("/api/vasps")
 def list_vasps():
     """Returns curated directory of tracked exchanges and hot wallets."""
@@ -120,13 +133,28 @@ async def run_trace(req: TraceRequest):
     Accepts suspect TRON/EVM/Bitcoin wallet, traces multi-hop flows, runs deposit sweep detection,
     and returns graph nodes with ML risk scoring, edges, target VASP, and pre-filled Section 94 notice.
     """
-    chain = req.chain.lower() if req.chain else detect_chain(req.seed_address)
-    if chain in ("bsc", "binance", "binancesmartchain"):
+    raw_chain = req.chain.lower().strip() if req.chain else detect_chain(req.seed_address)
+    if raw_chain in ("bsc", "binance", "binancesmartchain", "bep20", "bep-20"):
         chain = "bsc"
+    elif raw_chain in ("eth", "ethereum", "erc20", "erc-20"):
+        chain = "ethereum"
+    elif raw_chain in ("tron", "trc20", "trc-20", "trx"):
+        chain = "tron"
+    elif raw_chain in ("btc", "bitcoin", "utxo"):
+        chain = "bitcoin"
+    else:
+        chain = raw_chain
+
+    supported_chains = {"tron", "ethereum", "bsc", "bitcoin"}
     if chain == "unknown":
         raise InvalidWalletAddressError(
             address=req.seed_address,
             details="Unrecognized blockchain address format. Supported: TRON (starts with 'T'), EVM (starts with '0x'), Bitcoin (starts with 'bc1', '1', or '3')."
+        )
+    elif chain not in supported_chains:
+        raise InvalidWalletAddressError(
+            address=req.seed_address,
+            details=f"Unsupported blockchain chain '{req.chain or chain}'. Supported: TRON, Ethereum, BSC, Bitcoin."
         )
 
     response = await tracer.trace(req)

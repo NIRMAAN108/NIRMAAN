@@ -1,9 +1,9 @@
 import { useState } from "react";
 import {
   Search, ShieldCheck, Wallet, Network, FileText,
-  ChevronDown, CheckCircle, AlertTriangle, Loader2, ArrowRight
+  ChevronDown, CheckCircle, AlertTriangle, Loader2, ArrowRight, Download
 } from "lucide-react";
-import { traceWallet } from "../services/api";
+import { traceWallet, createCase, getDossierDownloadUrl, getBundleDownloadUrl } from "../services/api";
 import { FORENSIC_PRESETS } from "../data/mockData";
 
 export default function Investigation({ onNavigate }) {
@@ -14,6 +14,7 @@ export default function Investigation({ onNavigate }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [traceResult, setTraceResult] = useState(null);
+  const [caseId, setCaseId] = useState(null);
 
   const applyPreset = (preset) => {
     setWallet(preset.address);
@@ -34,6 +35,7 @@ export default function Investigation({ onNavigate }) {
     setIsLoading(true);
     setError(null);
     setTraceResult(null);
+    setCaseId(null);
 
     try {
       const data = await traceWallet({
@@ -49,6 +51,28 @@ export default function Investigation({ onNavigate }) {
         }
       });
       setTraceResult(data);
+
+      try {
+        const totalRouted = (data.edges || []).reduce((acc, e) => acc + (parseFloat(e.usd_value) || 0), 0);
+        const saved = await createCase({
+          fir_number: fir.trim(),
+          police_station: "Cyber Crime Police Station",
+          investigating_officer: "Investigating Officer",
+          complainant_name: "Complainant Victim",
+          loss_amount_inr: Number(lossAmount) || 0.0,
+          seed_address: data.seed_address,
+          chain: data.chain,
+          destination_vasp: data.target_vasp?.name || "Pending Attribution",
+          total_routed_usd: Math.round(totalRouted * 100) / 100,
+          evidence_sha256: data.evidence_sha256,
+          trace_data: data
+        });
+        if (saved && saved.case_id) {
+          setCaseId(saved.case_id);
+        }
+      } catch (saveErr) {
+        console.warn("Auto-save case vault error:", saveErr);
+      }
     } catch (err) {
       setError(err.message || "Failed to execute blockchain trace. Please verify the address format.");
     } finally {
@@ -214,6 +238,28 @@ export default function Investigation({ onNavigate }) {
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs font-mono">
               <span className="text-slate-500 block font-semibold">Section 63 BSA Tamper-Proof Cryptographic Seal:</span>
               <span className="text-slate-800 break-all">{traceResult.evidence_sha256}</span>
+            </div>
+          )}
+
+          {/* Download Official Legal Artifacts */}
+          {caseId && (
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <a
+                href={getDossierDownloadUrl(caseId)}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition"
+              >
+                <Download size={14} /> Download Court PDF Dossier
+              </a>
+              <a
+                href={getBundleDownloadUrl(caseId)}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold shadow-sm transition"
+              >
+                <Download size={14} /> Download Section 63 ZIP Bundle
+              </a>
             </div>
           )}
         </div>

@@ -82,11 +82,13 @@ class ResilientHttpClient:
                     logger.warning(f"Skipping tripped provider: {host}")
                     continue
 
+                provider_failed = False
                 for attempt in range(1, self.max_retries + 1):
                     try:
                         response = await client.get(url, params=params, headers=headers)
 
                         if response.status_code == 429:
+                            provider_failed = True
                             # Cap retry delay to prevent unbounded waits (ERR-22)
                             try:
                                 retry_after = min(float(response.headers.get("Retry-After", 1.0)), 3.0)
@@ -97,9 +99,16 @@ class ResilientHttpClient:
                             continue
 
                         if response.status_code >= 500:
+                            provider_failed = True
                             logger.warning(f"Server error ({response.status_code}) on {host}. Retrying...")
                             await asyncio.sleep(0.3 * (2 ** attempt) + random.uniform(0, 0.1))
                             continue
+
+                        if response.status_code in (400, 404):
+                            # Client-side 400/404 (e.g. unindexed wallet) is not a network or provider outage
+                            logger.info(f"Target address returned {response.status_code} on {host}; not an infrastructure failure.")
+                            provider_failed = False
+                            break
 
                         if response.status_code == 200:
                             try:
@@ -108,17 +117,20 @@ class ResilientHttpClient:
                                 return results
                             except Exception as parse_err:
                                 logger.warning(f"Parser error on payload from {host}: {parse_err}")
+                                provider_failed = False
                                 break
 
                     except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError) as net_err:
+                        provider_failed = True
                         logger.warning(f"Network error on {host} (attempt {attempt}/{self.max_retries}): {net_err}")
                         await asyncio.sleep(0.3 * (2 ** attempt) + random.uniform(0, 0.1))
                     except Exception as err:
                         logger.warning(f"Unexpected error querying {host}: {err}")
                         break
 
-                cb.record_failure()
-                logger.info("Failing over to secondary blockchain provider...")
+                if provider_failed:
+                    cb.record_failure()
+                    logger.info("Failing over to secondary blockchain provider...")
 
         logger.debug("All live blockchain providers returned empty or unreachable.")
         return []

@@ -18,7 +18,11 @@ import hashlib
 from typing import Dict, Any
 
 from app.core.pdf_dossier import generate_pdf_dossier
-from app.core.legal_notice import generate_section_94_bnss_notice, generate_section_63_bsa_certificate
+from app.core.legal_notice import (
+    generate_section_94_bnss_notice,
+    generate_section_63_bsa_certificate,
+    get_canonical_evidence_json
+)
 from app.core.pmla_str import generate_fiu_ind_str
 from app.models.schemas import CaseMetadata
 
@@ -71,8 +75,13 @@ def generate_evidence_bundle_zip(case_data: Dict[str, Any]) -> bytes:
         ])
     csv_bytes = csv_buffer.getvalue().encode("utf-8")
 
+    # 0. Canonical Evidence Specification (Direct verification of Section 63 BSA digest)
+    canonical_spec_str = get_canonical_evidence_json(trace_data)
+    canonical_spec_bytes = canonical_spec_str.encode("utf-8")
+
     # Artifact dictionary for checksums
     artifacts = {
+        f"00_CANONICAL_EVIDENCE_SPEC_{fir_clean}.json": canonical_spec_bytes,
         f"01_COURT_DOSSIER_{fir_clean}.pdf": pdf_bytes,
         f"02_SECTION_94_BNSS_NOTICE_{fir_clean}.txt": notice_text.encode("utf-8"),
         f"03_SECTION_63_BSA_CERTIFICATE_{fir_clean}.txt": bsa_text.encode("utf-8"),

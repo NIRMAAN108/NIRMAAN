@@ -5,6 +5,7 @@ Enforces compliance with Bharatiya Nagarik Suraksha Sanhita, 2023 & Bharatiya Sa
 import time
 import json
 import hashlib
+import platform
 from typing import Optional, Dict, Any, Union
 from app.models.schemas import TraceResponse, CaseMetadata
 
@@ -14,11 +15,10 @@ def _get_attr(obj: Any, key: str, default: Any = None) -> Any:
         return obj.get(key, default)
     return getattr(obj, key, default)
 
-def compute_canonical_evidence_digest(trace: Union[TraceResponse, Dict[str, Any]]) -> str:
+def get_canonical_evidence_json(trace: Union[TraceResponse, Dict[str, Any]]) -> str:
     """
-    Computes a deterministic, tamper-evident SHA-256 digest over the entire canonical
-    transaction graph (all nodes, directed edges, raw transfer amounts, token assets, and tx hashes).
-    Admissible under Section 63(4) Bharatiya Sakshya Adhiniyam (BSA), 2023.
+    Serializes the canonical transaction graph (all nodes, directed edges, raw transfer amounts,
+    token assets, and tx hashes) into a deterministic JSON string.
     """
     seed_address = _get_attr(trace, "seed_address", "")
     chain = _get_attr(trace, "chain", "")
@@ -49,7 +49,15 @@ def compute_canonical_evidence_digest(trace: Union[TraceResponse, Dict[str, Any]
             for e in edges
         ], key=lambda x: x["tx_hash"])
     }
-    canonical_json = json.dumps(canonical_data, sort_keys=True, separators=(',', ':'))
+    return json.dumps(canonical_data, sort_keys=True, separators=(',', ':'))
+
+def compute_canonical_evidence_digest(trace: Union[TraceResponse, Dict[str, Any]]) -> str:
+    """
+    Computes a deterministic, tamper-evident SHA-256 digest over the entire canonical
+    transaction graph (all nodes, directed edges, raw transfer amounts, token assets, and tx hashes).
+    Admissible under Section 63(4) Bharatiya Sakshya Adhiniyam (BSA), 2023.
+    """
+    canonical_json = get_canonical_evidence_json(trace)
     return hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
 
 def generate_section_94_bnss_notice(trace: Union[TraceResponse, Dict[str, Any]], meta: Optional[CaseMetadata] = None) -> str:
@@ -84,13 +92,25 @@ DO NOT TRANSMIT TO ANY FINANCIAL ENTITY, COURT OF LAW, OR VIRTUAL ASSET SERVICE 
     # Check whether an actual transaction edge establishes VASP custody
     has_target_edge = bool(
         target_vasp
-        and _get_attr(target_vasp, "sweep_tx_hash")
-        and str(_get_attr(target_vasp, "sweep_tx_hash")).strip()
-        and any(
-            _get_attr(edge, "source") == _get_attr(target_vasp, "deposit_address")
-            and _get_attr(edge, "target") == _get_attr(target_vasp, "hot_wallet")
-            and _get_attr(edge, "tx_hash") == _get_attr(target_vasp, "sweep_tx_hash")
-            for edge in edges
+        and (
+            (
+                _get_attr(target_vasp, "sweep_tx_hash")
+                and str(_get_attr(target_vasp, "sweep_tx_hash")).strip()
+                and any(
+                    _get_attr(edge, "source") == _get_attr(target_vasp, "deposit_address")
+                    and _get_attr(edge, "target") == _get_attr(target_vasp, "hot_wallet")
+                    and _get_attr(edge, "tx_hash") == _get_attr(target_vasp, "sweep_tx_hash")
+                    for edge in edges
+                )
+            )
+            or (
+                _get_attr(target_vasp, "deposit_address")
+                and any(
+                    _get_attr(edge, "target") == _get_attr(target_vasp, "deposit_address")
+                    or _get_attr(edge, "target") == _get_attr(target_vasp, "hot_wallet")
+                    for edge in edges
+                )
+            )
         )
     )
 
@@ -235,8 +255,9 @@ I, {meta.investigating_officer}, do hereby certify and declare on official oath 
 
 1. LAWFUL COMPUTER OPERATING CONDITIONS:
    During the period over which the electronic cryptocurrency records were produced, the 
-   automated NIRMAAN Blockchain Forensic System was operating properly in the ordinary course 
-   of official lawful cyber investigations.
+   automated NIRMAAN Blockchain Forensic System (Build v2.0-SEC63, SHA-256 Engine) was operating 
+   properly under standard operating parameters in the ordinary course of official lawful cyber investigations.
+   Host Platform: {platform.system()} {platform.machine()} (Kernel: {platform.release()}).
 
 2. INTEGRITY OF DATA INGESTION:
    The transaction records and graph traversal data were extracted directly from immutable 
