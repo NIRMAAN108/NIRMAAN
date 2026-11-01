@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Search, ShieldCheck, Wallet, Network, FileText,
   ChevronDown, CheckCircle, AlertTriangle, Loader2, ArrowRight, Download
@@ -6,15 +6,25 @@ import {
 import { traceWallet, createCase, getDossierDownloadUrl, getBundleDownloadUrl } from "../services/api";
 import { FORENSIC_PRESETS } from "../data/mockData";
 
-export default function Investigation({ onNavigate }) {
-  const [wallet, setWallet] = useState("");
+export default function Investigation({ onNavigate, initialWallet = "", initialFir = "" }) {
+  const [wallet, setWallet] = useState(initialWallet || "");
   const [chain, setChain] = useState("tron");
-  const [fir, setFir] = useState("");
+  const [fir, setFir] = useState(initialFir || (initialWallet ? "FIR-2026/CYBER/AUTO" : ""));
   const [lossAmount, setLossAmount] = useState(1500000);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [traceResult, setTraceResult] = useState(null);
   const [caseId, setCaseId] = useState(null);
+
+  useEffect(() => {
+    if (initialWallet) {
+      setWallet(initialWallet);
+      if (!fir) setFir("FIR-2026/CYBER/AUTO");
+    }
+    if (initialFir) {
+      setFir(initialFir);
+    }
+  }, [initialWallet, initialFir]);
 
   const applyPreset = (preset) => {
     setWallet(preset.address);

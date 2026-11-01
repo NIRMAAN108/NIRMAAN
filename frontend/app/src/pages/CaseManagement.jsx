@@ -2,10 +2,16 @@ import { useState, useEffect } from "react";
 import { BriefcaseBusiness, FileText, Download, ShieldCheck, Search, ExternalLink } from "lucide-react";
 import { fetchCases, getDossierDownloadUrl, getBundleDownloadUrl } from "../services/api";
 
-export default function CaseManagement({ onNavigate, title = "Case Management Vault" }) {
+export default function CaseManagement({ onNavigate, title = "Case Management Vault", initialSearch = "" }) {
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch || "");
+
+  useEffect(() => {
+    if (initialSearch) {
+      setSearch(initialSearch);
+    }
+  }, [initialSearch]);
 
   useEffect(() => {
     fetchCases()
