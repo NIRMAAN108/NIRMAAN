@@ -1,91 +1,299 @@
+
 """
 Section 94 BNSS Legal Notice & Case Dossier Generator
-Enforces compliance with Bharatiya Nagarik Suraksha Sanhita, 2023 & Bharatiya Sakshya Adhiniyam, 2023.
+
+Generates a draft requisition notice using blockchain tracing evidence.
+The generated document must be reviewed and authorized by the
+competent investigating officer before official issuance.
 """
-import time
+
 import hashlib
-from typing import Optional
+import json
+import math
+import time
+
+from datetime import date, datetime
+from decimal import Decimal
+from enum import Enum
+from typing import Any, Dict, Optional
+
 from app.models.schemas import TraceResponse, CaseMetadata
 
-def generate_section_94_bnss_notice(trace: TraceResponse, meta: Optional[CaseMetadata] = None) -> str:
-    """Generates a court-ready, pre-filled Section 94 BNSS requisition notice."""
-    if not meta:
+
+def compute_canonical_evidence_digest(evidence: Dict[str, Any]) -> str:
+    """
+    Generate a deterministic SHA-256 digest of forensic evidence.
+
+    Normalizes Pydantic models and nested structures before serialization.
+    Dictionary keys are sorted to ensure identical evidence produces
+    an identical digest regardless of insertion order.
+    """
+
+    def normalize(value: Any) -> Any:
+        # Handle Pydantic models
+        if hasattr(value, "model_dump"):
+            return normalize(value.model_dump(mode="json"))
+
+        # Handle dictionaries
+        if isinstance(value, dict):
+            return {
+                str(key): normalize(item)
+                for key, item in value.items()
+            }
+
+        # Handle lists and tuples
+        if isinstance(value, (list, tuple)):
+            return [normalize(item) for item in value]
+
+        # Handle Enum values
+        if isinstance(value, Enum):
+            return normalize(value.value)
+
+        # Handle date and datetime
+        if isinstance(value, (datetime, date)):
+            return value.isoformat()
+
+        # Handle Decimal values
+        if isinstance(value, Decimal):
+            if not value.is_finite():
+                raise ValueError(
+                    "Non-finite Decimal in forensic evidence"
+                )
+            return str(value)
+
+        # Handle float values
+        if isinstance(value, float):
+            if not math.isfinite(value):
+                raise ValueError(
+                    "Non-finite float in forensic evidence"
+                )
+            return value
+
+        # Handle standard JSON-compatible values
+        if value is None or isinstance(value, (str, int, bool)):
+            return value
+
+        raise TypeError(
+            f"Unsupported evidence value type: {type(value).__name__}"
+        )
+
+    normalized_evidence = normalize(evidence)
+
+    canonical_json = json.dumps(
+        normalized_evidence,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    )
+
+    return hashlib.sha256(
+        canonical_json.encode("utf-8")
+    ).hexdigest()
+
+
+def generate_section_94_bnss_notice(
+    trace: TraceResponse,
+    meta: Optional[CaseMetadata] = None,
+) -> str:
+    """
+    Generate a draft Section 94 BNSS requisition notice.
+
+    This is a document-generation template, not a determination that
+    statutory requirements have been satisfied or that a notice is
+    legally authorized for issuance.
+    """
+
+    if meta is None:
         meta = CaseMetadata()
 
     current_date = time.strftime("%d-%m-%Y")
-    current_time_utc = time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())
 
-    vasp_name = trace.target_vasp.name if trace.target_vasp else "Centralized Exchange / VASP"
-    nodal_email = trace.target_vasp.nodal_email if trace.target_vasp else "compliance@exchange.com"
-    deposit_addr = trace.target_vasp.deposit_address if trace.target_vasp else "N/A"
-    hot_wallet = trace.target_vasp.hot_wallet if trace.target_vasp else "N/A"
-    sweep_tx = trace.target_vasp.sweep_tx_hash if (trace.target_vasp and trace.target_vasp.sweep_tx_hash) else "N/A"
+    current_time_utc = time.strftime(
+        "%Y-%m-%d %H:%M:%S UTC",
+        time.gmtime(),
+    )
 
-    # Compute SHA-256 evidence hash of graph nodes and edges
-    evidence_payload = f"{trace.seed_address}:{deposit_addr}:{hot_wallet}:{len(trace.edges)}"
-    sha256_hash = hashlib.sha256(evidence_payload.encode()).hexdigest()
+    # Resolve VASP information only when a target was identified.
+    target_vasp = (
+        trace.target_vasp
+        if trace.destination_found and trace.target_vasp
+        else None
+    )
 
-    notice_template = f"""========================================================================================
-FORM OF STATUTORY NOTICE UNDER SECTION 94 OF THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023
-(Corresponding to Section 91 of the Code of Criminal Procedure, 1973)
-AND REQUISITION FOR IMMEDIATE ASSET PRESERVATION UNDER SECTIONS 106/107 BNSS, 2023
+    vasp_name = (
+        target_vasp.name
+        if target_vasp
+        else "Not identified"
+    )
+
+    nodal_email = (
+        target_vasp.nodal_email
+        if target_vasp and target_vasp.nodal_email
+        else "N/A"
+    )
+
+    deposit_addr = (
+        target_vasp.deposit_address
+        if target_vasp and target_vasp.deposit_address
+        else "N/A"
+    )
+
+    hot_wallet = (
+        target_vasp.hot_wallet
+        if target_vasp and target_vasp.hot_wallet
+        else "N/A"
+    )
+
+    sweep_tx = (
+        target_vasp.sweep_tx_hash
+        if target_vasp and target_vasp.sweep_tx_hash
+        else "N/A"
+    )
+
+    # Use the canonical digest generated by the tracer.
+    sha256_hash = trace.evidence_sha256 or "N/A"
+
+    # Build a conditional blockchain trail summary.
+    if target_vasp:
+        trail_summary = (
+            f"A multi-hop blockchain trace originating from "
+            f"'{trace.seed_address}' identified a potential destination "
+            f"associated with {vasp_name} across {len(trace.edges)} "
+            f"recorded transaction hops. The association is based on "
+            f"the configured VASP directory and requires independent "
+            f"verification."
+        )
+    else:
+        trail_summary = (
+            f"A multi-hop blockchain trace originating from "
+            f"'{trace.seed_address}' identified "
+            f"{len(trace.edges)} recorded transaction hops. "
+            f"No VASP destination was identified during this trace."
+        )
+
+    # Build the notice.
+    notice_template = f"""
 ========================================================================================
+DRAFT STATUTORY NOTICE
+SECTION 94 OF THE BHARATIYA NAGARIK SURAKSHA SANHITA, 2023
 
+REQUISITION FOR PRODUCTION OF RECORDS
+Cryptographic Trace Integrity Seal (SHA-256): {trace.evidence_sha256 or ""}
+========================================================================================
 NOTICE REFERENCE NO: LEA/CYBER/BNSS94/{trace.trace_id.upper()}
 DATE OF ISSUE: {current_date}
-PRIORITY: HIGH (1930 HELPLINE / GOLDEN HOUR CASE)
+PRIORITY: SUBJECT TO INVESTIGATING OFFICER'S ASSESSMENT
 
 TO:
 The Nodal Officer / Law Enforcement Response Desk
 M/s {vasp_name}
 Official LEA Contact: {nodal_email}
 
-SUBJECT: STATUTORY REQUISITION FOR PRODUCTION OF SUBSCRIBER KYC, TRANSACTION LEDGERS,
-         IP TELEMETRY AND IMMEDIATE FREEZING OF ASSETS LINKED TO FRAUD PROCEEDS IN
-         CASE FIR/NCRP COMPLAINT NO: {meta.fir_number}
+SUBJECT: REQUEST FOR PRODUCTION AND PRESERVATION OF RELEVANT
+ELECTRONIC RECORDS IN CONNECTION WITH CASE FIR/NCRP COMPLAINT NO:
+{meta.fir_number}
 
-1. INVESTIGATION PARTICULARS:
+1. INVESTIGATION PARTICULARS
+
    - Investigating Agency: {meta.police_station}
    - Investigating Officer: {meta.investigating_officer}
-   - Statutory Provisions: Sections 316(2), 318(4) Bharatiya Nyaya Sanhita (BNS), 2023 
-                           and Section 66D Information Technology Act, 2000.
+   - Case Reference: {meta.fir_number}
    - Reported Victim Loss: INR {meta.loss_amount_inr:,.2f}
 
-2. FORENSIC BLOCKCHAIN TRAIL SUMMARY:
-   Automated multi-hop blockchain tracing on the TRON (TRC-20) network originating from 
-   suspect address '{trace.seed_address}' established that illicit proceeds were routed 
-   across {len(trace.edges)} transaction hops and deposited into your exchange infrastructure:
+   - Relevant statutory provisions, if applicable:
+     To be verified and specified by the investigating officer.
 
-   * Identified User Deposit Address: {deposit_addr}
-   * Associated Exchange Hot Wallet:  {hot_wallet}
-   * Sweeping / Consolidation TxHash: {sweep_tx}
-   * Identification Timestamp:        {current_time_utc}
-   * Execution Traversal Latency:     {trace.execution_time_ms} ms
+2. FORENSIC BLOCKCHAIN TRAIL SUMMARY
 
-3. STATUTORY DIRECTIONS UNDER SECTION 94 BNSS, 2023:
-   By virtue of powers conferred under Section 94 BNSS, you are hereby legally required to 
-   furnish the following electronic records to this office within TWENTY-FOUR (24) HOURS:
-   
-   a) Complete User Profile & KYC: Full legal name, date of birth, residential address, 
-      government identity proofs (PAN, Aadhaar, Passport), verified phone number & email.
-   b) Transaction & Ledger History: Complete deposit, withdrawal, and order-book execution 
-      history for the Account UID linked to deposit address '{deposit_addr}'.
-   c) Telemetry & Access Logs: IP address logs with port numbers, timestamps (UTC), login 
-      device IMEI/MAC, and User-Agent strings.
-   d) P2P & Banking Off-Ramps: Bank account details (Account No., IFSC, Bank Name) or UPI IDs 
-      used for fiat settlement.
+   Network: {trace.chain}
 
-4. DIRECTION FOR IMMEDIATE LIEN / ASSET FREEZE (SECTIONS 106 & 107 BNSS):
-   You are directed to place an immediate debit freeze/lien on all crypto balances and 
-   fiat funds held under the target UID to prevent dissipation of crime proceeds.
+   Seed Address:
+   {trace.seed_address}
 
-5. STATUTORY ADMISSIBILITY CERTIFICATE (SECTION 63 BHARATIYA SAKSHYA ADHINIYAM, 2023):
-   I certify that the forensic data herein was extracted in the regular course of official 
-   duty from immutable public ledgers using verified tracing algorithms.
-   * Cryptographic Trace Integrity Seal (SHA-256): {sha256_hash}
+   {trail_summary}
 
-Notice Issued By:
-{meta.investigating_officer}
-{meta.police_station}
-========================================================================================"""
+   - Identified User Deposit Address: {deposit_addr}
+   - Associated Exchange Hot Wallet: {hot_wallet}
+   - Sweeping / Consolidation TxHash: {sweep_tx}
+   - Identification Timestamp: {current_time_utc}
+   - Execution Traversal Latency: {trace.execution_time_ms} ms
+   - Recorded Transaction Hops: {len(trace.edges)}
+
+   IMPORTANT:
+   A directory match does not independently establish ownership,
+   account attribution, or the identity of a user. All associations
+   require verification using appropriate records.
+
+3. REQUEST FOR PRODUCTION OF ELECTRONIC RECORDS
+
+   Subject to the authority and requirements of applicable law,
+   the competent investigating officer may request relevant records,
+   including:
+
+   a) Subscriber and KYC Records:
+      Relevant account identification details and KYC records
+      associated with the identified account, where legally authorized.
+
+   b) Transaction and Ledger History:
+      Relevant deposit, withdrawal, transfer, and account ledger
+      records associated with the identified deposit address or
+      account identifier.
+
+   c) Access and Telemetry Records:
+      Relevant login timestamps, IP address records, device details,
+      and associated access logs, where maintained and legally
+      obtainable.
+
+   d) Banking and Fiat Settlement Records:
+      Relevant bank account, payment, or UPI settlement information
+      associated with the identified account, where legally
+      authorized.
+
+4. REQUEST FOR PRESERVATION OF RECORDS
+
+   The recipient may be requested to preserve relevant records
+   pending appropriate legal process and subject to applicable
+   statutory requirements and directions of the competent authority.
+
+   Any freezing, debit restriction, lien, or other asset-preservation
+   direction must be issued and implemented only under valid legal
+   authority and applicable procedure.
+
+5. EVIDENCE INTEGRITY INFORMATION
+
+   Canonical Evidence Digest (SHA-256):
+
+   {sha256_hash}
+
+   The digest is generated from the canonical evidence representation
+   supplied by the tracing engine. It can be used to check whether
+   the corresponding evidence representation has changed.
+
+   It does not independently establish the authenticity, accuracy,
+   completeness, or admissibility of the underlying blockchain data.
+
+6. REVIEW AND AUTHORIZATION
+
+   This document is a system-generated draft.
+
+   The competent investigating officer must verify the case details,
+   evidence, statutory provisions, recipient information, and legal
+   authority before signing or issuing this notice.
+
+   Officer's Name:
+   {meta.investigating_officer}
+
+   Police Station / Agency:
+   {meta.police_station}
+
+   Signature: ______________________________
+
+   Official Seal: ___________________________
+
+========================================================================================
+END OF DRAFT
+========================================================================================
+"""
+
     return notice_template

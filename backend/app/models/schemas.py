@@ -11,12 +11,34 @@ class CaseMetadata(BaseModel):
     investigating_officer: Optional[str] = Field(default="Inspector Cyber Cell", description="IO Name/Rank")
     loss_amount_inr: Optional[float] = Field(default=0.0, description="Victim loss in INR")
 
-class TraceRequest(BaseModel):
-    seed_address: str = Field(..., description="Target TRON suspect wallet address (e.g., starts with T)")
-    max_depth: int = Field(default=4, ge=1, le=6, description="Maximum BFS traversal depth")
-    min_usd_value: float = Field(default=20.0, ge=0.0, description="Minimum USD value threshold to prune dust")
-    case_metadata: Optional[CaseMetadata] = Field(default_factory=CaseMetadata)
 
+class TraceRequest(BaseModel):
+    seed_address: str = Field(
+        ...,
+        description="Target blockchain wallet address"
+    )
+
+    chain: Optional[str] = Field(
+        default=None,
+        description="Optional blockchain override: TRON, Ethereum, BSC, Bitcoin"
+    )
+
+    max_depth: int = Field(
+        default=4,
+        ge=1,
+        le=6,
+        description="Maximum BFS traversal depth"
+    )
+
+    min_usd_value: float = Field(
+        default=20.0,
+        ge=0.0,
+        description="Minimum USD value threshold to prune dust"
+    )
+
+    case_metadata: Optional[CaseMetadata] = Field(
+        default_factory=CaseMetadata
+    )
 class GraphNode(BaseModel):
     id: str
     address: str
@@ -24,7 +46,14 @@ class GraphNode(BaseModel):
     label: str
     vasp_name: Optional[str] = None
     balance_usd: Optional[float] = 0.0
-
+    risk_score: float = 0.0
+    risk_tier: Optional[str] = None
+    is_peeling: bool = False
+    is_mixer: bool = False
+    flags: List[str] = Field(default_factory=list)
+    explanation: Optional[str] = None
+    feature_vector: Optional[List[float]] = None
+    typology: Optional[Dict[str, Any]] = None
 class GraphEdge(BaseModel):
     source: str
     target: str
@@ -42,7 +71,9 @@ class TargetVASP(BaseModel):
     sweep_tx_hash: Optional[str] = None
     nodal_email: str
     law_enforcement_portal: str
-
+    source: str = "UNKNOWN"
+    verification_date: Optional[str] = None
+    confidence: str = "UNVERIFIED"
 class TraceResponse(BaseModel):
     trace_id: str
     seed_address: str
@@ -53,3 +84,8 @@ class TraceResponse(BaseModel):
     nodes: List[GraphNode]
     edges: List[GraphEdge]
     section_94_notice_text: Optional[str] = None
+    evidence_sha256: Optional[str] = None
+    is_synthetic: bool = False
+    evidence_sha256: Optional[str] = None
+    syndicate_typology: Optional[Dict[str, Any]] = None
+    ml_anomaly_score: Optional[float] = None
