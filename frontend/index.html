@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>NIRMAAN — Crypto Fraud Attribution Engine (I4C / MHA)</title>
+  <title>NIRMAAN — Crypto Fraud Attribution Engine (Microsoft Azure & AI · I4C / MHA)</title>
   
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -20,15 +20,21 @@
         extend: {
           colors: {
             brand: {
-              50: '#eef2ff',
-              100: '#e0e7ff',
-              500: '#6366f1',
-              600: '#4f46e5',
-              700: '#4338ca'
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#0866D9',
+              700: '#0078D4'
+            },
+            ms: {
+              red: '#F25022',
+              green: '#7FBA00',
+              blue: '#00A4EF',
+              yellow: '#FFB900'
             }
           },
           fontFamily: {
-            sans: ['Inter', 'sans-serif'],
+            sans: ['Inter', 'Segoe UI', 'sans-serif'],
             mono: ['JetBrains Mono', 'monospace']
           }
         }
@@ -59,14 +65,17 @@
   <!-- ======================================================== -->
   <header class="h-16 border-b border-zinc-800/80 bg-[#09090b]/95 backdrop-blur-md sticky top-0 z-40 px-4 sm:px-6 flex items-center justify-between">
     <div class="flex items-center gap-3.5">
-      <div class="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center font-bold text-white shadow-md shadow-indigo-500/25 text-base font-mono">
-        N
+      <div class="grid grid-cols-2 gap-[2px] w-8 h-8 rounded-full overflow-hidden shrink-0 shadow-md border border-white/10" title="Microsoft Azure & AI Forensic Platform">
+        <span class="bg-[#F25022]"></span>
+        <span class="bg-[#7FBA00]"></span>
+        <span class="bg-[#00A4EF]"></span>
+        <span class="bg-[#FFB900]"></span>
       </div>
       <div class="flex flex-col">
         <div class="flex items-center gap-2">
           <span class="font-extrabold text-sm tracking-tight text-white">NIRMAAN</span>
           <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 font-semibold border border-indigo-500/20">ChainTrace AI</span>
-          <span class="text-[10px] text-zinc-500 font-mono hidden md:inline">• SIH26183</span>
+          <span class="text-[10px] text-zinc-400 font-mono hidden md:inline">• Microsoft Azure & AI · SIH26183</span>
         </div>
         <span class="text-[11px] text-zinc-400">Indian Cybercrime Coordination Centre (I4C) • Ministry of Home Affairs</span>
       </div>
@@ -74,7 +83,7 @@
 
     <!-- PRIMARY APP VIEW TABS -->
     <div class="flex items-center bg-zinc-900/90 p-1 rounded-xl border border-zinc-800">
-      <button id="navTraceBtn" onclick="switchMainTab('trace')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white flex items-center gap-1.5 transition-all shadow-sm">
+      <button id="navTraceBtn" onclick="switchMainTab('trace')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#0866D9] text-white flex items-center gap-1.5 transition-all shadow-sm">
         <span class="material-symbols-outlined text-[16px]">timeline</span>
         <span>Trace Canvas</span>
       </button>
@@ -86,7 +95,7 @@
       <button id="navVaspsBtn" onclick="switchMainTab('vasps')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-800/60 flex items-center gap-1.5 transition-all">
         <span class="material-symbols-outlined text-[16px]">account_balance</span>
         <span>VASP Directory</span>
-        <span class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-400 border border-emerald-500/20">45</span>
+        <span class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-400 border border-emerald-500/20">41</span>
       </button>
     </div>
 
@@ -228,7 +237,7 @@
         <button 
           id="btnTraceAction" 
           onclick="executeTraceFlow()" 
-          class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition-all shrink-0"
+          class="px-6 py-2.5 rounded-xl bg-[#0866D9] hover:bg-[#0078D4] active:scale-[0.98] text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-lg shadow-blue-600/25 transition-all shrink-0"
         >
           <span class="material-symbols-outlined text-[18px]">bolt</span>
           <span id="btnTraceText">Run Multi-Hop Forensics</span>
@@ -515,7 +524,7 @@
             <!-- 2. Download Court PDF Dossier -->
             <button 
               onclick="downloadCourtPDF()" 
-              class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] text-white text-xs font-semibold flex items-center justify-between shadow-lg shadow-indigo-600/25 transition-all"
+              class="w-full py-2.5 px-4 rounded-xl bg-[#0866D9] hover:bg-[#0078D4] active:scale-[0.99] text-white text-xs font-semibold flex items-center justify-between shadow-lg shadow-indigo-600/25 transition-all"
             >
               <div class="flex items-center gap-2">
                 <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
@@ -650,7 +659,7 @@
       
       <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
         <div class="flex items-center gap-2.5">
-          <div class="h-8 w-8 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center font-bold">
+          <div class="h-8 w-8 rounded-lg bg-[#0866D9]/20 text-indigo-400 flex items-center justify-center font-bold">
             <span class="material-symbols-outlined text-[18px]">gavel</span>
           </div>
           <div>
@@ -674,7 +683,7 @@ Loading notice content...
             <span class="material-symbols-outlined text-[16px]" id="copyNoticeIcon">content_copy</span>
             <span id="copyNoticeText">Copy Notice</span>
           </button>
-          <button onclick="sendNodalEmail()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-indigo-600/30 transition-all">
+          <button onclick="sendNodalEmail()" class="px-4 py-2 rounded-xl bg-[#0866D9] hover:bg-[#0078D4] text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-blue-600/25 transition-all">
             <span class="material-symbols-outlined text-[16px]">mail</span>
             <span>Email to Nodal Desk</span>
           </button>
@@ -771,15 +780,15 @@ Loading notice content...
 
       if (tab === 'trace') {
         vTrace.classList.remove('hidden');
-        btnTrace.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white flex items-center gap-1.5 transition-all shadow-sm";
+        btnTrace.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#0866D9] text-white flex items-center gap-1.5 transition-all shadow-sm";
         if (cy) { setTimeout(() => cy.resize().fit(), 100); }
       } else if (tab === 'vault') {
         vVault.classList.remove('hidden');
-        btnVault.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white flex items-center gap-1.5 transition-all shadow-sm";
+        btnVault.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#0866D9] text-white flex items-center gap-1.5 transition-all shadow-sm";
         fetchCaseVaultRecords();
       } else if (tab === 'vasps') {
         vVasps.classList.remove('hidden');
-        btnVasps.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white flex items-center gap-1.5 transition-all shadow-sm";
+        btnVasps.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#0866D9] text-white flex items-center gap-1.5 transition-all shadow-sm";
         fetchVaspDirectory();
       }
     }
@@ -1303,7 +1312,7 @@ Loading notice content...
               <td class="py-3 px-4 text-zinc-400 text-[11px]">${escapeHtml(dateStr)}</td>
               <td class="py-3 px-4 text-right">
                 <div class="flex items-center justify-end gap-1.5">
-                  <a href="http://127.0.0.1:8000/api/cases/${encodeURIComponent(c.case_id)}/dossier" target="_blank" class="px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-sans font-semibold">
+                  <a href="http://127.0.0.1:8000/api/cases/${encodeURIComponent(c.case_id)}/dossier" target="_blank" class="px-2 py-1 rounded bg-[#0866D9] hover:bg-[#0078D4] text-white text-[10px] font-sans font-semibold">
                     PDF
                   </a>
                   <a href="http://127.0.0.1:8000/api/cases/${encodeURIComponent(c.case_id)}/bundle" target="_blank" class="px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-sans font-semibold">

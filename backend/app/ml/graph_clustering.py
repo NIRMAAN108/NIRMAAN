@@ -3,139 +3,208 @@ Graph Analytics, Community Detection & Laundering Topology Clustering Engine.
 Computes graph centrality, fan-out entropy, circular layering detection, and velocity metrics.
 """
 
-from typing import List, Dict, Any, Set, Tuple, Optional
-import networkx as nx
+from typing import Any, Dict, List, Optional
 import math
 
+import networkx as nx
+
+
+def _safe_amount(tx: Dict[str, Any]) -> Optional[float]:
+    """Return a finite, non-negative transfer amount, or None if invalid."""
+    raw = tx.get("usd_value")
+    if raw is None:
+        raw = tx.get("amount")
+    if isinstance(raw, bool) or raw is None:
+        return None
+    try:
+        value = float(raw)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if not math.isfinite(value) or value <= 0 or not value.is_integer():
+        return None
+    return value
+
+
+def _safe_timestamp(tx: Dict[str, Any]) -> Optional[int]:
+    """Return a positive integer timestamp, or None if invalid."""
+    raw = tx.get("timestamp")
+    if isinstance(raw, bool) or raw is None:
+        return None
+    try:
+        value = float(raw)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if not math.isfinite(value) or value <= 0:
+        return None
+    return int(value)
+
+
 def build_nx_graph(edges: List[Dict[str, Any]]) -> nx.DiGraph:
-    """Constructs a directed NetworkX graph from edge dictionaries."""
-    G = nx.DiGraph()
+    """Construct a directed graph, retaining edges with safely normalized metadata."""
+    graph = nx.DiGraph()
     for edge in edges:
+        if not isinstance(edge, dict):
+            continue
         src = edge.get("source") or edge.get("from")
         tgt = edge.get("target") or edge.get("to")
-        val = float(edge.get("usd_value") or edge.get("amount") or 0.0)
-        ts = int(edge.get("timestamp") or 0)
-        tx = edge.get("tx_hash", "")
-        if src and tgt:
-            G.add_edge(src, tgt, weight=val, timestamp=ts, tx_hash=tx)
-    return G
+        if not src or not tgt:
+            continue
+
+        # Missing amounts default to zero for compatibility; malformed,
+        # non-finite, Boolean, or negative amounts invalidate the edge.
+        raw_amount = edge.get("usd_value")
+        if raw_amount is None:
+            raw_amount = edge.get("amount")
+        if raw_amount is None:
+            amount = 0.0
+        else:
+            amount = _safe_amount({"usd_value": raw_amount})
+            if amount is None:
+                continue
+
+        # Keep invalid/missing timestamps as 0 so downstream consumers receive
+        # a stable integer field rather than None.
+        timestamp = _safe_timestamp(edge)
+        graph.add_edge(
+            src,
+            tgt,
+            weight=amount,
+            timestamp=timestamp if timestamp is not None else 0,
+            tx_hash=edge.get("tx_hash", ""),
+        )
+    return graph
+
 
 def calculate_graph_centrality(G: nx.DiGraph, address: str) -> Dict[str, float]:
-    """Computes node degree, betweenness centrality approximation, and PageRank."""
+    """Compute degree, approximate betweenness, and PageRank for a node."""
     if address not in G:
         return {
             "in_degree": 0,
             "out_degree": 0,
             "betweenness": 0.0,
-            "pagerank": 0.0
+            "pagerank": 0.0,
         }
 
-    in_deg = G.in_degree(address)
-    out_deg = G.out_degree(address)
+    try:
+        pagerank = nx.pagerank(G, weight="weight").get(address, 0.0)
+    except (nx.NetworkXException, ZeroDivisionError, ValueError):
+        pagerank = 1.0 / max(1, len(G.nodes))
 
     try:
-        pr = nx.pagerank(G, weight="weight")
-        pagerank_score = pr.get(address, 0.0)
-    except Exception:
-        pagerank_score = 1.0 / max(1, len(G.nodes))
-
-    try:
-        bw = nx.betweenness_centrality(G)
-        betweenness_score = bw.get(address, 0.0)
-    except Exception:
-        betweenness_score = 0.0
+        betweenness = nx.betweenness_centrality(
+            G, k=min(100, len(G)) if len(G) > 100 else None, seed=42
+        ).get(address, 0.0)
+    except (nx.NetworkXException, ValueError):
+        betweenness = 0.0
 
     return {
-        "in_degree": in_deg,
-        "out_degree": out_deg,
-        "betweenness": round(betweenness_score, 4),
-        "pagerank": round(pagerank_score, 4)
+        "in_degree": G.in_degree(address),
+        "out_degree": G.out_degree(address),
+        "betweenness": round(float(betweenness), 4),
+        "pagerank": round(float(pagerank), 4),
     }
 
-def detect_circular_layering(G: nx.DiGraph, address: str) -> Dict[str, Any]:
-    """
-    Detects circular money routing (wash trading / round-tripping / circular mules).
-    Checks if address is part of any simple directed cycle of length 2 to 5.
-    """
-    if address not in G:
-        return {"has_cycle": False, "cycle_path": []}
 
+def detect_circular_layering(G: nx.DiGraph, address: str) -> Dict[str, Any]:
+    """Find a directed cycle of length 2–6 containing address, with a search cap."""
+    if address not in G:
+        return {"has_cycle": False, "cycle_path": [], "search_complete": True}
+
+    explored = 0
     try:
-        cycles = list(nx.simple_cycles(G))
-        for c in cycles:
-            if address in c and 2 <= len(c) <= 6:
+        for cycle in nx.simple_cycles(G, length_bound=6):
+            explored += 1
+            if len(cycle) >= 2 and address in cycle:
                 return {
                     "has_cycle": True,
-                    "cycle_path": c,
-                    "cycle_length": len(c)
+                    "cycle_path": cycle,
+                    "cycle_length": len(cycle),
+                    "search_complete": True,
                 }
-    except Exception:
+            if explored >= 5000:
+                return {
+                    "has_cycle": False,
+                    "cycle_path": [],
+                    "search_complete": False,
+                }
+    except (nx.NetworkXException, ValueError):
         pass
 
-    return {"has_cycle": False, "cycle_path": []}
+    return {"has_cycle": False, "cycle_path": [], "search_complete": True}
+
 
 def calculate_dispersion_entropy(outgoing_transfers: List[Dict[str, Any]]) -> float:
-    """
-    Computes Shannon entropy of outgoing transfer amounts.
-    High entropy = diversified/chaotic amounts (smurfing/fan-out).
-    Low entropy = equal splitting or single-hop pass-through.
-    """
+    """Compute Shannon entropy over valid positive outgoing transfer amounts."""
     if not outgoing_transfers or len(outgoing_transfers) <= 1:
         return 0.0
 
-    values = [float(tx.get("usd_value") or tx.get("amount") or 0.0) for tx in outgoing_transfers]
+    values = []
+    for tx in outgoing_transfers:
+        if not isinstance(tx, dict):
+            continue
+        value = _safe_amount(tx)
+        if value is not None and value > 0:
+            values.append(value)
+
     total = sum(values)
-    if total <= 0:
+    if not values or not math.isfinite(total) or total <= 0:
         return 0.0
 
-    probabilities = [v / total for v in values if v > 0]
+    probabilities = [value / total for value in values]
     entropy = -sum(p * math.log2(p) for p in probabilities if p > 0)
     return round(entropy, 3)
 
+
 def compute_transfer_velocity(
     incoming_transfers: List[Dict[str, Any]],
-    outgoing_transfers: List[Dict[str, Any]]
+    outgoing_transfers: List[Dict[str, Any]],
 ) -> Dict[str, Any]:
     """
-    Calculates dwell time (seconds between first receipt and first forward).
-    Laundering syndicates use automated bot forwarders with dwell times under 300s (5 mins).
+    Calculate time from the earliest valid receipt to the first valid forward
+    occurring at or after that receipt.
     """
+    normal = {
+        "dwell_time_seconds": None,
+        "is_rapid_forwarder": False,
+        "velocity_tier": "NORMAL",
+    }
     if not incoming_transfers or not outgoing_transfers:
-        return {
-            "dwell_time_seconds": None,
-            "is_rapid_forwarder": False,
-            "velocity_tier": "NORMAL"
-        }
+        return normal
 
-    in_times = [int(tx.get("timestamp") or 0) for tx in incoming_transfers if int(tx.get("timestamp") or 0) > 0]
-    out_times = [int(tx.get("timestamp") or 0) for tx in outgoing_transfers if int(tx.get("timestamp") or 0) > 0]
-
+    in_times = [
+        timestamp
+        for tx in incoming_transfers
+        if isinstance(tx, dict)
+        for timestamp in [_safe_timestamp(tx)]
+        if timestamp is not None
+    ]
+    out_times = [
+        timestamp
+        for tx in outgoing_transfers
+        if isinstance(tx, dict)
+        for timestamp in [_safe_timestamp(tx)]
+        if timestamp is not None
+    ]
     if not in_times or not out_times:
-        return {
-            "dwell_time_seconds": None,
-            "is_rapid_forwarder": False,
-            "velocity_tier": "NORMAL"
-        }
+        return normal
 
     first_in = min(in_times)
-    first_out = min(out_times)
-    dwell = max(0, first_out - first_in)
+    eligible_outgoing = [timestamp for timestamp in out_times if timestamp >= first_in]
+    if not eligible_outgoing:
+        return normal
 
+    dwell = min(eligible_outgoing) - first_in
     if dwell <= 300:
-        tier = "ULTRA_RAPID (<5m)"
-        rapid = True
+        tier, rapid = "ULTRA_RAPID (<5m)", True
     elif dwell <= 1800:
-        tier = "RAPID (<30m)"
-        rapid = True
+        tier, rapid = "RAPID (<30m)", True
     elif dwell <= 7200:
-        tier = "MODERATE (<2h)"
-        rapid = False
+        tier, rapid = "MODERATE (<2h)", False
     else:
-        tier = "SLOW (>2h)"
-        rapid = False
+        tier, rapid = "SLOW (>2h)", False
 
     return {
         "dwell_time_seconds": dwell,
         "is_rapid_forwarder": rapid,
-        "velocity_tier": tier
+        "velocity_tier": tier,
     }
