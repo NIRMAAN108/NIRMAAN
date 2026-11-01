@@ -40,10 +40,10 @@ class NCRPParseRequest(BaseModel):
 
     @model_validator(mode="after")
     def populate_text(self):
-        if not self.text and not self.complaint_text:
+        if self.text is None and self.complaint_text is None:
             raise ValueError("Complaint text must be provided in 'text' or 'complaint_text' field.")
-        if not self.text:
-            self.text = self.complaint_text
+        if self.text is None:
+            self.text = self.complaint_text or ""
         return self
 
 app = FastAPI(

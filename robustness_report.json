@@ -10,7 +10,7 @@
       "description": "Empty string address",
       "passed": true,
       "status_code": 400,
-      "latency_ms": 2.31,
+      "latency_ms": 2.46,
       "details": "Code=400"
     },
     {
@@ -19,7 +19,7 @@
       "description": "Non-standard prefix 'Z12345'",
       "passed": true,
       "status_code": 400,
-      "latency_ms": 1.52,
+      "latency_ms": 3.1,
       "details": "Code=400"
     },
     {
@@ -28,7 +28,7 @@
       "description": "Non-standard prefix 'xyz'",
       "passed": true,
       "status_code": 400,
-      "latency_ms": 2.4,
+      "latency_ms": 2.11,
       "details": "Code=400"
     },
     {
@@ -37,7 +37,7 @@
       "description": "Non-standard prefix 'BTC_123456789'",
       "passed": true,
       "status_code": 400,
-      "latency_ms": 1.62,
+      "latency_ms": 1.63,
       "details": "Code=400"
     },
     {
@@ -46,7 +46,7 @@
       "description": "Special characters and symbols",
       "passed": true,
       "status_code": 400,
-      "latency_ms": 2.02,
+      "latency_ms": 1.63,
       "details": "Code=400"
     },
     {
@@ -55,7 +55,7 @@
       "description": "34-char string starting with T but full of symbols",
       "passed": true,
       "status_code": 400,
-      "latency_ms": 1.54,
+      "latency_ms": 1.73,
       "details": "Code=400"
     },
     {
@@ -64,7 +64,7 @@
       "description": "Excessively long input (10,000 chars of 'A')",
       "passed": true,
       "status_code": 400,
-      "latency_ms": 2.3,
+      "latency_ms": 2.76,
       "details": "Code=400"
     },
     {
@@ -73,7 +73,7 @@
       "description": "Excessively long input (10,000 chars starting with 0x)",
       "passed": true,
       "status_code": 400,
-      "latency_ms": 3.29,
+      "latency_ms": 2.89,
       "details": "Code=400"
     },
     {
@@ -82,7 +82,7 @@
       "description": "Excessively long input (10,000 chars starting with T)",
       "passed": true,
       "status_code": 400,
-      "latency_ms": 2.03,
+      "latency_ms": 2.76,
       "details": "Code=400"
     },
     {
@@ -91,7 +91,7 @@
       "description": "max_depth = 0 (violates ge=1)",
       "passed": true,
       "status_code": 422,
-      "latency_ms": 2.2,
+      "latency_ms": 2.35,
       "details": "Status=422"
     },
     {
@@ -100,7 +100,7 @@
       "description": "max_depth = -5 (negative depth)",
       "passed": true,
       "status_code": 422,
-      "latency_ms": 2.1,
+      "latency_ms": 2.52,
       "details": "Status=422"
     },
     {
@@ -109,7 +109,7 @@
       "description": "max_depth = 100 (violates le=6)",
       "passed": true,
       "status_code": 422,
-      "latency_ms": 2.0,
+      "latency_ms": 2.1,
       "details": "Status=422"
     },
     {
@@ -118,7 +118,7 @@
       "description": "min_usd_value = -50 (violates ge=0.0)",
       "passed": true,
       "status_code": 422,
-      "latency_ms": 2.07,
+      "latency_ms": 1.92,
       "details": "Status=422"
     },
     {
@@ -127,7 +127,7 @@
       "description": "min_usd_value = -100 (violates ge=0.0)",
       "passed": true,
       "status_code": 422,
-      "latency_ms": 2.13,
+      "latency_ms": 1.72,
       "details": "Status=422"
     },
     {
@@ -136,7 +136,7 @@
       "description": "min_usd_value = 0.0 (exact lower bound)",
       "passed": true,
       "status_code": 200,
-      "latency_ms": 18.01,
+      "latency_ms": 474.6,
       "details": "Status=200"
     },
     {
@@ -145,7 +145,7 @@
       "description": "max_depth = 6 (exact upper bound)",
       "passed": true,
       "status_code": 200,
-      "latency_ms": 15.35,
+      "latency_ms": 25.83,
       "details": "Status=200"
     },
     {
@@ -154,7 +154,7 @@
       "description": "negative loss_amount_inr = -100000",
       "passed": true,
       "status_code": 422,
-      "latency_ms": 1.86,
+      "latency_ms": 3.01,
       "details": "Status=422"
     },
     {
@@ -163,7 +163,7 @@
       "description": "Hindi Unicode complainant & FIR",
       "passed": true,
       "status_code": 200,
-      "latency_ms": 23.59,
+      "latency_ms": 19.93,
       "details": "Status=200"
     },
     {
@@ -172,7 +172,7 @@
       "description": "Emoji & special symbols in FIR",
       "passed": true,
       "status_code": 200,
-      "latency_ms": 29.53,
+      "latency_ms": 19.83,
       "details": "Status=200"
     },
     {
@@ -181,7 +181,7 @@
       "description": "SQL Injection strings in FIR & Complainant",
       "passed": true,
       "status_code": 200,
-      "latency_ms": 17.85,
+      "latency_ms": 16.5,
       "details": "Status=200"
     },
     {
@@ -190,7 +190,7 @@
       "description": "XSS HTML payloads in metadata",
       "passed": true,
       "status_code": 200,
-      "latency_ms": 22.34,
+      "latency_ms": 14.48,
       "details": "Status=200"
     },
     {
@@ -199,7 +199,7 @@
       "description": "Completely empty text string",
       "passed": true,
       "status_code": 200,
-      "latency_ms": 4.04,
+      "latency_ms": 2.64,
       "details": "Len=0, Status=200, ValidSchema=True"
     },
     {
@@ -208,7 +208,7 @@
       "description": "Text with zero crypto addresses",
       "passed": true,
       "status_code": 200,
-      "latency_ms": 3.56,
+      "latency_ms": 2.65,
       "details": "Len=185, Status=200, ValidSchema=True"
     },
     {
@@ -217,7 +217,7 @@
       "description": "Text with TRON, EVM, BTC addresses",
       "passed": true,
       "status_code": 200,
-      "latency_ms": 2.88,
+      "latency_ms": 2.2,
       "details": "Len=574, Status=200, ValidSchema=True"
     },
     {
@@ -226,7 +226,7 @@
       "description": "Large text document (50k characters)",
       "passed": true,
       "status_code": 200,
-      "latency_ms": 25.6,
+      "latency_ms": 18.05,
       "details": "Len=45526, Status=200, ValidSchema=True"
     },
     {
@@ -235,7 +235,7 @@
       "description": "Extremely large document (100k characters)",
       "passed": true,
       "status_code": 200,
-      "latency_ms": 48.84,
+      "latency_ms": 47.67,
       "details": "Len=100000, Status=200, ValidSchema=True"
     },
     {
@@ -244,7 +244,7 @@
       "description": "Case Record Query for non-existent 'invalid-uuid-12345'",
       "passed": true,
       "status_code": 404,
-      "latency_ms": 4.31,
+      "latency_ms": 4.59,
       "details": "Status=404, Structured404=True"
     },
     {
@@ -253,7 +253,7 @@
       "description": "PDF Dossier Stream for non-existent 'invalid-uuid-12345'",
       "passed": true,
       "status_code": 404,
-      "latency_ms": 3.4,
+      "latency_ms": 4.88,
       "details": "Status=404, Structured404=True"
     },
     {
@@ -262,7 +262,7 @@
       "description": "Evidence Bundle ZIP for non-existent 'invalid-uuid-12345'",
       "passed": true,
       "status_code": 404,
-      "latency_ms": 3.19,
+      "latency_ms": 3.97,
       "details": "Status=404, Structured404=True"
     },
     {
@@ -271,7 +271,7 @@
       "description": "FIU-IND STR Payload for non-existent 'invalid-uuid-12345'",
       "passed": true,
       "status_code": 404,
-      "latency_ms": 4.14,
+      "latency_ms": 3.76,
       "details": "Status=404, Structured404=True"
     },
     {
@@ -280,7 +280,7 @@
       "description": "Case Record Query for non-existent 'case_999' OR '1'='1'",
       "passed": true,
       "status_code": 404,
-      "latency_ms": 4.05,
+      "latency_ms": 4.77,
       "details": "Status=404, Structured404=True"
     },
     {
@@ -289,7 +289,7 @@
       "description": "PDF Dossier Stream for non-existent 'case_999' OR '1'='1'",
       "passed": true,
       "status_code": 404,
-      "latency_ms": 4.54,
+      "latency_ms": 3.85,
       "details": "Status=404, Structured404=True"
     },
     {
@@ -298,7 +298,7 @@
       "description": "Evidence Bundle ZIP for non-existent 'case_999' OR '1'='1'",
       "passed": true,
       "status_code": 404,
-      "latency_ms": 5.22,
+      "latency_ms": 4.18,
       "details": "Status=404, Structured404=True"
     },
     {
@@ -307,7 +307,7 @@
       "description": "FIU-IND STR Payload for non-existent 'case_999' OR '1'='1'",
       "passed": true,
       "status_code": 404,
-      "latency_ms": 3.15,
+      "latency_ms": 4.85,
       "details": "Status=404, Structured404=True"
     },
     {
@@ -316,7 +316,7 @@
       "description": "Case Record Query for non-existent 'case_!@#$%^&*()'",
       "passed": true,
       "status_code": 404,
-      "latency_ms": 2.79,
+      "latency_ms": 5.23,
       "details": "Status=404, Structured404=True"
     },
     {
@@ -325,7 +325,7 @@
       "description": "PDF Dossier Stream for non-existent 'case_!@#$%^&*()'",
       "passed": true,
       "status_code": 404,
-      "latency_ms": 3.03,
+      "latency_ms": 4.12,
       "details": "Status=404, Structured404=True"
     },
     {
@@ -334,7 +334,7 @@
       "description": "Evidence Bundle ZIP for non-existent 'case_!@#$%^&*()'",
       "passed": true,
       "status_code": 404,
-      "latency_ms": 2.84,
+      "latency_ms": 4.34,
       "details": "Status=404, Structured404=True"
     },
     {
@@ -343,7 +343,7 @@
       "description": "FIU-IND STR Payload for non-existent 'case_!@#$%^&*()'",
       "passed": true,
       "status_code": 404,
-      "latency_ms": 2.8,
+      "latency_ms": 4.15,
       "details": "Status=404, Structured404=True"
     },
     {
@@ -352,8 +352,8 @@
       "description": "Persist case with Hindi unicode & emojis",
       "passed": true,
       "status_code": 201,
-      "latency_ms": 10.91,
-      "details": "CreatedCaseId=case_b376d31264"
+      "latency_ms": 34.69,
+      "details": "CreatedCaseId=case_c8becebc0f"
     },
     {
       "category": "Unicode Lifecycle",
@@ -361,7 +361,7 @@
       "description": "Fetch persisted Unicode case record",
       "passed": true,
       "status_code": 200,
-      "latency_ms": 6.95,
+      "latency_ms": 8.17,
       "details": ""
     },
     {
@@ -370,7 +370,7 @@
       "description": "Generate FIU-IND STR with Unicode metadata",
       "passed": true,
       "status_code": 200,
-      "latency_ms": 5.46,
+      "latency_ms": 5.13,
       "details": ""
     },
     {
@@ -379,8 +379,8 @@
       "description": "Generate court PDF dossier with Unicode metadata",
       "passed": true,
       "status_code": 200,
-      "latency_ms": 38.14,
-      "details": "Status=200, Bytes=4422"
+      "latency_ms": 28.46,
+      "details": "Status=200, Bytes=4550"
     },
     {
       "category": "Unicode Lifecycle",
@@ -388,8 +388,8 @@
       "description": "Generate court ZIP bundle with Unicode metadata",
       "passed": true,
       "status_code": 200,
-      "latency_ms": 40.8,
-      "details": "Status=200, Bytes=13512"
+      "latency_ms": 24.9,
+      "details": "Status=200, Bytes=14490"
     },
     {
       "category": "Concurrency & Load",
@@ -397,8 +397,8 @@
       "description": "16 concurrent trace requests",
       "passed": true,
       "status_code": 200,
-      "latency_ms": 188.38,
-      "details": "MeanLat=188.4ms, P95=235.2ms, ErrorRate=0.0%"
+      "latency_ms": 278.64,
+      "details": "MeanLat=278.6ms, P95=300.9ms, ErrorRate=0.0%"
     },
     {
       "category": "Concurrency & Load",
@@ -406,7 +406,7 @@
       "description": "Server remains online & responsive after load",
       "passed": true,
       "status_code": 200,
-      "latency_ms": 3.18,
+      "latency_ms": 2.49,
       "details": "HealthOK=True"
     }
   ]
