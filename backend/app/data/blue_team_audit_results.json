@@ -1,12 +1,12 @@
 {
-  "timestamp": "2026-11-01T12:13:05Z",
+  "timestamp": "2026-11-01T12:24:57Z",
   "target_endpoint": "http://127.0.0.1:8000",
   "summary": {
     "total": 16,
     "passed": 16,
     "failed": 0,
     "pass_rate_pct": 100.0,
-    "elapsed_seconds": 8.15
+    "elapsed_seconds": 11.83
   },
   "results": [
     {
@@ -67,7 +67,7 @@
       "name": "Preset 1: TRON Demo (\u20b915L Telegram Scam)",
       "status": "PASS",
       "details": {
-        "latency_ms": 14.83,
+        "latency_ms": 5.85,
         "destination_found": true,
         "target_vasp": "Binance",
         "typology": "STANDARD_RAPID_MULE",
@@ -82,7 +82,7 @@
       "name": "Preset 2: EVM Demo (\u20b925L CEX Layering)",
       "status": "PASS",
       "details": {
-        "latency_ms": 5.61,
+        "latency_ms": 28.15,
         "destination_found": true,
         "target_vasp": "Binance",
         "nodes_count": 5,
@@ -95,7 +95,7 @@
       "name": "Preset 3: BTC Demo (\u20b950L Pig Butchering UTXO)",
       "status": "PASS",
       "details": {
-        "latency_ms": 1845.15,
+        "latency_ms": 1615.56,
         "destination_found": true,
         "target_vasp": "Binance",
         "nodes_count": 5,
@@ -108,7 +108,7 @@
       "name": "Preset 4: Live Binance 14 Hot Vault (EVM)",
       "status": "PASS",
       "details": {
-        "latency_ms": 1.8,
+        "latency_ms": 17.01,
         "target_vasp": "Binance",
         "nodal_email": "compliance-in@binance.com",
         "fiu_registered": true
@@ -120,7 +120,7 @@
       "name": "Preset 5: Live WazirX Exploiter (CRITICAL Risk Tier)",
       "status": "PASS",
       "details": {
-        "latency_ms": 29.27,
+        "latency_ms": 3.0,
         "risk_tier": "CRITICAL",
         "ml_anomaly_score": 0.85,
         "flags": [
@@ -134,9 +134,9 @@
       "name": "Preset 6: Live Active TRON Wallet (TronGrid Live)",
       "status": "PASS",
       "details": {
-        "latency_ms": 5619.76,
-        "nodes_count": 26,
-        "edges_count": 50,
+        "latency_ms": 9584.24,
+        "nodes_count": 23,
+        "edges_count": 33,
         "ml_anomaly_score": 0.95
       },
       "notes": ""
@@ -146,7 +146,7 @@
       "name": "SQLite Case Vault: Case Creation (POST /api/cases)",
       "status": "PASS",
       "details": {
-        "case_id": "case_27454ae673",
+        "case_id": "case_6125cd41ab",
         "fir_number": "FIR-E2E-AUDIT/2026"
       },
       "notes": ""
@@ -156,7 +156,7 @@
       "name": "Case Retrieval by ID (GET /api/cases/{id})",
       "status": "PASS",
       "details": {
-        "case_id": "case_27454ae673",
+        "case_id": "case_6125cd41ab",
         "destination_vasp": "Binance"
       },
       "notes": ""
@@ -166,7 +166,7 @@
       "name": "Court Dossier PDF Generation (GET /api/cases/{id}/dossier)",
       "status": "PASS",
       "details": {
-        "bytes_length": 4451,
+        "bytes_length": 4452,
         "header_signature": "%PDF-",
         "content_type": "application/pdf"
       },
@@ -188,7 +188,7 @@
       "name": "Court-Sealed ZIP Evidence Bundle & Cryptographic Invariance",
       "status": "PASS",
       "details": {
-        "bundle_bytes": 12986,
+        "bundle_bytes": 12996,
         "files_count": 7,
         "verified_files": [
           "01_COURT_DOSSIER_FIR-E2E-AUDIT_2026.pdf",
