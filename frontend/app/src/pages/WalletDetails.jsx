@@ -17,14 +17,23 @@ export default function WalletDetails() {
   const [activeFilter, setActiveFilter] = useState("All");
 
   const query = search.trim().toLowerCase();
+  const cleanStr = (str) => (str || "").toString().toLowerCase().replace(/[^a-z0-9]/g, "");
+  const cleanQuery = cleanStr(search);
 
   const filteredTransactions = transactions.filter((tx) => {
-    const searchableText = [
+    const rawSearchableText = [
       tx.id, tx.type, tx.from, tx.to,
       tx.amount, tx.date, tx.status
     ].join(" ").toLowerCase();
 
-    const matchesSearch = searchableText.includes(query);
+    const normalizedSearchableText = cleanStr(rawSearchableText);
+
+    // Matches standard substring OR normalized alphanumeric (e.g. 'TXN001' matches 'TXN-001', '12000' matches '$12,000')
+    const matchesSearch =
+      !query ||
+      rawSearchableText.includes(query) ||
+      (cleanQuery.length > 0 && normalizedSearchableText.includes(cleanQuery));
+
     const matchesFilter =
       activeFilter === "All" || tx.type === activeFilter;
 
@@ -127,22 +136,22 @@ export default function WalletDetails() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <div className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2">
+            <form onSubmit={(e) => e.preventDefault()} className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2">
               <Search size={15} className="text-slate-400" />
               <input
                 type="text"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search transaction..."
+                placeholder="Search transaction (e.g. TXN-001, TXN001)..."
                 autoComplete="off"
-                className="w-40 bg-transparent text-sm outline-none"
+                className="w-52 bg-transparent text-sm outline-none"
               />
               {search.length > 0 && (
                 <button type="button" onClick={() => setSearch("")} className="text-xs font-semibold text-blue-600">
                   Clear
                 </button>
               )}
-            </div>
+            </form>
 
             <select
               value={activeFilter}
