@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>NIRMAAN — Crypto Fraud Attribution Engine (Microsoft Azure & AI · I4C / MHA)</title>
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#0866D9',
+              700: '#0078D4'
+            },
+            ms: {
+              red: '#F25022',
+              green: '#7FBA00',
+              blue: '#00A4EF',
+              yellow: '#FFB900'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'Segoe UI', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Cytoscape.js & Dagre Layout for Interactive Forensics Graph -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.5.0/cytoscape-dagre.min.js"></script>
+
+  <style>
+    body { background-color: #09090b; color: #f4f4f5; font-family: 'Inter', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #09090b; }
+    ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+    .glass-card { background: rgba(18, 18, 23, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .glass-input { background: rgba(9, 9, 11, 0.9); border: 1px solid rgba(255, 255, 255, 0.12); }
+    #cyCanvas { width: 100%; height: 420px; background: #0b0b10; border-radius: 0.75rem; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+  <!-- ======================================================== -->
+  <!-- TOP NAVIGATION BAR -->
+  <!-- ======================================================== -->
+  <header class="h-16 border-b border-zinc-800/80 bg-[#09090b]/95 backdrop-blur-md sticky top-0 z-40 px-4 sm:px-6 flex items-center justify-between">
+    <div class="flex items-center gap-3.5">
+      <div class="grid grid-cols-2 gap-[2px] w-8 h-8 rounded-full overflow-hidden shrink-0 shadow-md border border-white/10" title="Microsoft Azure & AI Forensic Platform">
+        <span class="bg-[#F25022]"></span>
+        <span class="bg-[#7FBA00]"></span>
+        <span class="bg-[#00A4EF]"></span>
+        <span class="bg-[#FFB900]"></span>
+      </div>
+      <div class="flex flex-col">
+        <div class="flex items-center gap-2">
+          <span class="font-extrabold text-sm tracking-tight text-white">NIRMAAN</span>
+          <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 font-semibold border border-indigo-500/20">ChainTrace AI</span>
+          <span class="text-[10px] text-zinc-400 font-mono hidden md:inline">• Microsoft Azure & AI · SIH26183</span>
+        </div>
+        <span class="text-[11px] text-zinc-400">Indian Cybercrime Coordination Centre (I4C) • Ministry of Home Affairs</span>
+      </div>
+    </div>
+
+    <!-- PRIMARY APP VIEW TABS -->
+    <div class="flex items-center bg-zinc-900/90 p-1 rounded-xl border border-zinc-800">
+      <button id="navTraceBtn" onclick="switchMainTab('trace')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#0866D9] text-white flex items-center gap-1.5 transition-all shadow-sm">
+        <span class="material-symbols-outlined text-[16px]">timeline</span>
+        <span>Trace Canvas</span>
+      </button>
+      <button id="navVaultBtn" onclick="switchMainTab('vault')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-800/60 flex items-center gap-1.5 transition-all">
+        <span class="material-symbols-outlined text-[16px]">inventory_2</span>
+        <span>Case Vault</span>
+        <span id="caseCountBadge" class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-300">0</span>
+      </button>
+      <button id="navVaspsBtn" onclick="switchMainTab('vasps')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-800/60 flex items-center gap-1.5 transition-all">
+        <span class="material-symbols-outlined text-[16px]">account_balance</span>
+        <span>VASP Directory</span>
+        <span class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-400 border border-emerald-500/20">41</span>
+      </button>
+    </div>
+
+    <!-- USER & LIVE STATUS -->
+    <div class="hidden lg:flex items-center gap-4">
+      <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-300">
+        <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="font-mono text-[11px]" id="engineStatusBadge">Mainnet Crawlers Active (TRON • EVM • BTC)</span>
+      </div>
+      
+      <div class="flex items-center gap-2 border-l border-zinc-800 pl-4">
+        <div class="h-8 w-8 rounded-full bg-indigo-950 border border-indigo-500/30 flex items-center justify-center text-xs font-mono font-bold text-indigo-300">
+          IO
+        </div>
+        <div class="flex flex-col text-left">
+          <span class="text-xs font-semibold text-white leading-tight">DSP Anjali Verma</span>
+          <span class="text-[10px] text-zinc-400 font-mono">Cyber Crime PS</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+
+  <!-- ======================================================== -->
+  <!-- VIEW 1: FORENSIC TRACE CANVAS (Default) -->
+  <!-- ======================================================== -->
+  <main id="viewTraceCanvas" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col gap-8">
+    
+    <!-- SECTION 1: SEARCH & INGESTION CONTROL CENTER -->
+    <section class="glass-card rounded-2xl p-5 shadow-2xl flex flex-col gap-4 border border-zinc-800/90">
+      
+      <!-- MODE TOGGLES: DIRECT WALLET vs 1930 NCRP COMPLAINT -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-zinc-800">
+        <div class="flex items-center gap-2">
+          <button id="tabWalletBtn" onclick="switchInputMode('wallet')" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-zinc-800 text-white flex items-center gap-1.5 transition-all">
+            <span class="material-symbols-outlined text-[16px] text-indigo-400">account_balance_wallet</span>
+            <span>Suspect Wallet Address</span>
+          </button>
+          <button id="tabNcrpBtn" onclick="switchInputMode('ncrp')" class="text-xs font-medium px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/50 flex items-center gap-1.5 transition-all">
+            <span class="material-symbols-outlined text-[16px] text-zinc-400">document_scanner</span>
+            <span>1930 / NCRP Text Ingestion</span>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2 text-[11px] font-mono text-zinc-400" id="crawlModeIndicator">
+          <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+          <span>Fast Hybrid Mode (Auto-Resolver)</span>
+        </div>
+      </div>
+
+      <!-- INPUT CONTAINER 1: DIRECT WALLET -->
+      <div id="modeWalletView" class="flex flex-col gap-3">
+        <div class="relative">
+          <label class="text-[11px] font-semibold text-zinc-400 block mb-1">Suspect Wallet / Transaction Seed</label>
+          <input 
+            id="inputWallet" 
+            type="text" 
+            value="TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC" 
+            placeholder="Paste TRON (T...), Ethereum/BSC (0x...), or Bitcoin (bc1/1/3)..."
+            class="w-full glass-input rounded-xl px-4 py-3 font-mono text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500 transition-colors"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="text-[11px] font-semibold text-zinc-400 block mb-1">FIR / Crime Number</label>
+            <input 
+              id="inputFir" 
+              type="text" 
+              value="FIR-88/2026 Cyber PS Bhopal" 
+              placeholder="e.g. FIR-88/2026"
+              class="w-full glass-input rounded-xl px-3 py-2 font-mono text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+          <div>
+            <label class="text-[11px] font-semibold text-zinc-400 block mb-1">Reported Victim Loss (INR)</label>
+            <input 
+              id="inputLoss" 
+              type="number" 
+              value="1500000" 
+              placeholder="1500000"
+              class="w-full glass-input rounded-xl px-3 py-2 font-mono text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+          <div>
+            <label class="text-[11px] font-semibold text-zinc-400 block mb-1">Max BFS Depth</label>
+            <select id="inputDepth" class="w-full glass-input rounded-xl px-3 py-2 font-mono text-xs text-white focus:outline-none focus:border-indigo-500">
+              <option value="3">3 Hops (Rapid Sweep)</option>
+              <option value="4" selected>4 Hops (Standard Laundering)</option>
+              <option value="5">5 Hops (Deep Layering)</option>
+              <option value="6">6 Hops (Exhaustive)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- INPUT CONTAINER 2: RAW NCRP TEXT -->
+      <div id="modeNcrpView" class="hidden flex-col gap-3">
+        <label class="text-[11px] font-semibold text-zinc-400 block">Raw 1930 Incident Ticket / Complaint Description</label>
+        <textarea 
+          id="ncrpRawInput" 
+          rows="3" 
+          placeholder="Paste raw 1930 portal ticket, SMS, or FIR narrative here..."
+          class="w-full glass-input rounded-xl p-3 font-mono text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500 leading-relaxed"
+        >Complainant Ramesh Kumar reports loss of Rs 15,00,000 on Telegram task fraud group. Transferred USDT to suspect wallet TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC. Ref FIR-88/2026 Cyber PS Bhopal.</textarea>
+      </div>
+
+      <!-- TRACE ACTION BUTTON & PRESETS -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-3 border-t border-zinc-800">
+        <!-- 1-Click Investigation Presets -->
+        <div class="flex flex-wrap items-center gap-1.5 text-xs">
+          <span class="text-zinc-400 font-semibold mr-1 flex items-center gap-1">
+            <span class="material-symbols-outlined text-[15px] text-indigo-400">play_circle</span> Quick Presets:
+          </span>
+          <button onclick="loadScenario('tron_demo')" class="px-2.5 py-1 rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[11px] text-zinc-300 transition-all">
+            TRON ₹15L Telegram
+          </button>
+          <button onclick="loadScenario('evm_demo')" class="px-2.5 py-1 rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[11px] text-zinc-300 transition-all">
+            EVM ₹25L CEX Layering
+          </button>
+          <button onclick="loadScenario('btc_demo')" class="px-2.5 py-1 rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[11px] text-zinc-300 transition-all">
+            BTC ₹50L Pig Butchering
+          </button>
+          <span class="text-zinc-600 font-mono">|</span>
+          <button onclick="loadScenario('binance_live')" class="px-2.5 py-1 rounded-md bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-500/30 text-[11px] text-emerald-300 transition-all flex items-center gap-1">
+            <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+            Binance 14 Live Hot Vault
+          </button>
+          <button onclick="loadScenario('wazirx_live')" class="px-2.5 py-1 rounded-md bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/30 text-[11px] text-rose-300 transition-all flex items-center gap-1">
+            <span class="h-1.5 w-1.5 rounded-full bg-rose-400"></span>
+            WazirX Exploiter (Tornado)
+          </button>
+          <button onclick="loadScenario('tron_live')" class="px-2.5 py-1 rounded-md bg-sky-950/40 hover:bg-sky-900/60 border border-sky-500/30 text-[11px] text-sky-300 transition-all flex items-center gap-1">
+            <span class="h-1.5 w-1.5 rounded-full bg-sky-400"></span>
+            Live TRON Active Wallet
+          </button>
+        </div>
+
+        <button 
+          id="btnTraceAction" 
+          onclick="executeTraceFlow()" 
+          class="px-6 py-2.5 rounded-xl bg-[#0866D9] hover:bg-[#0078D4] active:scale-[0.98] text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-lg shadow-blue-600/25 transition-all shrink-0"
+        >
+          <span class="material-symbols-outlined text-[18px]">bolt</span>
+          <span id="btnTraceText">Run Multi-Hop Forensics</span>
+        </button>
+      </div>
+
+    </section>
+
+    <!-- SECTION 2: INTERACTIVE GRAPH CANVAS & SUMMARY -->
+    <section id="trailSection" class="glass-card rounded-2xl p-5 flex flex-col gap-4 border border-zinc-800">
+      
+      <!-- CANVAS CONTROLS HEADER -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-zinc-800">
+        <div class="flex items-center gap-2.5">
+          <div class="h-6 w-6 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-xs font-mono font-bold">1</div>
+          <h2 class="text-sm font-bold text-white tracking-tight">Interactive Multi-Hop Transaction Graph</h2>
+          <span class="text-xs text-zinc-500">•</span>
+          <span class="text-xs font-mono text-zinc-400" id="trailLatencyBadge">0 Nodes • 0 Edges • 0 ms</span>
+          <span id="graphStatsBadge" class="hidden"></span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <!-- Chain Badge -->
+          <span id="trailChainBadge" class="px-2.5 py-0.5 rounded-full bg-indigo-950 border border-indigo-500/30 text-indigo-300 text-[11px] font-mono font-semibold">
+            Multi-Chain
+          </span>
+          <!-- Graph Legend -->
+          <div class="hidden md:flex items-center gap-3 text-[10px] font-mono mr-2">
+            <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-rose-500"></span> Suspect</span>
+            <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-amber-500"></span> Mule</span>
+            <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-sky-500"></span> Deposit Forwarder</span>
+            <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-emerald-500"></span> Exchange Vault</span>
+            <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-purple-500"></span> Mixer</span>
+          </div>
+
+          <!-- Canvas Zoom Actions -->
+          <button onclick="cyFit()" title="Fit to Screen" class="px-2 py-1 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-300">
+            <span class="material-symbols-outlined text-[16px]">fit_screen</span>
+          </button>
+          <button onclick="cyZoomIn()" title="Zoom In" class="px-2 py-1 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-300">
+            <span class="material-symbols-outlined text-[16px]">zoom_in</span>
+          </button>
+          <button onclick="cyZoomOut()" title="Zoom Out" class="px-2 py-1 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-300">
+            <span class="material-symbols-outlined text-[16px]">zoom_out</span>
+          </button>
+          <button onclick="cyResetLayout()" title="Re-layout Graph" class="px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[11px] font-mono text-zinc-300 flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">refresh</span> Re-layout
+          </button>
+        </div>
+      </div>
+
+      <!-- MAIN GRAPH CANVAS WITH SIDE INSPECTOR -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        
+        <!-- CYTOSCAPE CANVAS (8 COLS) -->
+        <div class="lg:col-span-8 relative rounded-xl border border-zinc-800/80 overflow-hidden bg-[#09090d]">
+          <div id="cyCanvas"></div>
+          
+          <div class="absolute bottom-3 left-3 px-2.5 py-1 rounded-md bg-black/70 backdrop-blur-md border border-zinc-800 text-[10px] font-mono text-zinc-400 flex items-center gap-2">
+            <span class="material-symbols-outlined text-[13px] text-indigo-400">touch_app</span>
+            <span>Click any node to inspect wallet details &amp; risk factors</span>
+          </div>
+        </div>
+
+        <!-- NODE DETAILS INSPECTOR PANEL (4 COLS) -->
+        <div class="lg:col-span-4 glass-card rounded-xl p-4 flex flex-col justify-between border border-zinc-800 bg-zinc-950/80">
+          <div>
+            <div class="flex items-center justify-between pb-2 border-b border-zinc-800/80">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Wallet Inspector</span>
+              <span id="inspectNodeType" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">
+                AWAITING SELECTION
+              </span>
+            </div>
+
+            <div class="mt-3 flex flex-col gap-3">
+              <div>
+                <span class="text-[10px] text-zinc-500 block uppercase font-mono">Address</span>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <span id="inspectAddress" class="text-xs font-mono text-zinc-400 break-all select-all font-medium">
+                    —
+                  </span>
+                  <button onclick="copyToClipboard(document.getElementById('inspectAddress').innerText)" title="Copy Address" class="text-zinc-500 hover:text-white p-1">
+                    <span class="material-symbols-outlined text-[15px]">content_copy</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2 bg-black/40 p-2.5 rounded-lg border border-zinc-800/60 font-mono text-xs">
+                <div>
+                  <span class="text-[10px] text-zinc-500 uppercase block">Risk Tier</span>
+                  <span id="inspectRiskTier" class="text-zinc-400 font-bold">—</span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-zinc-500 uppercase block">Risk Score</span>
+                  <span id="inspectRiskScore" class="text-zinc-400 font-bold">0.00</span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-zinc-500 uppercase block">Balance</span>
+                  <span id="inspectBalance" class="text-zinc-400">$0.00 USD</span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-zinc-500 uppercase block">VASP Attribution</span>
+                  <span id="inspectVasp" class="text-zinc-400 font-semibold">None</span>
+                </div>
+              </div>
+
+              <div>
+                <span class="text-[10px] text-zinc-500 block uppercase font-mono">Forensic Tags &amp; Heuristic Signals</span>
+                <div id="inspectTagsContainer" class="flex flex-wrap gap-1.5 mt-1">
+                  <span class="px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700 text-[10px] font-mono">NO_TAGS</span>
+                </div>
+              </div>
+
+              <div>
+                <span class="text-[10px] text-zinc-500 block uppercase font-mono">Forensic Analyst Summary</span>
+                <p id="inspectExplanation" class="text-[11px] text-zinc-400 leading-relaxed mt-0.5 bg-black/20 p-2 rounded-lg border border-zinc-800/40">
+                  Select any node in the transaction graph to inspect its wallet address, risk tier, and forensic tags.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-zinc-800 text-[10px] text-zinc-500 font-mono flex items-center justify-between">
+            <span>Graph Coordinates: Interactive</span>
+            <span class="text-indigo-400">Click node to sync</span>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- SECTION 3: STEP-BY-STEP DYNAMIC PROGRESSION & VERDICT HUB -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      
+      <!-- LEFT COLUMN: DYNAMIC HOP PIPELINE & HOPS TABLE (7 COLS) -->
+      <div class="lg:col-span-7 flex flex-col gap-4">
+        
+        <!-- STEP-BY-STEP DYNAMIC CARDS CONTAINER -->
+        <div class="glass-card rounded-2xl p-5 border border-zinc-800 flex flex-col gap-3">
+          <div class="flex items-center justify-between pb-2 border-b border-zinc-800">
+            <div class="flex items-center gap-2">
+              <div class="h-6 w-6 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xs font-mono font-bold">2</div>
+              <h3 class="text-sm font-bold text-white">Forensic Step-by-Step Laundering Flow</h3>
+            </div>
+            <span class="text-[11px] font-mono text-zinc-400" id="flowStepCountBadge">0 Resolved Steps</span>
+          </div>
+
+          <!-- Dynamic Flow Cards Container (Filled dynamically by JS) -->
+          <div id="dynamicFlowCards" class="flex flex-col gap-2.5">
+            <!-- Dynamically populated -->
+          </div>
+          <div class="hidden">
+            <span id="trailHop0Addr"></span>
+            <span id="trailHop0Amount"></span>
+            <span id="trailHop2Addr"></span>
+            <span id="trailHop3Addr"></span>
+          </div>
+        </div>
+
+        <!-- TRANSACTION HOPS LEDGER TABLE -->
+        <div class="glass-card rounded-2xl p-5 border border-zinc-800 flex flex-col gap-3">
+          <div class="flex items-center justify-between pb-2 border-b border-zinc-800">
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider font-mono">Transaction Hops Ledger</h3>
+            <span class="text-[10px] font-mono text-zinc-400">On-Chain Electronic Records</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left font-mono text-xs">
+              <thead>
+                <tr class="text-[10px] text-zinc-500 border-b border-zinc-800 uppercase">
+                  <th class="pb-2">Hop</th>
+                  <th class="pb-2">From &rarr; To</th>
+                  <th class="pb-2">Amount</th>
+                  <th class="pb-2">Tx Hash</th>
+                </tr>
+              </thead>
+              <tbody id="hopsTableBody" class="divide-y divide-zinc-800/60 text-zinc-300">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: STATUTORY VERDICT & LEGAL ENFORCEMENT HUB (5 COLS) -->
+      <div class="lg:col-span-5 flex flex-col gap-4">
+        
+        <!-- TARGET EXCHANGE ATTRIBUTION VERDICT CARD -->
+        <div class="glass-card rounded-2xl p-6 border border-zinc-800 flex flex-col gap-4 bg-gradient-to-b from-zinc-900/80 to-zinc-950">
+          <div class="flex items-center justify-between pb-2 border-b border-zinc-800">
+            <span class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Identified Target Exchange</span>
+            <span id="verdictFiuBadge" class="px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 text-[10px] font-bold font-mono">
+              AWAITING TRACE
+            </span>
+          </div>
+
+          <div>
+            <div class="flex items-baseline gap-3">
+              <h2 class="text-3xl font-extrabold text-white tracking-tight" id="verdictExchangeTitle">No Active Trace</h2>
+              <span id="verdictExchangeName" class="hidden">None</span>
+              <span class="text-xs font-mono text-zinc-400 font-semibold" id="verdictTrackedLoss">₹0 Tracked</span>
+            </div>
+            <p class="text-xs text-zinc-400 mt-1 leading-relaxed">
+              Initiate an on-chain trace from the search bar to detect consolidation into registered exchange omnibus hot vaults.
+            </p>
+          </div>
+
+          <!-- ML SYNDICATE TYPOLOGY BOX -->
+          <div class="p-3.5 rounded-xl bg-indigo-950/20 border border-indigo-500/30 flex flex-col gap-1.5" id="typologyBox">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-mono uppercase text-indigo-400 font-semibold flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">psychology</span> Modus Operandi Typology
+              </span>
+              <span class="text-[10px] font-mono text-zinc-400 font-bold" id="typologyConfidence">—</span>
+            </div>
+            <div class="text-xs font-bold text-white" id="typologyName">Awaiting Forensic Traversal</div>
+            <div class="text-[11px] text-zinc-400 leading-relaxed" id="typologyDesc">
+              Execute a transaction hop trace or parse an NCRP complaint to evaluate laundering patterns and ML risk profiles.
+            </div>
+            <div class="text-[10px] font-mono text-zinc-400 pt-1 border-t border-indigo-500/20" id="typologyViolation">
+              Statutory Classification: Pending Case Ingestion
+            </div>
+          </div>
+
+          <!-- TARGET COMPLIANCE DESK PARTICULARS -->
+          <div class="grid grid-cols-1 gap-2.5 bg-black/40 p-3.5 rounded-xl border border-zinc-800/80 font-mono text-xs">
+            <div>
+              <span class="text-[10px] text-zinc-500 uppercase block">Nodal Compliance Officer (FIU-IND)</span>
+              <a href="#" class="text-zinc-400 hover:underline font-medium text-xs break-all" id="verdictNodalEmail">
+                —
+              </a>
+            </div>
+            <div>
+              <span class="text-[10px] text-zinc-500 uppercase block">Law Enforcement Portal</span>
+              <a href="#" target="_blank" class="text-zinc-400 hover:underline font-medium text-xs truncate block" id="verdictPortalUrl">
+                —
+              </a>
+            </div>
+            <div>
+              <span class="text-[10px] text-zinc-500 uppercase block">Sweeping TxHash</span>
+              <span class="text-zinc-400 text-[11px] font-mono truncate block" id="verdictSweepHash">
+                —
+              </span>
+            </div>
+            <div>
+              <span class="text-[10px] text-zinc-500 uppercase block">Evidence SHA-256 Seal (Sec 63 BSA)</span>
+              <span class="text-zinc-400 text-[11px] font-mono truncate block" id="verdictEvidenceHash">
+                —
+              </span>
+              <span id="verdictEvidenceSeal" class="hidden"></span>
+            </div>
+
+            <!-- RISK BAR -->
+            <div class="flex flex-col gap-1 pt-1 border-t border-zinc-800/80">
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="text-zinc-400">Laundering Risk Score:</span>
+                <span id="verdictRiskScore" class="text-zinc-400 font-bold">0.00 (PENDING)</span>
+              </div>
+              <div class="h-1.5 w-full bg-zinc-900 rounded-full overflow-hidden border border-zinc-800">
+                <div id="verdictRiskBar" class="h-full bg-zinc-700 rounded-full w-[0%] transition-all"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ENFORCEMENT ACTION BUTTONS -->
+          <div class="flex flex-col gap-2.5 pt-2">
+            <!-- 1. View & Copy Section 94 Notice -->
+            <button 
+              onclick="openNoticeModal()" 
+              class="w-full py-2.5 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 active:scale-[0.99] text-white text-xs font-semibold flex items-center justify-between border border-zinc-700 transition-all shadow-md"
+            >
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-indigo-400 text-[18px]">gavel</span>
+                <div class="text-left">
+                  <div>Section 94 BNSS Summons Notice</div>
+                  <div class="text-[10px] text-zinc-400 font-normal">Freeze Account &amp; Requisition KYC</div>
+                </div>
+              </div>
+              <span class="material-symbols-outlined text-zinc-400 text-[16px]">open_in_new</span>
+            </button>
+
+            <!-- 2. Download Court PDF Dossier -->
+            <button 
+              onclick="downloadCourtPDF()" 
+              class="w-full py-2.5 px-4 rounded-xl bg-[#0866D9] hover:bg-[#0078D4] active:scale-[0.99] text-white text-xs font-semibold flex items-center justify-between shadow-lg shadow-indigo-600/25 transition-all"
+            >
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+                <div class="text-left">
+                  <div>Export Court Evidence Dossier (PDF)</div>
+                  <div class="text-[10px] text-indigo-200 font-normal">Section 63 BSA Electronic Certificate</div>
+                </div>
+              </div>
+              <span class="material-symbols-outlined text-white text-[16px]">download</span>
+            </button>
+
+            <!-- 3. Download Full Sealed Evidence Bundle -->
+            <button 
+              onclick="downloadZIPBundle()" 
+              class="w-full py-2.5 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 active:scale-[0.99] text-white text-xs font-semibold flex items-center justify-between border border-zinc-700 transition-all shadow-md"
+            >
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-emerald-400 text-[18px]">folder_zip</span>
+                <div class="text-left">
+                  <div>Court Evidence Bundle (ZIP)</div>
+                  <div class="text-[10px] text-zinc-400 font-normal">PDF + Summons + STR + SHA256 Manifest</div>
+                </div>
+              </div>
+              <span class="material-symbols-outlined text-zinc-400 text-[16px]">download</span>
+            </button>
+          </div>
+
+          <div class="pt-2 border-t border-zinc-800 text-[11px] text-zinc-500 flex items-center gap-1.5 font-mono">
+            <span class="material-symbols-outlined text-[14px] text-emerald-400">verified</span>
+            <span>Cryptographic non-repudiation seal verified</span>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- ======================================================== -->
+  <!-- VIEW 2: CASE VAULT (Investigated Cases History) -->
+  <!-- ======================================================== -->
+  <main id="viewCaseVault" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col gap-6">
+    
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-zinc-800 gap-4">
+      <div>
+        <h1 class="text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
+          <span class="material-symbols-outlined text-indigo-400 text-[26px]">inventory_2</span>
+          Case Vault
+        </h1>
+        <p class="text-xs text-zinc-400 mt-1">
+          Historical repository of investigated cryptocurrency fraud traces, court evidence seals, and statutory Section 94 notices.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button onclick="fetchCaseVaultRecords()" class="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-300 flex items-center gap-1.5 transition-all">
+          <span class="material-symbols-outlined text-[16px]">refresh</span> Refresh Records
+        </button>
+      </div>
+    </div>
+
+    <!-- CASES DATA TABLE -->
+    <div class="glass-card rounded-2xl border border-zinc-800 overflow-hidden shadow-2xl">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left font-mono text-xs">
+          <thead>
+            <tr class="text-[10px] text-zinc-500 bg-black/40 border-b border-zinc-800 uppercase">
+              <th class="py-3 px-4">Case ID &amp; FIR</th>
+              <th class="py-3 px-4">Suspect Seed Address</th>
+              <th class="py-3 px-4">Chain</th>
+              <th class="py-3 px-4">Destination VASP</th>
+              <th class="py-3 px-4">Victim Loss</th>
+              <th class="py-3 px-4">Created (UTC)</th>
+              <th class="py-3 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="caseVaultTableBody" class="divide-y divide-zinc-800 text-zinc-300">
+            <tr>
+              <td colspan="7" class="py-8 text-center text-zinc-500 font-sans text-xs">Loading Case Vault records...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+
+  <!-- ======================================================== -->
+  <!-- VIEW 3: VASP INTELLIGENCE DIRECTORY -->
+  <!-- ======================================================== -->
+  <main id="viewVaspsDirectory" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col gap-6">
+    
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-zinc-800 gap-4">
+      <div>
+        <h1 class="text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
+          <span class="material-symbols-outlined text-emerald-400 text-[26px]">account_balance</span>
+          VASP Intelligence Directory
+        </h1>
+        <p class="text-xs text-zinc-400 mt-1">
+          FIU-IND registered Virtual Asset Service Providers, legal compliance desks, and known hot wallet omnibus addresses.
+        </p>
+      </div>
+
+      <div class="w-full sm:w-72">
+        <input 
+          id="vaspSearchInput" 
+          oninput="filterVaspDirectory()" 
+          type="text" 
+          placeholder="Search exchange by name..." 
+          class="w-full glass-input rounded-xl px-3 py-2 font-mono text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500"
+        />
+      </div>
+    </div>
+
+    <!-- VASPS GRID CONTAINER -->
+    <div id="vaspGridContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- Populated dynamically by JS -->
+    </div>
+
+  </main>
+
+
+  <!-- ======================================================== -->
+  <!-- MODAL: SECTION 94 BNSS STATUTORY SUMMONS NOTICE VIEWER -->
+  <!-- ======================================================== -->
+  <div id="modalNotice" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden items-center justify-center p-4">
+    <div class="glass-card bg-zinc-900/95 border border-zinc-700/80 w-full max-w-3xl rounded-2xl p-6 flex flex-col gap-4 shadow-2xl max-h-[85vh]">
+      
+      <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
+        <div class="flex items-center gap-2.5">
+          <div class="h-8 w-8 rounded-lg bg-[#0866D9]/20 text-indigo-400 flex items-center justify-center font-bold">
+            <span class="material-symbols-outlined text-[18px]">gavel</span>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white">Section 94 BNSS Statutory Summons Notice</h3>
+            <p class="text-xs text-zinc-400">Formal legal requisition under Bharatiya Nagarik Suraksha Sanhita, 2023</p>
+          </div>
+        </div>
+        <button onclick="closeNoticeModal()" class="text-zinc-400 hover:text-white text-2xl font-bold">&times;</button>
+      </div>
+
+      <div class="relative">
+        <pre id="noticePreContent" class="bg-black/70 p-4 rounded-xl border border-zinc-800 font-mono text-[11px] text-zinc-300 whitespace-pre-wrap overflow-y-auto max-h-[50vh] leading-relaxed select-all">
+Loading notice content...
+        </pre>
+      </div>
+
+      <div class="flex items-center justify-between pt-3 border-t border-zinc-800 gap-3">
+        <span class="text-xs text-zinc-500">Notice reference is cryptographically sealed</span>
+        <div class="flex items-center gap-2">
+          <button onclick="copyNoticeToClipboard()" class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-all">
+            <span class="material-symbols-outlined text-[16px]" id="copyNoticeIcon">content_copy</span>
+            <span id="copyNoticeText">Copy Notice</span>
+          </button>
+          <button onclick="sendNodalEmail()" class="px-4 py-2 rounded-xl bg-[#0866D9] hover:bg-[#0078D4] text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-blue-600/25 transition-all">
+            <span class="material-symbols-outlined text-[16px]">mail</span>
+            <span>Email to Nodal Desk</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ======================================================== -->
+  <!-- JAVASCRIPT LOGIC & FORENSICS CONTROLLER -->
+  <!-- ======================================================== -->
+  <script>
+    const API_BASE = (window.location.protocol.startsWith('http'))
+      ? window.location.origin
+      : "http://127.0.0.1:8000";
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    let cy = null;
+    let currentTrace = null;
+    let currentCaseId = null;
+    let cachedVasps = {};
+
+    const SCENARIOS = {
+      tron_demo: {
+        wallet: "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC",
+        fir: "FIR-88/2026 Cyber PS Bhopal",
+        loss: 1500000,
+        depth: 4,
+        is_live: false
+      },
+      evm_demo: {
+        wallet: "0x95222290DD7853684454F4275E597E3A63725F78",
+        fir: "FIR-104/2026 Cyber PS Bengaluru",
+        loss: 2500000,
+        depth: 4,
+        is_live: false
+      },
+      btc_demo: {
+        wallet: "bc1qqyqszqgpqyqszqgpqyqszqgpqyqszqgpyfl4f3",
+        fir: "FIR-12/2026 Cyber PS Delhi",
+        loss: 5000000,
+        depth: 4,
+        is_live: false
+      },
+      binance_live: {
+        wallet: "0x28C6c06298d514Db089934071355E5743bf21d60",
+        fir: "FIR-301/2026 Cyber HQ Mumbai",
+        loss: 8500000,
+        depth: 3,
+        is_live: true
+      },
+      wazirx_live: {
+        wallet: "0x0bfC924618e950882e70e3025255474B5C6eDb27",
+        fir: "FIR-192/2024 Special Cell Delhi",
+        loss: 19500000000,
+        depth: 3,
+        is_live: true
+      },
+      tron_live: {
+        wallet: "TTRnHsXFcGkkjC8NzQhUsVF1y86o38VjTw",
+        fir: "FIR-44/2026 Cyber PS Cyberabad",
+        loss: 3400000,
+        depth: 4,
+        is_live: true
+      }
+    };
+
+    // -------------------------------------------------------------
+    // 1. MAIN TAB SWITCHER (Trace Canvas | Case Vault | VASP Directory)
+    // -------------------------------------------------------------
+    function switchMainTab(tab) {
+      const vTrace = document.getElementById('viewTraceCanvas');
+      const vVault = document.getElementById('viewCaseVault');
+      const vVasps = document.getElementById('viewVaspsDirectory');
+
+      const btnTrace = document.getElementById('navTraceBtn');
+      const btnVault = document.getElementById('navVaultBtn');
+      const btnVasps = document.getElementById('navVaspsBtn');
+
+      // Reset styles
+      [btnTrace, btnVault, btnVasps].forEach(btn => {
+        btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-800/60 flex items-center gap-1.5 transition-all";
+      });
+
+      vTrace.classList.add('hidden');
+      vVault.classList.add('hidden');
+      vVasps.classList.add('hidden');
+
+      if (tab === 'trace') {
+        vTrace.classList.remove('hidden');
+        btnTrace.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#0866D9] text-white flex items-center gap-1.5 transition-all shadow-sm";
+        if (cy) { setTimeout(() => cy.resize().fit(), 100); }
+      } else if (tab === 'vault') {
+        vVault.classList.remove('hidden');
+        btnVault.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#0866D9] text-white flex items-center gap-1.5 transition-all shadow-sm";
+        fetchCaseVaultRecords();
+      } else if (tab === 'vasps') {
+        vVasps.classList.remove('hidden');
+        btnVasps.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#0866D9] text-white flex items-center gap-1.5 transition-all shadow-sm";
+        fetchVaspDirectory();
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 2. INPUT MODE SWITCHER (Direct Wallet vs 1930 Text Ingest)
+    // -------------------------------------------------------------
+    function switchInputMode(mode) {
+      const tabWallet = document.getElementById('tabWalletBtn');
+      const tabNcrp = document.getElementById('tabNcrpBtn');
+      const viewWallet = document.getElementById('modeWalletView');
+      const viewNcrp = document.getElementById('modeNcrpView');
+      const btnText = document.getElementById('btnTraceText');
+
+      if (mode === 'wallet') {
+        tabWallet.className = "text-xs font-semibold px-3 py-1.5 rounded-lg bg-zinc-800 text-white flex items-center gap-1.5 transition-all";
+        tabNcrp.className = "text-xs font-medium px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/50 flex items-center gap-1.5 transition-all";
+        viewWallet.classList.remove('hidden');
+        viewWallet.classList.add('flex');
+        viewNcrp.classList.add('hidden');
+        viewNcrp.classList.remove('flex');
+        btnText.innerText = "Run Multi-Hop Forensics";
+      } else {
+        tabNcrp.className = "text-xs font-semibold px-3 py-1.5 rounded-lg bg-zinc-800 text-white flex items-center gap-1.5 transition-all";
+        tabWallet.className = "text-xs font-medium px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/50 flex items-center gap-1.5 transition-all";
+        viewNcrp.classList.remove('hidden');
+        viewNcrp.classList.add('flex');
+        viewWallet.classList.add('hidden');
+        viewWallet.classList.remove('flex');
+        btnText.innerText = "Parse 1930 & Trace";
+      }
+    }
+
+    function loadScenario(key) {
+      switchInputMode('wallet');
+      const s = SCENARIOS[key];
+      if (!s) return;
+      document.getElementById('inputWallet').value = s.wallet;
+      document.getElementById('inputFir').value = s.fir;
+      document.getElementById('inputLoss').value = s.loss;
+      if (s.depth) document.getElementById('inputDepth').value = s.depth;
+      
+      const indicator = document.getElementById('crawlModeIndicator');
+      if (s.is_live) {
+        indicator.innerHTML = `<span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span><span class="text-emerald-400 font-semibold font-mono">Live Blockchain Mainnet Active</span>`;
+      } else {
+        indicator.innerHTML = `<span class="h-2 w-2 rounded-full bg-amber-400"></span><span class="text-amber-400 font-mono">Fast Demo Fixture</span>`;
+      }
+      
+      executeTraceFlow();
+    }
+
+    // -------------------------------------------------------------
+    // 3. TRACE EXECUTION FLOW
+    // -------------------------------------------------------------
+    async function executeTraceFlow() {
+      const isNcrpMode = !document.getElementById('modeNcrpView').classList.contains('hidden');
+      const btn = document.getElementById('btnTraceAction');
+
+      if (isNcrpMode) {
+        const rawText = document.getElementById('ncrpRawInput').value.trim();
+        if (!rawText) return alert("Please enter 1930 incident text.");
+
+        btn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span><span>NLP Extracting 1930 Incident...</span>`;
+
+        try {
+          const res = await fetch(`${API_BASE}/api/ncrp/parse", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: rawText })
+          });
+          if (res.ok) {
+            const parsed = await res.json();
+            if (parsed.primary_seed_address) {
+              document.getElementById('inputWallet').value = parsed.primary_seed_address;
+              if (parsed.suggested_fir) document.getElementById('inputFir').value = parsed.suggested_fir;
+              if (parsed.estimated_loss_inr) document.getElementById('inputLoss').value = parsed.estimated_loss_inr;
+              switchInputMode('wallet');
+              await traceWallet(parsed.primary_seed_address, parsed.suggested_fir, parsed.estimated_loss_inr);
+            } else {
+              alert("No valid cryptocurrency address found in complaint text.");
+            }
+          }
+        } catch (e) {
+          console.error("1930 parse error:", e);
+        } finally {
+          btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">bolt</span><span id="btnTraceText">Run Multi-Hop Forensics</span>`;
+        }
+      } else {
+        const wallet = document.getElementById('inputWallet').value.trim();
+        const fir = document.getElementById('inputFir').value.trim();
+        const loss = parseFloat(document.getElementById('inputLoss').value) || 0;
+        if (!wallet) return alert("Please enter a suspect wallet address.");
+        await traceWallet(wallet, fir, loss);
+      }
+    }
+
+    async function traceWallet(wallet, fir, loss) {
+      const btn = document.getElementById('btnTraceAction');
+      const depth = parseInt(document.getElementById('inputDepth').value) || 4;
+      btn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span><span>Traversing On-Chain Graph...</span>`;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/trace", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            seed_address: wallet,
+            max_depth: depth,
+            min_usd_value: 20.0,
+            case_metadata: {
+              fir_number: fir,
+              loss_amount_inr: loss,
+              police_station: "State Cyber Crime Police Station",
+              investigating_officer: "DSP Anjali Verma"
+            }
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          currentTrace = data;
+          renderTraceResults(data, fir, loss);
+          autoSaveCase(data, fir, loss);
+        } else {
+          const err = await res.json().catch(() => ({}));
+          const errMsg = err.error?.message || err.detail || `Server returned HTTP ${res.status}`;
+          alert("Forensic Trace Error: " + errMsg);
+          resetTraceUIState(errMsg);
+        }
+      } catch (e) {
+        console.error("Backend request error:", e);
+        alert("Network Error: Could not connect to the NIRMAAN backend at http://127.0.0.1:8000. Please verify the API server is active.");
+        resetTraceUIState("API Server Unreachable");
+      } finally {
+        btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">bolt</span><span id="btnTraceText">Run Multi-Hop Forensics</span>`;
+      }
+    }
+
+    function resetTraceUIState(reason) {
+      if (cy) cy.elements().remove();
+      const statsBadge = document.getElementById('graphStatsBadge');
+      if (statsBadge) statsBadge.innerText = `Trace Failed: ${reason}`;
+      const chainBadge = document.getElementById('trailChainBadge');
+      if (chainBadge) chainBadge.innerText = 'OFFLINE';
+      const countBadge = document.getElementById('flowStepCountBadge');
+      if (countBadge) countBadge.innerText = '0 Entities';
+      const flowCards = document.getElementById('dynamicFlowCards');
+      if (flowCards) flowCards.innerHTML = `<div class="p-6 text-center text-rose-400 font-mono text-xs">Investigation failed or timed out: ${escapeHtml(reason)}</div>`;
+      const hopsTable = document.getElementById('hopsTableBody');
+      if (hopsTable) hopsTable.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-rose-400 font-mono text-xs">No transaction hops resolved.</td></tr>`;
+    }
+
+    // -------------------------------------------------------------
+    // 4. RENDERING RESULTS, CYTOSCAPE GRAPH & DYNAMIC FLOW CARDS
+    // -------------------------------------------------------------
+    function renderTraceResults(data, fir, loss) {
+      document.getElementById('graphStatsBadge').innerText = `${data.nodes.length} Nodes • ${data.edges.length} Hops • ${data.execution_time_ms} ms (${data.chain})`;
+      const chainBadge = document.getElementById('trailChainBadge');
+      if (chainBadge) chainBadge.innerText = data.chain;
+      document.getElementById('flowStepCountBadge').innerText = `${data.nodes.length} Resolved Entities`;
+
+      // 1. Init Cytoscape Graph
+      initCytoscapeGraph(data);
+
+      // 2. Select initial suspect node in inspector
+      if (data.nodes && data.nodes.length > 0) {
+        updateInspectorPanel(data.nodes[0]);
+      }
+
+      // 3. Render Dynamic Flow Cards
+      renderDynamicFlowCards(data);
+
+      // 4. Render Transaction Hops Table
+      renderHopsTable(data);
+
+      // 5. Render Verdict & Action Hub
+      renderVerdictSection(data, loss);
+
+      // 6. Pre-fill Section 94 Summons Modal
+      if (data.section_94_notice_text) {
+        document.getElementById('noticePreContent').innerText = data.section_94_notice_text;
+      }
+    }
+
+    // CYTOSCAPE INITIALIZER WITH DAGRE HIERARCHICAL LAYOUT
+    function initCytoscapeGraph(data) {
+      const container = document.getElementById('cyCanvas');
+      const elements = [];
+
+      // Add Nodes
+      data.nodes.forEach(node => {
+        let label = node.label || node.address.substring(0, 8) + '...';
+        if (node.vasp_name) label = `${node.vasp_name}\n${node.address.substring(0, 6)}...`;
+
+        let color = '#94a3b8';
+        if (node.node_type === 'SUSPECT') color = '#f43f5e'; // red
+        else if (node.node_type === 'MULE') color = '#f59e0b'; // amber
+        else if (node.node_type === 'VASP_DEPOSIT') color = '#0284c7'; // sky
+        else if (node.node_type === 'VASP_HOT') color = '#10b981'; // emerald
+        else if (node.node_type === 'MIXER') color = '#8b5cf6'; // purple
+
+        elements.push({
+          group: 'nodes',
+          data: {
+            id: node.id,
+            label: label,
+            address: node.address,
+            rawNode: node,
+            color: color
+          }
+        });
+      });
+
+      // Add Edges
+      data.edges.forEach((edge, idx) => {
+        elements.push({
+          group: 'edges',
+          data: {
+            id: `edge_${idx}`,
+            source: edge.source,
+            target: edge.target,
+            amount: `${edge.amount.toLocaleString()} ${edge.token || 'USDT'}`,
+            usd_value: edge.usd_value || 0,
+            tx_hash: edge.tx_hash || '',
+            rawEdge: edge
+          }
+        });
+      });
+
+      if (cy) cy.destroy();
+
+      cy = cytoscape({
+        container: container,
+        elements: elements,
+        style: [
+          {
+            selector: 'node',
+            style: {
+              'background-color': 'data(color)',
+              'label': 'data(label)',
+              'color': '#f8fafc',
+              'font-size': '10px',
+              'font-family': 'JetBrains Mono',
+              'text-valign': 'bottom',
+              'text-margin-y': 5,
+              'width': 34,
+              'height': 34,
+              'border-width': 2,
+              'border-color': '#ffffff',
+              'border-opacity': 0.3
+            }
+          },
+          {
+            selector: 'edge',
+            style: {
+              'width': 2,
+              'line-color': '#475569',
+              'target-arrow-color': '#475569',
+              'target-arrow-shape': 'triangle',
+              'curve-style': 'bezier',
+              'label': 'data(amount)',
+              'font-size': '9px',
+              'font-family': 'JetBrains Mono',
+              'color': '#94a3b8',
+              'text-rotation': 'autorotate',
+              'text-margin-y': -8,
+              'text-background-color': '#09090b',
+              'text-background-opacity': 0.8,
+              'text-background-padding': 2
+            }
+          },
+          {
+            selector: ':selected',
+            style: {
+              'border-width': 3,
+              'border-color': '#6366f1',
+              'border-opacity': 1,
+              'line-color': '#6366f1',
+              'target-arrow-color': '#6366f1'
+            }
+          }
+        ],
+        layout: {
+          name: 'dagre',
+          rankDir: 'LR',
+          nodeSep: 50,
+          rankSep: 90
+        }
+      });
+
+      // Handle Node Click
+      cy.on('tap', 'node', function(evt) {
+        const raw = evt.target.data('rawNode');
+        if (raw) updateInspectorPanel(raw);
+      });
+
+      // Handle Edge Click (ERR-35)
+      cy.on('tap', 'edge', function(evt) {
+        const d = evt.target.data();
+        if (!d) return;
+        document.getElementById('inspectAddress').innerText = d.tx_hash || "N/A";
+        document.getElementById('inspectNodeType').innerText = "HOP TRANSACTION";
+        document.getElementById('inspectNodeType').className = "text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20";
+        document.getElementById('inspectRiskTier').innerText = "TRANSFER";
+        document.getElementById('inspectRiskScore').innerText = "N/A";
+        document.getElementById('inspectBalance').innerText = `$${Number(d.usd_value || 0).toLocaleString()} USD`;
+        document.getElementById('inspectVasp').innerText = `${d.amount}`;
+        document.getElementById('inspectExplanation').innerText = `Direct on-chain hop from ${d.source ? d.source.substring(0, 10) : ''}... to ${d.target ? d.target.substring(0, 10) : ''}...`;
+        const tagsContainer = document.getElementById('inspectTagsContainer');
+        if (tagsContainer) {
+          tagsContainer.innerHTML = '<span class="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800 text-[10px] font-mono">ON_CHAIN_HOP</span>';
+        }
+      });
+    }
+
+    function cyFit() { if (cy) cy.fit(); }
+    function cyZoomIn() { if (cy) cy.zoom(cy.zoom() * 1.25); }
+    function cyZoomOut() { if (cy) cy.zoom(cy.zoom() * 0.8); }
+    function cyResetLayout() {
+      if (cy) {
+        cy.layout({ name: 'dagre', rankDir: 'LR', nodeSep: 50, rankSep: 90 }).run();
+      }
+    }
+
+    // UPDATE INSPECTOR PANEL WITH NODE DETAILS
+    function updateInspectorPanel(node) {
+      document.getElementById('inspectAddress').innerText = node.address || "N/A";
+      document.getElementById('inspectNodeType').innerText = node.node_type || "UNKNOWN";
+      
+      const typeSpan = document.getElementById('inspectNodeType');
+      if (node.node_type === 'SUSPECT') {
+        typeSpan.className = "text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20";
+      } else if (node.node_type === 'MULE') {
+        typeSpan.className = "text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20";
+      } else if (node.node_type === 'VASP_DEPOSIT') {
+        typeSpan.className = "text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20";
+      } else {
+        typeSpan.className = "text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+      }
+
+      document.getElementById('inspectRiskTier').innerText = node.risk_tier || "MEDIUM";
+      document.getElementById('inspectRiskScore').innerText = node.risk_score || "0.5";
+      document.getElementById('inspectBalance').innerText = node.balance_usd ? `$${node.balance_usd.toLocaleString()} USD` : "In-Transit";
+      document.getElementById('inspectVasp').innerText = node.vasp_name || (node.node_type.includes('VASP') ? 'Exchange Ingestion' : 'Unattributed');
+      document.getElementById('inspectExplanation').innerText = node.explanation || "Forensic node participating in multi-hop transfer graph.";
+
+      const tagsContainer = document.getElementById('inspectTagsContainer');
+      tagsContainer.innerHTML = '';
+      const flags = node.flags && node.flags.length > 0 ? node.flags : [node.node_type];
+      flags.forEach(f => {
+        const s = document.createElement('span');
+        s.className = "px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700 text-[10px] font-mono";
+        s.innerText = f;
+        tagsContainer.appendChild(s);
+      });
+    }
+
+    // RENDER DYNAMIC FLOW CARDS
+    function renderDynamicFlowCards(data) {
+      const container = document.getElementById('dynamicFlowCards');
+      container.innerHTML = '';
+
+      data.nodes.forEach((node, idx) => {
+        let borderClass = "border-l-zinc-500";
+        let badgeBg = "bg-zinc-800 text-zinc-300";
+        if (node.node_type === 'SUSPECT') {
+          borderClass = "border-l-rose-500";
+          badgeBg = "bg-rose-500/10 text-rose-400 border border-rose-500/20";
+        } else if (node.node_type === 'MULE') {
+          borderClass = "border-l-amber-500";
+          badgeBg = "bg-amber-500/10 text-amber-400 border border-amber-500/20";
+        } else if (node.node_type === 'VASP_DEPOSIT') {
+          borderClass = "border-l-sky-500";
+          badgeBg = "bg-sky-500/10 text-sky-400 border border-sky-500/20";
+        } else if (node.node_type === 'VASP_HOT') {
+          borderClass = "border-l-emerald-500 bg-emerald-950/10";
+          badgeBg = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold";
+        }
+
+        const card = document.createElement('div');
+        card.className = `p-3 rounded-xl border border-zinc-800 ${borderClass} border-l-4 flex flex-col gap-2 bg-black/40 hover:bg-black/60 transition-all cursor-pointer`;
+        card.onclick = () => {
+          updateInspectorPanel(node);
+          if (cy) {
+            const cyNode = cy.$id(node.id);
+            if (cyNode) { cy.elements().unselect(); cyNode.select(); }
+          }
+        };
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded ${badgeBg}">
+              Hop ${idx} &bull; ${escapeHtml(node.node_type)}
+            </span>
+            <span class="text-[10px] font-mono text-zinc-400">Risk: ${escapeHtml(node.risk_tier || 'MED')}</span>
+          </div>
+          <div>
+            <div class="text-xs font-semibold text-white">${escapeHtml(node.label || node.vasp_name || 'Wallet Node')}</div>
+            <div class="text-[11px] font-mono text-zinc-400 break-all select-all">${escapeHtml(node.address)}</div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // RENDER HOPS LEDGER TABLE
+    function renderHopsTable(data) {
+      const tbody = document.getElementById('hopsTableBody');
+      tbody.innerHTML = '';
+
+      if (!data.edges || data.edges.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-zinc-500">No outgoing transactions found.</td></tr>`;
+        return;
+      }
+
+      data.edges.forEach((edge, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-zinc-900/50 transition-colors";
+        tr.innerHTML = `
+          <td class="py-2.5 font-bold text-indigo-400">#${idx + 1}</td>
+          <td class="py-2.5">
+            <div class="truncate max-w-[200px]" title="${escapeHtml(edge.source)}">${escapeHtml(edge.source ? edge.source.substring(0, 10) : '')}...</div>
+            <div class="text-[10px] text-zinc-500">&darr; ${escapeHtml(edge.target ? edge.target.substring(0, 10) : '')}...</div>
+          </td>
+          <td class="py-2.5 font-bold text-white">
+            ${Number(edge.amount || 0).toLocaleString()} ${escapeHtml(edge.token || 'USDT')}
+          </td>
+          <td class="py-2.5 text-zinc-400 text-[11px]">
+            <span class="truncate max-w-[140px] block" title="${escapeHtml(edge.tx_hash)}">${escapeHtml(edge.tx_hash ? edge.tx_hash.substring(0, 14) : '')}...</span>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // RENDER VERDICT SECTION
+    function renderVerdictSection(data, loss) {
+      const vasp = data.target_vasp;
+      if (vasp) {
+        document.getElementById('verdictExchangeName').innerText = vasp.name;
+        if (document.getElementById('verdictExchangeTitle')) document.getElementById('verdictExchangeTitle').innerText = vasp.name;
+        document.getElementById('verdictTrackedLoss').innerText = `${loss ? '₹' + loss.toLocaleString('en-IN') : 'Proceeds'} Tracked`;
+        document.getElementById('verdictNodalEmail').innerText = vasp.nodal_email;
+        document.getElementById('verdictNodalEmail').href = `mailto:${vasp.nodal_email}`;
+        document.getElementById('verdictPortalUrl').innerText = (vasp.law_enforcement_portal || "Online LEA Portal").replace("https://", "");
+        document.getElementById('verdictPortalUrl').href = vasp.law_enforcement_portal || "#";
+        document.getElementById('verdictFiuBadge').innerText = vasp.fiu_registered ? "FIU-IND REGISTERED" : "GLOBAL EXCHANGE";
+        if (document.getElementById('verdictSweepHash')) {
+          document.getElementById('verdictSweepHash').innerText = (vasp.sweep_tx_hash || "Sweep Verified").substring(0, 24) + "...";
+        }
+      } else {
+        document.getElementById('verdictExchangeName').innerText = "In-Transit / Unidentified";
+        if (document.getElementById('verdictExchangeTitle')) document.getElementById('verdictExchangeTitle').innerText = "In-Transit / Unidentified";
+        document.getElementById('verdictTrackedLoss').innerText = "No Consolidation";
+        document.getElementById('verdictNodalEmail').innerText = "N/A";
+        document.getElementById('verdictPortalUrl').innerText = "N/A";
+        document.getElementById('verdictNodalEmail').removeAttribute('href');
+        document.getElementById('verdictPortalUrl').removeAttribute('href');
+        if (document.getElementById('verdictFiuBadge')) {
+          document.getElementById('verdictFiuBadge').innerText = "DISPERSED / UNATTRIBUTED";
+          document.getElementById('verdictFiuBadge').className = "text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 font-bold border border-zinc-700";
+        }
+        if (document.getElementById('verdictSweepHash')) {
+          document.getElementById('verdictSweepHash').innerText = "None (Dispersed)";
+        }
+      }
+
+      const score = data.ml_anomaly_score || 0.85;
+      if (document.getElementById('verdictRiskScore')) {
+        document.getElementById('verdictRiskScore').innerText = `${score} (${score >= 0.8 ? 'CRITICAL RISK' : score >= 0.6 ? 'HIGH RISK' : 'MODERATE'})`;
+      }
+      if (document.getElementById('verdictRiskBar')) {
+        document.getElementById('verdictRiskBar').style.width = `${Math.round(score * 100)}%`;
+      }
+
+      if (data.evidence_sha256) {
+        if (document.getElementById('verdictEvidenceSeal')) document.getElementById('verdictEvidenceSeal').innerText = data.evidence_sha256;
+        if (document.getElementById('verdictEvidenceHash')) document.getElementById('verdictEvidenceHash').innerText = data.evidence_sha256;
+      }
+
+      // Syndicate Typology
+      if (data.syndicate_typology) {
+        const typ = data.syndicate_typology;
+        document.getElementById('typologyName').innerText = typ.typology_name;
+        document.getElementById('typologyDesc').innerText = typ.description;
+        document.getElementById('typologyViolation').innerText = `Violation: ${typ.statutory_violation}`;
+        document.getElementById('typologyConfidence').innerText = `${Math.round(typ.confidence * 100)}% Confidence`;
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 5. CASE VAULT DATA FETCHER & ACTIONS
+    // -------------------------------------------------------------
+    async function fetchCaseVaultRecords() {
+      const tbody = document.getElementById('caseVaultTableBody');
+      try {
+        const res = await fetch(`${API_BASE}/api/cases?limit=25");
+        if (res.ok) {
+          const cases = await res.json();
+          document.getElementById('caseCountBadge').innerText = cases.length;
+          
+          if (cases.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-zinc-500">No cases recorded yet. Run a trace to persist an investigation.</td></tr>`;
+            return;
+          }
+
+          tbody.innerHTML = '';
+          cases.forEach(c => {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-zinc-900/50 transition-colors";
+            const parsedDate = typeof c.created_at === 'number'
+              ? new Date(c.created_at * (c.created_at < 1e12 ? 1000 : 1))
+              : new Date(c.created_at);
+            const dateStr = !isNaN(parsedDate.getTime())
+              ? parsedDate.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true })
+              : 'Recent';
+            tr.innerHTML = `
+              <td class="py-3 px-4 font-bold text-white">
+                <div>${escapeHtml(c.fir_number)}</div>
+                <div class="text-[10px] text-zinc-500 font-mono">${escapeHtml(c.case_id)}</div>
+              </td>
+              <td class="py-3 px-4">
+                <span class="truncate max-w-[140px] block" title="${escapeHtml(c.seed_address)}">${escapeHtml(c.seed_address ? c.seed_address.substring(0, 12) : '')}...</span>
+              </td>
+              <td class="py-3 px-4 text-zinc-400">${escapeHtml(c.chain)}</td>
+              <td class="py-3 px-4 text-emerald-400 font-bold">${escapeHtml(c.destination_vasp || 'In-Transit')}</td>
+              <td class="py-3 px-4 text-white font-semibold">₹${Number(c.loss_amount_inr || 0).toLocaleString('en-IN')}</td>
+              <td class="py-3 px-4 text-zinc-400 text-[11px]">${escapeHtml(dateStr)}</td>
+              <td class="py-3 px-4 text-right">
+                <div class="flex items-center justify-end gap-1.5">
+                  <a href=`${API_BASE}/api/cases/${encodeURIComponent(c.case_id)}/dossier" target="_blank" class="px-2 py-1 rounded bg-[#0866D9] hover:bg-[#0078D4] text-white text-[10px] font-sans font-semibold">
+                    PDF
+                  </a>
+                  <a href=`${API_BASE}/api/cases/${encodeURIComponent(c.case_id)}/bundle" target="_blank" class="px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-sans font-semibold">
+                    ZIP
+                  </a>
+                </div>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      } catch (e) {
+        console.warn("Failed to load Case Vault:", e);
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 6. VASP DIRECTORY FETCHER & SEARCH
+    // -------------------------------------------------------------
+    async function fetchVaspDirectory() {
+      const container = document.getElementById('vaspGridContainer');
+      try {
+        const res = await fetch(`${API_BASE}/api/vasps");
+        if (res.ok) {
+          const data = await res.json();
+          cachedVasps = data.vasps || {};
+          renderVaspCards(cachedVasps);
+        }
+      } catch (e) {
+        console.warn("Failed to load VASPs:", e);
+      }
+    }
+
+    function renderVaspCards(vasps) {
+      const container = document.getElementById('vaspGridContainer');
+      container.innerHTML = '';
+      
+      Object.keys(vasps).forEach(key => {
+        const v = vasps[key];
+        const card = document.createElement('div');
+        card.className = "glass-card rounded-2xl p-4 border border-zinc-800 flex flex-col justify-between gap-3 hover:border-zinc-700 transition-all";
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <h3 class="text-sm font-bold text-white">${escapeHtml(v.name)}</h3>
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ${v.fiu_registered ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-zinc-800 text-zinc-400'}">
+                ${v.fiu_registered ? 'FIU-IND' : 'GLOBAL'}
+              </span>
+            </div>
+            <div class="text-[11px] font-mono text-zinc-400 flex flex-col gap-1 mt-2">
+              <div><span class="text-zinc-500">Nodal:</span> <a href="mailto:${encodeURI(v.nodal_email || '')}" class="text-indigo-400 hover:underline break-all">${escapeHtml(v.nodal_email)}</a></div>
+              <div><span class="text-zinc-500">Portal:</span> <a href="${encodeURI(v.law_enforcement_portal || '')}" target="_blank" class="text-indigo-400 hover:underline truncate block">${escapeHtml((v.law_enforcement_portal || '').replace('https://', ''))}</a></div>
+            </div>
+          </div>
+          <div class="pt-2 border-t border-zinc-800 flex items-center justify-between text-[10px] font-mono text-zinc-500">
+            <span>Known Hot Wallets: ${(v.known_hot_wallets || []).length}</span>
+            <button onclick="inspectVaspHotWallets('${escapeHtml(key)}')" class="text-indigo-400 hover:underline">View Wallets</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function filterVaspDirectory() {
+      const q = document.getElementById('vaspSearchInput').value.toLowerCase().trim();
+      const filtered = {};
+      Object.keys(cachedVasps).forEach(k => {
+        const v = cachedVasps[k];
+        if (v.name.toLowerCase().includes(q) || (v.nodal_email && v.nodal_email.toLowerCase().includes(q))) {
+          filtered[k] = v;
+        }
+      });
+      renderVaspCards(filtered);
+    }
+
+    function inspectVaspHotWallets(key) {
+      const v = cachedVasps[key];
+      if (v && v.known_hot_wallets) {
+        alert(`${v.name} Tracked Hot Wallets:\n\n` + v.known_hot_wallets.join("\n"));
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 7. AUTO-SAVE CASE HELPER & DOWNLOADS
+    // -------------------------------------------------------------
+    async function autoSaveCase(data, fir, loss) {
+      try {
+        const totalRouted = (data.edges || []).reduce((acc, e) => acc + (parseFloat(e.usd_value) || 0), 0);
+        const payload = {
+          fir_number: fir || "FIR-AUTO/2026",
+          police_station: "State Cyber Crime Police Station",
+          investigating_officer: "DSP Anjali Verma",
+          complainant_name: "Complainant Victim",
+          loss_amount_inr: parseFloat(loss) || 0.0,
+          seed_address: data.seed_address,
+          chain: data.chain,
+          destination_vasp: data.target_vasp?.name || "Unknown / Pending Attribution",
+          total_routed_usd: Math.round(totalRouted * 100) / 100,
+          evidence_sha256: data.evidence_sha256,
+          trace_data: data
+        };
+
+        const res = await fetch(`${API_BASE}/api/cases", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          const saved = await res.json();
+          currentCaseId = saved.case_id;
+        }
+      } catch (e) {
+        console.warn("Auto save case error:", e);
+      }
+    }
+
+    function openNoticeModal() {
+      document.getElementById('modalNotice').classList.remove('hidden');
+      document.getElementById('modalNotice').classList.add('flex');
+    }
+
+    function closeNoticeModal() {
+      document.getElementById('modalNotice').classList.add('hidden');
+      document.getElementById('modalNotice').classList.remove('flex');
+    }
+
+    function copyNoticeToClipboard() {
+      const text = document.getElementById('noticePreContent').innerText;
+      copyToClipboard(text);
+      const icon = document.getElementById('copyNoticeIcon');
+      const span = document.getElementById('copyNoticeText');
+      icon.innerText = "check";
+      span.innerText = "Copied!";
+      setTimeout(() => {
+        icon.innerText = "content_copy";
+        span.innerText = "Copy Notice";
+      }, 2000);
+    }
+
+    function copyToClipboard(val) {
+      navigator.clipboard.writeText(val);
+    }
+
+    function sendNodalEmail() {
+      const email = document.getElementById('verdictNodalEmail').innerText;
+      if (!email || email === "N/A" || !email.includes("@")) {
+        alert("No valid VASP Nodal Officer email identified for this target.");
+        return;
+      }
+      const fir = document.getElementById('inputFir').value || "CASE-2026";
+      const subject = encodeURIComponent(`URGENT: Requisition under Section 94 BNSS - FIR ${fir}`);
+      const summary = encodeURIComponent(
+        `To: Nodal Officer, Compliance / Law Enforcement Assistance
+
+` +
+        `Sub: Statutory Requisition under Section 94 BNSS & Preservation Notice - Ref FIR ${fir}
+
+` +
+        `Sir/Madam,
+
+` +
+        `This is an official statutory requisition from the Cyber Crime Investigation Division. ` +
+        `The full formal Section 94 BNSS Legal Summons and Section 63 BSA Digital Evidence Certificate ` +
+        `have been copied to clipboard for your immediate review and processing.
+
+` +
+        `Please confirm receipt and action immediately.`
+      );
+      copyNoticeToClipboard();
+      window.location.href = `mailto:${email}?subject=${subject}&body=${summary}`;
+    }
+
+    function downloadCourtPDF() {
+      if (currentCaseId) {
+        window.open(`${API_BASE}/api/cases/${currentCaseId}/dossier`, '_blank');
+      } else {
+        alert("Trace a wallet first to generate court PDF.");
+        executeTraceFlow();
+      }
+    }
+
+    function downloadZIPBundle() {
+      if (currentCaseId) {
+        window.open(`${API_BASE}/api/cases/${currentCaseId}/bundle`, '_blank');
+      } else {
+        alert("Trace a wallet first to generate ZIP evidence bundle.");
+        executeTraceFlow();
+      }
+    }
+
+    // Auto-run TRON default on initial page load
+    window.onload = () => {
+      executeTraceFlow();
+      fetchCaseVaultRecords();
+      fetchVaspDirectory();
+    };
+  </script>
+</body>
+</html>

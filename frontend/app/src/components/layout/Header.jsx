@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import {
   Menu, ArrowLeft, Home, Search, Bell, Grid3X3,
   ChevronDown, X, ShieldCheck, CheckCircle2,
-  ExternalLink, BriefcaseBusiness, Network, Wallet, FileText, AlertTriangle
+  ExternalLink, BriefcaseBusiness, Network, Wallet, FileText, AlertTriangle,
+  Settings, CircleHelp, ArrowRight, User
 } from "lucide-react";
 
 export default function Header({
@@ -17,6 +18,36 @@ export default function Header({
   const [showAppsMenu, setShowAppsMenu] = useState(false);
   const [showAlertsMenu, setShowAlertsMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [officerProfile, setOfficerProfile] = useState({
+    name: "Inspector Rajesh Sharma",
+    badge: "IO-77-CYBER",
+    station: "Cyber Crime Police Station",
+    state: "Delhi NCT",
+    email: "io.cyber77@delhipolice.gov.in"
+  });
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("nirmaan_officer_settings");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setOfficerProfile((prev) => ({
+          name: parsed.officerName || prev.name,
+          badge: parsed.badgeId || prev.badge,
+          station: parsed.policeStation || prev.station,
+          state: parsed.stateUt || prev.state,
+          email: parsed.leaEmail || prev.email
+        }));
+      }
+    } catch {}
+  }, [showProfileMenu]);
+  const officerInitials = (officerProfile.name || "IO")
+    .split(" ")
+    .filter(Boolean)
+    .slice(-2)
+    .map((w) => w[0].toUpperCase())
+    .join("") || "IO";
+
   const searchInputRef = useRef(null);
   const appsMenuRef = useRef(null);
   const alertsMenuRef = useRef(null);
@@ -263,7 +294,7 @@ export default function Header({
                 })}
                 {/* Cytoscape Standalone View */}
                 <a
-                  href="/app/"
+                  href="/standalone-graph.html"
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center gap-3 p-2 rounded-xl text-left hover:bg-indigo-50 text-indigo-700 transition mt-1 border-t border-slate-100 pt-2"
@@ -273,7 +304,7 @@ export default function Header({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-bold">Cytoscape Visualizer</div>
-                    <div className="text-[10px] text-indigo-500">Open standalone graph canvas</div>
+                    <div className="text-[10px] text-indigo-500">Open standalone graph canvas (New Tab)</div>
                   </div>
                 </a>
               </div>
@@ -349,68 +380,131 @@ export default function Header({
                 : "border-slate-200 hover:bg-slate-50"
             }`}
           >
-            <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-              A
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white flex items-center justify-center font-bold text-xs shadow-xs ring-1 ring-blue-200">
+              {officerInitials}
             </div>
             <div className="hidden sm:block text-left">
-              <div className="text-xs font-bold text-slate-800 leading-none">Officer</div>
-              <div className="text-[10px] text-slate-400 font-mono mt-0.5">IO-CYBER-8842</div>
+              <div className="text-xs font-semibold text-slate-800 leading-none max-w-[130px] truncate">
+                {officerProfile.name}
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                {officerProfile.badge}
+              </div>
             </div>
             <ChevronDown size={14} className="text-slate-400" />
           </button>
 
           {showProfileMenu && (
-            <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-white border border-slate-200 shadow-xl p-3 z-50 animate-in fade-in zoom-in-95 duration-100 text-xs">
-              <div className="flex items-center gap-3 pb-3 border-b border-slate-100 mb-2 px-1">
-                <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
-                  A
+            <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-white border border-slate-200 shadow-2xl p-3.5 z-50 animate-in fade-in zoom-in-95 duration-100 text-xs">
+              <div className="flex items-start gap-3 pb-3 border-b border-slate-100">
+                <div className="relative">
+                  <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white flex items-center justify-center font-bold text-sm shadow-md ring-2 ring-blue-100">
+                    {officerInitials}
+                  </div>
+                  <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white ring-1 ring-emerald-300" />
                 </div>
-                <div>
-                  <div className="font-bold text-slate-900 text-sm">Investigating Officer</div>
-                  <div className="text-slate-500 text-[11px]">Cyber Crime Police Station</div>
-                  <div className="text-emerald-600 text-[10px] font-semibold flex items-center gap-1 mt-0.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    Authenticated Session Active
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-slate-900 text-sm truncate">
+                    {officerProfile.name}
+                  </div>
+                  <div className="text-slate-500 text-[11px] truncate">
+                    {officerProfile.station}
+                  </div>
+                  <div className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold text-[10px] border border-emerald-200">
+                    <ShieldCheck size={11} className="text-emerald-600" />
+                    <span>Sec. 94 BNSS Session Active</span>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-1.5 text-slate-600 py-1">
-                <div className="flex justify-between py-1 px-2 rounded-lg bg-slate-50">
+              <div className="mt-2.5 p-2 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5 text-[11px]">
+                <div className="flex justify-between items-center text-slate-600">
+                  <span className="text-slate-400">Badge ID:</span>
+                  <span className="font-mono font-medium text-slate-800">{officerProfile.badge}</span>
+                </div>
+                <div className="flex justify-between items-center text-slate-600">
                   <span className="text-slate-400">Jurisdiction:</span>
-                  <span className="font-medium text-slate-800">MHA / I4C Portal</span>
+                  <span className="font-medium text-slate-800">{officerProfile.state}</span>
                 </div>
-                <div className="flex justify-between py-1 px-2 rounded-lg bg-slate-50">
-                  <span className="text-slate-400">Statutory Authority:</span>
+                <div className="flex justify-between items-center text-slate-600">
+                  <span className="text-slate-400">Official LEA Email:</span>
+                  <span className="font-mono text-[10px] text-slate-700 truncate max-w-[150px]">{officerProfile.email}</span>
+                </div>
+                <div className="flex justify-between items-center text-slate-600">
+                  <span className="text-slate-400">Legal Standard:</span>
                   <span className="font-medium text-slate-800">Sec 94 BNSS / 63 BSA</span>
-                </div>
-                <div className="flex justify-between py-1 px-2 rounded-lg bg-slate-50">
-                  <span className="text-slate-400">Engine Build:</span>
-                  <span className="font-mono text-slate-800">v2.0-SEC63 (WAL)</span>
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-slate-100 mt-2 space-y-1">
+              <div className="pt-2 border-t border-slate-100 mt-2.5 space-y-0.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onNavigate?.("Settings");
+                    setShowProfileMenu(false);
+                  }}
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-100 font-medium text-slate-700 flex items-center justify-between transition"
+                >
+                  <div className="flex items-center gap-2">
+                    <Settings size={14} className="text-slate-500" />
+                    <span>Officer & System Settings</span>
+                  </div>
+                  <ArrowRight size={13} className="text-slate-400" />
+                </button>
                 <button
                   type="button"
                   onClick={() => {
                     onNavigate?.("Case Management");
                     setShowProfileMenu(false);
                   }}
-                  className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-slate-50 font-semibold text-slate-700 flex items-center justify-between"
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-100 font-medium text-slate-700 flex items-center justify-between transition"
                 >
-                  <span>Case Management Vault</span>
-                  <BriefcaseBusiness size={14} className="text-slate-400" />
+                  <div className="flex items-center gap-2">
+                    <BriefcaseBusiness size={14} className="text-slate-500" />
+                    <span>Case Vault</span>
+                  </div>
+                  <ArrowRight size={13} className="text-slate-400" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onNavigate?.("Transaction Graph");
+                    setShowProfileMenu(false);
+                  }}
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-100 font-medium text-slate-700 flex items-center justify-between transition"
+                >
+                  <div className="flex items-center gap-2">
+                    <Network size={14} className="text-slate-500" />
+                    <span>Transaction Graph</span>
+                  </div>
+                  <ArrowRight size={13} className="text-slate-400" />
                 </button>
                 <a
-                  href="/app/"
+                  href="/standalone-graph.html"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-blue-50 font-semibold text-blue-600 flex items-center justify-between"
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-blue-50 font-medium text-blue-700 flex items-center justify-between transition"
                 >
-                  <span>Cytoscape Canvas</span>
-                  <ExternalLink size={14} />
+                  <div className="flex items-center gap-2">
+                    <ExternalLink size={14} className="text-blue-600" />
+                    <span>Standalone Cytoscape Canvas</span>
+                  </div>
+                  <span className="text-[10px] text-blue-500 font-mono">NEW TAB</span>
                 </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onNavigate?.("Help & Documentation");
+                    setShowProfileMenu(false);
+                  }}
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-100 font-medium text-slate-700 flex items-center justify-between transition"
+                >
+                  <div className="flex items-center gap-2">
+                    <CircleHelp size={14} className="text-slate-500" />
+                    <span>Help & Statutory Protocols</span>
+                  </div>
+                  <ArrowRight size={13} className="text-slate-400" />
+                </button>
               </div>
             </div>
           )}
