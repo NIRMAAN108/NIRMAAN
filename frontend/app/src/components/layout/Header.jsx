@@ -211,18 +211,18 @@ export default function Header({
       {/* Center: Global Search Bar */}
       <form
         onSubmit={handleSearchSubmit}
-        className="relative flex-1 max-w-[550px] mx-2"
+        className="relative flex-1 max-w-[550px] mx-1 sm:mx-2 min-w-0"
       >
-        <Search className="absolute left-3.5 top-3 text-slate-400" size={17} />
+        <Search className="absolute left-3 sm:left-3.5 top-3 text-slate-400" size={17} />
         <input
           ref={searchInputRef}
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search by Wallet, FIR, or TxID... (Ctrl + K)"
-          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-16 text-xs sm:text-sm outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-inner"
+          placeholder="Search Wallet, FIR, or TxID..."
+          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 sm:py-2.5 pl-8 sm:pl-10 pr-10 sm:pr-16 text-xs sm:text-sm outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-inner"
         />
-        <div className="absolute right-2.5 top-2.5 flex items-center gap-1">
+        <div className="absolute right-2 sm:right-2.5 top-2.5 flex items-center gap-1">
           {searchQuery && (
             <button
               type="button"
@@ -239,7 +239,7 @@ export default function Header({
       </form>
 
       {/* Right: Actions, Notifications & Profile */}
-      <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
         {/* Module Quick Switcher */}
         <div className="relative" ref={appsMenuRef}>
           <button
@@ -250,17 +250,17 @@ export default function Header({
               setShowProfileMenu(false);
             }}
             title="Forensic Modules Quick Switcher"
-            className={`p-2.5 rounded-xl border transition ${
+            className={`p-2 sm:p-2.5 rounded-xl border transition ${
               showAppsMenu
                 ? "bg-blue-50 text-blue-600 border-blue-200"
                 : "border-transparent text-slate-600 hover:bg-slate-100 hover:text-blue-600"
             }`}
           >
-            <Grid3X3 size={19} />
+            <Grid3X3 size={18} />
           </button>
 
           {showAppsMenu && (
-            <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-white border border-slate-200 shadow-xl p-3 z-50 animate-in fade-in zoom-in-95 duration-100">
+            <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-1.5rem)] rounded-2xl bg-white border border-slate-200 shadow-xl p-3 z-50 animate-in fade-in zoom-in-95 duration-100">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 mb-2 px-2">
                 <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">Forensic Modules</span>
                 <span className="text-[10px] text-blue-600 font-semibold bg-blue-50 px-2 py-0.5 rounded-full">Active Core</span>
@@ -333,7 +333,7 @@ export default function Header({
           </button>
 
           {showAlertsMenu && (
-            <div className="absolute right-0 mt-2 w-84 rounded-2xl bg-white border border-slate-200 shadow-xl p-3 z-50 animate-in fade-in zoom-in-95 duration-100">
+            <div className="absolute right-0 mt-2 w-84 max-w-[calc(100vw-1.5rem)] rounded-2xl bg-white border border-slate-200 shadow-xl p-3 z-50 animate-in fade-in zoom-in-95 duration-100">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 mb-2 px-2">
                 <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">Tactical Intelligence Alerts</span>
                 <span className="text-[10px] bg-red-50 text-red-600 font-bold px-2 py-0.5 rounded-full">3 New</span>
@@ -395,7 +395,7 @@ export default function Header({
           </button>
 
           {showProfileMenu && (
-            <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-white border border-slate-200 shadow-2xl p-3.5 z-50 animate-in fade-in zoom-in-95 duration-100 text-xs">
+            <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-1.5rem)] rounded-2xl bg-white border border-slate-200 shadow-2xl p-3.5 z-50 animate-in fade-in zoom-in-95 duration-100 text-xs">
               <div className="flex items-start gap-3 pb-3 border-b border-slate-100">
                 <div className="relative">
                   <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white flex items-center justify-center font-bold text-sm shadow-md ring-2 ring-blue-100">

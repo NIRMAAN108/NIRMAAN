@@ -471,7 +471,7 @@ export default function TransactionGraph({
               <select
                 value={selectedCaseId}
                 onChange={(e) => setSelectedCaseId(e.target.value)}
-                className="appearance-none rounded-xl border border-slate-200 bg-slate-50 py-2 pl-3 pr-8 text-xs font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-2xs"
+                className="appearance-none rounded-xl border border-slate-200 bg-slate-50 py-2 pl-3 pr-8 text-xs font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-2xs max-w-[210px] sm:max-w-xs truncate"
                 title="Select Case Investigation from Vault"
               >
                 {casesList.map((c) => (
@@ -614,7 +614,7 @@ export default function TransactionGraph({
 
         {/* Right Forensic Node & Edge Inspector (Full-width, zero truncation) */}
         {inspectorOpen && (
-          <div className="w-[380px] shrink-0 border-l border-slate-200 bg-white flex flex-col h-full shadow-lg overflow-hidden animate-in slide-in-from-right duration-200">
+          <div className="w-full sm:w-[380px] absolute sm:relative inset-y-0 right-0 z-30 sm:z-auto shrink-0 border-l border-slate-200 bg-white flex flex-col h-full shadow-2xl sm:shadow-lg overflow-hidden animate-in slide-in-from-right duration-200">
             {/* Inspector Header */}
             <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-slate-50/80 px-5 py-4">
               <div className="flex items-center gap-2">

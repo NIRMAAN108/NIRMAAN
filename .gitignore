@@ -11,3 +11,5 @@ frontend/app/node_modules/
 frontend/app/dist/
 dist/
 *.log
+
+.idea/

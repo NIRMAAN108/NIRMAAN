@@ -15,9 +15,14 @@ export default function App() {
   const [activePage, setActivePage] = useState("Dashboard");
   const [pageHistory, setPageHistory] = useState([]);
   const [navParams, setNavParams] = useState({});
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    return typeof window !== "undefined" ? window.innerWidth < 1024 : false;
+  });
 
   const navigateTo = (page, params = {}) => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setSidebarCollapsed(true);
+    }
     if (page === activePage) {
       if (Object.keys(params).length > 0) {
         setNavParams(params);
@@ -114,10 +119,21 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#F8FAFC]">
-      {/* Permanent In-Layout Sidebar (Always on screen; Collapsible to Icon Rail) */}
+      {/* Mobile Backdrop Overlay (Active only when sidebar drawer is open on mobile screens) */}
+      {!sidebarCollapsed && (
+        <div
+          onClick={() => setSidebarCollapsed(true)}
+          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs md:hidden transition-opacity"
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Responsive In-Layout Sidebar: Docked on desktop/tablet, Off-canvas drawer on mobile */}
       <aside
-        className={`h-screen shrink-0 border-r border-slate-200 bg-white transition-all duration-300 ease-in-out flex flex-col overflow-hidden ${
-          sidebarCollapsed ? "w-[72px]" : "w-[260px]"
+        className={`h-screen border-r border-slate-200 bg-white transition-all duration-300 ease-in-out flex flex-col overflow-hidden z-50 md:z-auto ${
+          sidebarCollapsed
+            ? "max-md:-translate-x-full max-md:w-0 max-md:hidden md:relative md:shrink-0 md:w-[72px]"
+            : "fixed inset-y-0 left-0 w-[260px] shadow-2xl md:shadow-none md:relative md:shrink-0 md:w-[260px]"
         }`}
       >
         <Sidebar
