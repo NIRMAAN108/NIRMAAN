@@ -119,21 +119,10 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#F8FAFC]">
-      {/* Mobile Backdrop Overlay (Active only when sidebar drawer is open on mobile screens) */}
-      {!sidebarCollapsed && (
-        <div
-          onClick={() => setSidebarCollapsed(true)}
-          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs md:hidden transition-opacity"
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Responsive In-Layout Sidebar: Docked on desktop/tablet, Off-canvas drawer on mobile */}
+      {/* Sidebar: Strictly In-Flow, Permanently Docked Beside Content, Zero Overlap */}
       <aside
-        className={`h-screen border-r border-slate-200 bg-white transition-all duration-300 ease-in-out flex flex-col overflow-hidden z-50 md:z-auto ${
-          sidebarCollapsed
-            ? "max-md:-translate-x-full max-md:w-0 max-md:hidden md:relative md:shrink-0 md:w-[72px]"
-            : "fixed inset-y-0 left-0 w-[260px] shadow-2xl md:shadow-none md:relative md:shrink-0 md:w-[260px]"
+        className={`relative h-screen shrink-0 border-r border-slate-200 bg-white transition-all duration-300 ease-in-out flex flex-col overflow-hidden ${
+          sidebarCollapsed ? "w-[68px]" : "w-[240px]"
         }`}
       >
         <Sidebar
@@ -144,7 +133,7 @@ export default function App() {
         />
       </aside>
 
-      {/* Main Content Area (Permanently visible alongside sidebar, never obscured by backdrops) */}
+      {/* Main Content Area (Permanently adjacent flex sibling) */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <div className="shrink-0">
           <Header
