@@ -269,6 +269,21 @@ Issued under seal of Investigating Officer, Cyber Crime Police Station.`;
 // Fallback Curated Cases
 const FALLBACK_CASES = [
   {
+    case_id: "CASE-173573",
+    fir_number: "LEA-LIVE-EVM-AUDIT",
+    police_station: "Special Cyber Crime Cell",
+    investigating_officer: "Inspector Rajesh Sharma",
+    complainant_name: "FinTech Compliance Unit",
+    loss_amount_inr: 3200000.0,
+    seed_address: "0x28C6c06298d514Db089934071355E5743bf21d60",
+    chain: "Ethereum (ERC-20)",
+    destination_vasp: "CoinDCX (Neblio Technologies)",
+    total_routed_usd: 38200.0,
+    evidence_sha256: "sha256:4a7e9b2c1d3f5e8a0b2c4d6e8f0a2b4c6d8e0f2a4b6c8d0e2f4a6b8c0d2e4f6a",
+    created_at: "2026-11-01T18:00:00Z",
+    trace_data: generateSyntheticTrace("0x28C6c06298d514Db089934071355E5743bf21d60", "ethereum", "LEA-LIVE-EVM-AUDIT", 3200000)
+  },
+  {
     case_id: "CASE-DL-2026-088",
     fir_number: "FIR-88/2026 Cyber Cell Delhi",
     police_station: "Special Cell / IFSO Delhi Police",

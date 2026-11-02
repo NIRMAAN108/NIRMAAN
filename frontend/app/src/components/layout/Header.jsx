@@ -168,14 +168,13 @@ export default function Header({
           onClick={onGoBack}
           disabled={!canGoBack}
           title={canGoBack ? "Go Back to Previous Page" : "At Root Page"}
-          className={`p-2 rounded-xl border transition flex items-center gap-1 text-xs font-semibold ${
+          className={`p-2 rounded-xl border transition flex items-center justify-center text-xs font-semibold ${
             canGoBack
               ? "border-slate-200 text-slate-700 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 active:scale-95 cursor-pointer shadow-xs"
               : "border-slate-100 text-slate-300 cursor-not-allowed"
           }`}
         >
           <ArrowLeft size={16} />
-          <span className="hidden xl:inline">Back</span>
         </button>
 
         {/* Go Home Button */}
@@ -183,29 +182,14 @@ export default function Header({
           type="button"
           onClick={() => onNavigate?.("Dashboard")}
           title="Return to Main Dashboard"
-          className={`p-2 rounded-xl border border-slate-200 transition text-xs font-semibold flex items-center gap-1 shadow-xs active:scale-95 ${
+          className={`p-2 rounded-xl border transition text-xs font-semibold flex items-center justify-center shadow-xs active:scale-95 ${
             activePage === "Dashboard"
               ? "bg-blue-50 text-blue-600 border-blue-200"
-              : "text-slate-700 hover:bg-slate-50 hover:text-blue-600"
+              : "border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-blue-600"
           }`}
         >
           <Home size={16} />
-          <span className="hidden xl:inline">Home</span>
         </button>
-
-        {/* Breadcrumb Trail */}
-        <div className="hidden lg:flex items-center gap-1.5 text-xs font-medium pl-1">
-          <span
-            onClick={() => onNavigate?.("Dashboard")}
-            className="text-slate-400 hover:text-blue-600 cursor-pointer transition"
-          >
-            NIRMAAN
-          </span>
-          <span className="text-slate-300">/</span>
-          <span className="text-slate-900 font-bold bg-slate-100 px-2 py-0.5 rounded-md">
-            {activePage}
-          </span>
-        </div>
       </div>
 
       {/* Center: Global Search Bar */}
@@ -213,16 +197,16 @@ export default function Header({
         onSubmit={handleSearchSubmit}
         className="relative flex-1 max-w-[550px] mx-1 sm:mx-2 min-w-0"
       >
-        <Search className="absolute left-3 sm:left-3.5 top-3 text-slate-400" size={17} />
+        <Search className="absolute left-3.5 top-3 text-slate-400" size={17} />
         <input
           ref={searchInputRef}
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search Wallet, FIR, or TxID..."
-          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 sm:py-2.5 pl-8 sm:pl-10 pr-10 sm:pr-16 text-xs sm:text-sm outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-inner"
+          placeholder="Search by Wallet, FIR, or TxID... (Ctrl + K)"
+          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-10 text-xs sm:text-sm outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-inner"
         />
-        <div className="absolute right-2 sm:right-2.5 top-2.5 flex items-center gap-1">
+        <div className="absolute right-2.5 top-2.5 flex items-center gap-1">
           {searchQuery && (
             <button
               type="button"
@@ -232,9 +216,6 @@ export default function Header({
               <X size={14} />
             </button>
           )}
-          <span className="hidden sm:inline-block text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-slate-200/70 text-slate-500 border border-slate-300/60">
-            Ctrl K
-          </span>
         </div>
       </form>
 

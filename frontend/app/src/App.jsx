@@ -15,14 +15,9 @@ export default function App() {
   const [activePage, setActivePage] = useState("Dashboard");
   const [pageHistory, setPageHistory] = useState([]);
   const [navParams, setNavParams] = useState({});
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    return typeof window !== "undefined" ? window.innerWidth < 1024 : false;
-  });
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const navigateTo = (page, params = {}) => {
-    if (typeof window !== "undefined" && window.innerWidth < 768) {
-      setSidebarCollapsed(true);
-    }
     if (page === activePage) {
       if (Object.keys(params).length > 0) {
         setNavParams(params);
@@ -119,10 +114,10 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#F8FAFC]">
-      {/* Sidebar: Strictly In-Flow, Permanently Docked Beside Content, Zero Overlap */}
+      {/* Permanent In-Layout Sidebar: Side-by-Side Flex Sibling, Zero Overlap */}
       <aside
-        className={`relative h-screen shrink-0 border-r border-slate-200 bg-white transition-all duration-300 ease-in-out flex flex-col overflow-hidden ${
-          sidebarCollapsed ? "w-[68px]" : "w-[240px]"
+        className={`h-screen shrink-0 border-r border-slate-200 bg-white transition-all duration-300 ease-in-out flex flex-col overflow-hidden ${
+          sidebarCollapsed ? "w-[72px]" : "w-[260px]"
         }`}
       >
         <Sidebar

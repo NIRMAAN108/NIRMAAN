@@ -51,9 +51,11 @@ export default function Dashboard({ onNavigate }) {
   };
 
   const displayCases = liveCases.length > 0 ? liveCases.slice(0, 5) : [
-    { case_id: "demo-1", fir_number: "FIR-88/2026", chain: "TRON (TRC-20)", target_vasp_name: "Binance", status: "Active" },
-    { case_id: "demo-2", fir_number: "FIR-91/2026", chain: "Ethereum (ERC-20)", target_vasp_name: "Bybit", status: "Under Review" },
-    { case_id: "demo-3", fir_number: "FIR-94/2026", chain: "BSC (BEP-20)", target_vasp_name: "CoinDCX", status: "Closed" },
+    { case_id: "CASE-173573", fir_number: "LEA-LIVE-EVM-AUDIT", chain: "Ethereum (ERC-20)", target_vasp_name: "CoinDCX (Neblio Technologies)", status: "Completed" },
+    { case_id: "CASE-DL-2026-088", fir_number: "FIR-88/2026 Cyber Cell Delhi", chain: "TRON (TRC-20)", target_vasp_name: "Binance India", status: "Completed" },
+    { case_id: "CASE-MH-2026-042", fir_number: "FIR-42/2026 Mumbai Cyber", chain: "Ethereum (ERC-20)", target_vasp_name: "WazirX", status: "Completed" },
+    { case_id: "CASE-KA-2026-109", fir_number: "FIR-109/2026 Bengaluru CID", chain: "Bitcoin (UTXO)", target_vasp_name: "CoinDCX", status: "Completed" },
+    { case_id: "CASE-TG-2026-017", fir_number: "FIR-17/2026 Cyber Cell Hyderabad", chain: "TRON (TRC-20)", target_vasp_name: "Bybit Global", status: "Completed" },
   ];
 
   return (
