@@ -3,6 +3,7 @@ Industrial Multi-Provider Bitcoin Crawler
 Integrates Mempool.space + Blockstream Esplora + Multi-Input Clustering + Failover.
 """
 import logging
+import os
 import time
 from typing import List, Dict, Any, Optional, Set
 import httpx
@@ -130,7 +131,7 @@ class BitcoinCrawler:
 
     async def fetch_transfers(self, address: str, limit: int = 15) -> List[Dict[str, Any]]:
         """Multi-Provider Failover Crawl for Bitcoin."""
-        if address in DEMO_BTC_TRAIL:
+        if os.getenv("STRICT_LIVE_NETWORK") != "1" and address in DEMO_BTC_TRAIL:
             logger.info(f"Returning deterministic Bitcoin demo fixture for {address}")
             return DEMO_BTC_TRAIL[address]
 

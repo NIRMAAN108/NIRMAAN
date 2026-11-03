@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Search, ShieldCheck, Wallet, Network, FileText,
   ChevronDown, CheckCircle, AlertTriangle, Loader2, ArrowRight, Download
@@ -16,7 +16,12 @@ export default function Investigation({ onNavigate, initialWallet = "", initialF
   const [traceResult, setTraceResult] = useState(null);
   const [caseId, setCaseId] = useState(null);
 
-  useEffect(() => {
+  const [prevInitialWallet, setPrevInitialWallet] = useState(initialWallet);
+  const [prevInitialFir, setPrevInitialFir] = useState(initialFir);
+
+  if (initialWallet !== prevInitialWallet || initialFir !== prevInitialFir) {
+    setPrevInitialWallet(initialWallet);
+    setPrevInitialFir(initialFir);
     if (initialWallet) {
       setWallet(initialWallet);
       if (!fir) setFir("FIR-2026/CYBER/AUTO");
@@ -24,7 +29,7 @@ export default function Investigation({ onNavigate, initialWallet = "", initialF
     if (initialFir) {
       setFir(initialFir);
     }
-  }, [initialWallet, initialFir]);
+  }
 
   const applyPreset = (preset) => {
     setWallet(preset.address);

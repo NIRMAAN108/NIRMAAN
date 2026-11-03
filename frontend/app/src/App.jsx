@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "./components/layout/Sidebar";
 import Header from "./components/layout/Header";
 import Dashboard from "./pages/Dashboard";
@@ -18,6 +18,20 @@ export default function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return typeof window !== "undefined" ? window.innerWidth < 1024 : false;
   });
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window !== "undefined") {
+        if (window.innerWidth < 1024) {
+          setSidebarCollapsed(true);
+        } else {
+          setSidebarCollapsed(false);
+        }
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const navigateTo = (page, params = {}) => {
     if (typeof window !== "undefined" && window.innerWidth < 768) {

@@ -1,17 +1,13 @@
 import { useState } from "react";
 import {
-  CircleHelp,
   BookOpen,
   Scale,
   ShieldCheck,
   FileText,
   Network,
-  Phone,
   HelpCircle,
-  ExternalLink,
   ChevronDown,
   ChevronRight,
-  ShieldAlert,
 } from "lucide-react";
 
 const FAQS = [

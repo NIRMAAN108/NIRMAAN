@@ -387,7 +387,7 @@ export async function traceWallet({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(6000)
+      signal: AbortSignal.timeout(45000)
     });
 
     if (!res.ok) {
@@ -398,13 +398,8 @@ export async function traceWallet({
 
     return await res.json();
   } catch (err) {
-    console.info("NIRMAAN Engine: Backend unreachable or offline. Serving high-fidelity simulated trace for demonstration.", err);
-    return generateSyntheticTrace(
-      payload.seed_address,
-      payload.chain,
-      payload.case_metadata.fir_number,
-      payload.case_metadata.loss_amount_inr
-    );
+    console.error("NIRMAAN Engine: Live trace request failed:", err);
+    throw err;
   }
 }
 
@@ -460,7 +455,9 @@ export async function fetchCases() {
     if (!res.ok) throw new Error(`Failed to fetch cases: ${res.status}`);
     const data = await res.json();
     if (Array.isArray(data) && data.length > 0) return data;
-  } catch {}
+  } catch {
+    /* backend offline fallback */
+  }
 
   // Check localStorage for user-created cases
   try {
@@ -471,7 +468,9 @@ export async function fetchCases() {
         return [...parsed, ...FALLBACK_CASES];
       }
     }
-  } catch {}
+  } catch {
+    /* parse error fallback */
+  }
 
   return FALLBACK_CASES;
 }
@@ -480,7 +479,9 @@ export async function fetchCaseById(caseId) {
   try {
     const res = await fetch(`${API_BASE}/api/cases/${caseId}`, { signal: AbortSignal.timeout(3000) });
     if (res.ok) return await res.json();
-  } catch {}
+  } catch {
+    /* backend offline fallback */
+  }
 
   const all = await fetchCases();
   const match = all.find((c) => c.case_id === caseId || c.fir_number === caseId);
@@ -498,7 +499,9 @@ export async function createCase(caseData) {
     });
 
     if (res.ok) return await res.json();
-  } catch {}
+  } catch {
+    /* backend offline fallback */
+  }
 
   // Fallback: save to localStorage
   const newCase = {
@@ -511,7 +514,9 @@ export async function createCase(caseData) {
     const local = localStorage.getItem("nirmaan_vault_cases");
     const existing = local ? JSON.parse(local) : [];
     localStorage.setItem("nirmaan_vault_cases", JSON.stringify([newCase, ...existing]));
-  } catch {}
+  } catch {
+    /* storage error fallback */
+  }
 
   return newCase;
 }

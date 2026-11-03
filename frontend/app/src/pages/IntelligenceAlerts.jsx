@@ -1,13 +1,10 @@
 import { useState } from "react";
 import {
   Bell,
-  AlertTriangle,
   ShieldAlert,
   ShieldCheck,
   Search,
-  Filter,
   ArrowRight,
-  ExternalLink,
   Copy,
   Check,
   RefreshCw,
@@ -16,7 +13,6 @@ import {
   Network,
   Zap,
   Building2,
-  CheckCircle2,
 } from "lucide-react";
 
 const INITIAL_ALERTS = [
@@ -133,7 +129,7 @@ export default function IntelligenceAlerts({ onNavigate }) {
     onNavigate?.("Investigations", { wallet: alert.wallet, fir: alert.fir });
   };
 
-  const handleViewGraph = (alert) => {
+  const handleViewGraph = () => {
     onNavigate?.("Transaction Graph");
   };
 

@@ -155,11 +155,12 @@ class EVMCrawler:
         """Multi-Provider Failover Crawl for EVM."""
         address_lower = address.lower()
 
-        # Check demo fixture first
-        for key in DEMO_EVM_TRAIL:
-            if key.lower() == address_lower:
-                logger.info(f"Returning deterministic EVM demo fixture for {address}")
-                return DEMO_EVM_TRAIL[key]
+        # Check demo fixture first (bypassed if STRICT_LIVE_NETWORK is active)
+        if os.getenv("STRICT_LIVE_NETWORK") != "1":
+            for key in DEMO_EVM_TRAIL:
+                if key.lower() == address_lower:
+                    logger.info(f"Returning deterministic EVM demo fixture for {address}")
+                    return DEMO_EVM_TRAIL[key]
 
         base_host = "bsc.blockscout.com" if chain == "bsc" else "eth.blockscout.com"
         etherscan_host = "api.bscscan.com" if chain == "bsc" else "api.etherscan.io"

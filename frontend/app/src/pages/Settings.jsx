@@ -1,31 +1,28 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Settings as SettingsIcon,
   User,
-  Shield,
   Building,
-  Key,
-  Server,
-  Bell,
   Save,
-  Check,
   RotateCcw,
-  ShieldCheck,
   CheckCircle2,
-  Sliders,
   FileText,
-  Radio,
   ExternalLink,
-  Lock,
-  Zap,
-  Globe,
-  Mail,
   Scale,
   RefreshCw,
-  Eye,
   Building2,
   Cpu,
 } from "lucide-react";
+
+function getStoredSettings() {
+  try {
+    const saved = typeof window !== "undefined" ? localStorage.getItem("nirmaan_officer_settings") : null;
+    if (saved) return JSON.parse(saved);
+  } catch {
+    // Ignore error
+  }
+  return null;
+}
 
 const STATE_PRESETS = [
   {
@@ -68,18 +65,24 @@ const STATE_PRESETS = [
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("profile"); // profile | statutory | blockchain | fiu | alerts
-  const [officerName, setOfficerName] = useState("Inspector Rajesh Sharma");
-  const [badgeId, setBadgeId] = useState("IO-77-CYBER");
-  const [policeStation, setPoliceStation] = useState("Cyber Crime Police Station, South District");
-  const [stateUt, setStateUt] = useState("Delhi NCT");
-  const [leaEmail, setLeaEmail] = useState("io.cyber77@delhipolice.gov.in");
+  const [officerName, setOfficerName] = useState(() => getStoredSettings()?.officerName || "Inspector Rajesh Sharma");
+  const [badgeId, setBadgeId] = useState(() => getStoredSettings()?.badgeId || "IO-77-CYBER");
+  const [policeStation, setPoliceStation] = useState(() => getStoredSettings()?.policeStation || "Cyber Crime Police Station, South District");
+  const [stateUt, setStateUt] = useState(() => getStoredSettings()?.stateUt || "Delhi NCT");
+  const [leaEmail, setLeaEmail] = useState(() => getStoredSettings()?.leaEmail || "io.cyber77@delhipolice.gov.in");
   const [phoneNumber, setPhoneNumber] = useState("+91 11 2345 6789");
 
   // Statutory parameters
-  const [defaultChain, setDefaultChain] = useState("TRON (TRC-20)");
-  const [complianceHours, setComplianceHours] = useState("24");
-  const [autoSeal, setAutoSeal] = useState(true);
-  const [fiuAutoSync, setFiuAutoSync] = useState(true);
+  const [defaultChain, setDefaultChain] = useState(() => getStoredSettings()?.defaultChain || "TRON (TRC-20)");
+  const [complianceHours, setComplianceHours] = useState(() => getStoredSettings()?.complianceHours || "24");
+  const [autoSeal, setAutoSeal] = useState(() => {
+    const s = getStoredSettings();
+    return s?.autoSeal !== undefined ? s.autoSeal : true;
+  });
+  const [fiuAutoSync, setFiuAutoSync] = useState(() => {
+    const s = getStoredSettings();
+    return s?.fiuAutoSync !== undefined ? s.fiuAutoSync : true;
+  });
   const [includeBnsOffences, setIncludeBnsOffences] = useState(true);
   const [goldenHourPriority, setGoldenHourPriority] = useState(true);
 
@@ -91,26 +94,6 @@ export default function Settings() {
   const [rpcStatus, setRpcStatus] = useState("Connected (14ms)");
 
   const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    try {
-      const savedSettings = localStorage.getItem("nirmaan_officer_settings");
-      if (savedSettings) {
-        const parsed = JSON.parse(savedSettings);
-        if (parsed.officerName) setOfficerName(parsed.officerName);
-        if (parsed.badgeId) setBadgeId(parsed.badgeId);
-        if (parsed.policeStation) setPoliceStation(parsed.policeStation);
-        if (parsed.stateUt) setStateUt(parsed.stateUt);
-        if (parsed.leaEmail) setLeaEmail(parsed.leaEmail);
-        if (parsed.defaultChain) setDefaultChain(parsed.defaultChain);
-        if (parsed.complianceHours) setComplianceHours(parsed.complianceHours);
-        if (parsed.autoSeal !== undefined) setAutoSeal(parsed.autoSeal);
-        if (parsed.fiuAutoSync !== undefined) setFiuAutoSync(parsed.fiuAutoSync);
-      }
-    } catch {
-      // Ignore
-    }
-  }, []);
 
   const handleApplyPreset = (p) => {
     setOfficerName(p.officer);
@@ -163,7 +146,9 @@ export default function Settings() {
     setFiuAutoSync(true);
     try {
       localStorage.removeItem("nirmaan_officer_settings");
-    } catch {}
+    } catch {
+      // Ignore removal error
+    }
   };
 
   return (

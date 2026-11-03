@@ -3,6 +3,7 @@ Industrial Multi-Provider TRON Crawler
 Integrates TronGrid Primary + Tronscan Secondary + Circuit Breakers + Failover.
 """
 import logging
+import os
 import time
 from typing import List, Dict, Any, Optional
 import httpx
@@ -143,7 +144,7 @@ class TronCrawler:
         2. Queries TronGrid Official API
         3. If failed/timed out, automatically fails over to Tronscan OpenAPI
         """
-        if address in DEMO_FIXTURE_TRAIL:
+        if os.getenv("STRICT_LIVE_NETWORK") != "1" and address in DEMO_FIXTURE_TRAIL:
             logger.info(f"Returning deterministic demo fixture for {address}")
             return DEMO_FIXTURE_TRAIL[address]
 

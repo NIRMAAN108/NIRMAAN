@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   FileText, Wallet, ShieldCheck, Activity,
-  Clock, Search, ArrowRight, TrendingUp, CheckCircle, RefreshCw, ExternalLink
+  Clock, Search, ArrowRight, RefreshCw, ExternalLink
 } from "lucide-react";
 import { fetchCases, checkSystemHealth } from "../services/api";
 import CaseDetailModal from "../components/modals/CaseDetailModal";
@@ -25,13 +25,7 @@ export default function Dashboard({ onNavigate }) {
   const [systemInfo, setSystemInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [selectedCase, setSelectedCase] = useState(null);
-
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
-
   const loadDashboardData = async () => {
-    setLoading(true);
     try {
       const [casesData, healthData] = await Promise.allSettled([
         fetchCases(),
@@ -49,6 +43,33 @@ export default function Dashboard({ onNavigate }) {
       setLoading(false);
     }
   };
+
+  const handleRefresh = () => {
+    setLoading(true);
+    loadDashboardData();
+  };
+
+  useEffect(() => {
+    let ignore = false;
+    Promise.allSettled([
+      fetchCases(),
+      checkSystemHealth()
+    ]).then(([casesData, healthData]) => {
+      if (!ignore) {
+        if (casesData.status === "fulfilled" && Array.isArray(casesData.value)) {
+          setLiveCases(casesData.value);
+        }
+        if (healthData.status === "fulfilled") {
+          setSystemInfo(healthData.value);
+        }
+      }
+    }).catch(() => {
+      // Fallback gracefully
+    });
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const displayCases = liveCases.length > 0 ? liveCases.slice(0, 5) : [
     { case_id: "CASE-173573", fir_number: "LEA-LIVE-EVM-AUDIT", chain: "Ethereum (ERC-20)", target_vasp_name: "CoinDCX (Neblio Technologies)", status: "Completed" },
@@ -136,7 +157,7 @@ export default function Dashboard({ onNavigate }) {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={loadDashboardData}
+              onClick={handleRefresh}
               className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold transition"
               title="Refresh"
             >

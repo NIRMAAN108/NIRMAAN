@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Menu, ArrowLeft, Home, Search, Bell, Grid3X3,
-  ChevronDown, X, ShieldCheck, CheckCircle2,
-  ExternalLink, BriefcaseBusiness, Network, Wallet, FileText, AlertTriangle,
-  Settings, CircleHelp, ArrowRight, User
+  ChevronDown, X, ShieldCheck,
+  ExternalLink, BriefcaseBusiness, Network, Wallet, FileText,
+  Settings, CircleHelp, ArrowRight
 } from "lucide-react";
 
 export default function Header({
@@ -18,15 +18,32 @@ export default function Header({
   const [showAppsMenu, setShowAppsMenu] = useState(false);
   const [showAlertsMenu, setShowAlertsMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [officerProfile, setOfficerProfile] = useState({
-    name: "Inspector Rajesh Sharma",
-    badge: "IO-77-CYBER",
-    station: "Cyber Crime Police Station",
-    state: "Delhi NCT",
-    email: "io.cyber77@delhipolice.gov.in"
+  const [officerProfile, setOfficerProfile] = useState(() => {
+    try {
+      const stored = localStorage.getItem("nirmaan_officer_settings");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return {
+          name: parsed.officerName || "Inspector Rajesh Sharma",
+          badge: parsed.badgeId || "IO-77-CYBER",
+          station: parsed.policeStation || "Cyber Crime Police Station",
+          state: parsed.stateUt || "Delhi NCT",
+          email: parsed.leaEmail || "io.cyber77@delhipolice.gov.in"
+        };
+      }
+    } catch {
+      // ignore
+    }
+    return {
+      name: "Inspector Rajesh Sharma",
+      badge: "IO-77-CYBER",
+      station: "Cyber Crime Police Station",
+      state: "Delhi NCT",
+      email: "io.cyber77@delhipolice.gov.in"
+    };
   });
 
-  useEffect(() => {
+  const refreshOfficerProfile = () => {
     try {
       const stored = localStorage.getItem("nirmaan_officer_settings");
       if (stored) {
@@ -39,8 +56,10 @@ export default function Header({
           email: parsed.leaEmail || prev.email
         }));
       }
-    } catch {}
-  }, [showProfileMenu]);
+    } catch {
+      // ignore
+    }
+  };
   const officerInitials = (officerProfile.name || "IO")
     .split(" ")
     .filter(Boolean)
@@ -148,18 +167,18 @@ export default function Header({
   ];
 
   return (
-    <header className="h-[76px] bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 lg:px-8 sticky top-0 z-30 shadow-xs">
+    <header className="h-[76px] bg-white border-b border-slate-200 flex items-center justify-between px-2 sm:px-4 lg:px-8 sticky top-0 z-30 shadow-xs">
       {/* Left: Navigation Controls & Breadcrumbs */}
-      <div className="flex items-center gap-2 sm:gap-3 shrink-0 mr-4">
+      <div className="flex items-center gap-1 sm:gap-2 shrink-0 mr-1 sm:mr-3">
         {/* Toggle Sidebar Button (Collapse / Expand) */}
         <button
           type="button"
           onClick={onToggleSidebar}
           title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           aria-label={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-          className="p-2 rounded-xl text-slate-600 hover:text-blue-600 hover:bg-slate-100 transition active:scale-95"
+          className="p-1.5 sm:p-2 rounded-xl text-slate-600 hover:text-blue-600 hover:bg-slate-100 transition active:scale-95"
         >
-          <Menu size={20} />
+          <Menu size={18} className="sm:w-5 sm:h-5" />
         </button>
 
         {/* Go Back Arrow */}
@@ -168,7 +187,7 @@ export default function Header({
           onClick={onGoBack}
           disabled={!canGoBack}
           title={canGoBack ? "Go Back to Previous Page" : "At Root Page"}
-          className={`p-2 rounded-xl border transition flex items-center justify-center text-xs font-semibold ${
+          className={`p-1.5 sm:p-2 rounded-xl border transition flex items-center justify-center text-xs font-semibold ${
             canGoBack
               ? "border-slate-200 text-slate-700 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 active:scale-95 cursor-pointer shadow-xs"
               : "border-slate-100 text-slate-300 cursor-not-allowed"
@@ -177,12 +196,12 @@ export default function Header({
           <ArrowLeft size={16} />
         </button>
 
-        {/* Go Home Button */}
+        {/* Go Home Button (hidden on mobile, visible on sm+) */}
         <button
           type="button"
           onClick={() => onNavigate?.("Dashboard")}
           title="Return to Main Dashboard"
-          className={`p-2 rounded-xl border transition text-xs font-semibold flex items-center justify-center shadow-xs active:scale-95 ${
+          className={`hidden sm:flex p-1.5 sm:p-2 rounded-xl border transition text-xs font-semibold items-center justify-center shadow-xs active:scale-95 ${
             activePage === "Dashboard"
               ? "bg-blue-50 text-blue-600 border-blue-200"
               : "border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-blue-600"
@@ -195,18 +214,18 @@ export default function Header({
       {/* Center: Global Search Bar */}
       <form
         onSubmit={handleSearchSubmit}
-        className="relative flex-1 max-w-[550px] mx-1 sm:mx-2 min-w-0"
+        className="relative min-w-0 flex-1 max-w-[550px] mx-1 sm:mx-2"
       >
-        <Search className="absolute left-3.5 top-3 text-slate-400" size={17} />
+        <Search className="absolute left-3 top-3 sm:left-3.5 sm:top-3 text-slate-400" size={16} />
         <input
           ref={searchInputRef}
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search by Wallet, FIR, or TxID... (Ctrl + K)"
-          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-10 text-xs sm:text-sm outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-inner"
+          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-8 pr-8 sm:py-2.5 sm:pl-10 sm:pr-10 text-xs sm:text-sm outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-inner truncate"
         />
-        <div className="absolute right-2.5 top-2.5 flex items-center gap-1">
+        <div className="absolute right-2 top-2 sm:right-2.5 sm:top-2.5 flex items-center gap-1">
           {searchQuery && (
             <button
               type="button"
@@ -220,7 +239,7 @@ export default function Header({
       </form>
 
       {/* Right: Actions, Notifications & Profile */}
-      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
         {/* Module Quick Switcher */}
         <div className="relative" ref={appsMenuRef}>
           <button
@@ -351,6 +370,7 @@ export default function Header({
           <button
             type="button"
             onClick={() => {
+              if (!showProfileMenu) refreshOfficerProfile();
               setShowProfileMenu(!showProfileMenu);
               setShowAppsMenu(false);
               setShowAlertsMenu(false);

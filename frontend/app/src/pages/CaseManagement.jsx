@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BriefcaseBusiness, FileText, Download, ShieldCheck, Search, ExternalLink } from "lucide-react";
+import { ShieldCheck, Search, ExternalLink } from "lucide-react";
 import { fetchCases, getDossierDownloadUrl, getBundleDownloadUrl } from "../services/api";
 import CaseDetailModal from "../components/modals/CaseDetailModal";
 
@@ -7,13 +7,13 @@ export default function CaseManagement({ onNavigate, title = "Case Management Va
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(initialSearch || "");
+  const [prevInitialSearch, setPrevInitialSearch] = useState(initialSearch);
   const [selectedCase, setSelectedCase] = useState(null);
 
-  useEffect(() => {
-    if (initialSearch) {
-      setSearch(initialSearch);
-    }
-  }, [initialSearch]);
+  if (initialSearch !== prevInitialSearch) {
+    setPrevInitialSearch(initialSearch);
+    setSearch(initialSearch);
+  }
 
   useEffect(() => {
     fetchCases()

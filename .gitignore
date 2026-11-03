@@ -11,5 +11,9 @@ frontend/app/node_modules/
 frontend/app/dist/
 dist/
 *.log
+.agents/
+test-results/
+frontend/app/test-results/
+frontend/app/playwright-report/
 
 .idea/

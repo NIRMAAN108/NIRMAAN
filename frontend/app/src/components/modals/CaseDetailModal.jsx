@@ -1,29 +1,20 @@
 import { useState, useEffect } from "react";
 import {
   X,
-  FileText,
   Download,
   ShieldCheck,
-  Building2,
   Network,
-  Clock,
   ArrowRight,
   ExternalLink,
   Copy,
   Check,
-  AlertTriangle,
-  User,
   Scale,
-  Hash,
-  Share2,
   Search,
-  CheckCircle2,
 } from "lucide-react";
 import {
   fetchCaseById,
   getDossierDownloadUrl,
   getBundleDownloadUrl,
-  getStrReportUrl,
 } from "../../services/api";
 
 export default function CaseDetailModal({
@@ -42,23 +33,36 @@ export default function CaseDetailModal({
   useEffect(() => {
     if (!isOpen || !caseId) return;
 
-    // Load full case details including graph trace and statutory requisitions
-    setLoading(true);
-    setError(null);
+    let active = true;
+    const timer = setTimeout(() => {
+      if (active) {
+        setLoading(true);
+        setError(null);
+      }
+    }, 0);
+
     fetchCaseById(caseId)
       .then((data) => {
-        setCaseData(data);
+        if (active) setCaseData(data);
       })
       .catch((err) => {
         console.warn("Failed to load full case details:", err);
-        // Fallback to initialCaseData if available
-        if (initialCaseData) {
-          setCaseData(initialCaseData);
-        } else {
-          setError(err.message || "Failed to load case details.");
+        if (active) {
+          if (initialCaseData) {
+            setCaseData(initialCaseData);
+          } else {
+            setError(err.message || "Failed to load case details.");
+          }
         }
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
   }, [isOpen, caseId, initialCaseData]);
 
   // Handle escape key
@@ -77,7 +81,6 @@ export default function CaseDetailModal({
   const data = caseData || initialCaseData || {};
   const trace = data.trace_data || {};
   const targetVasp = trace.target_vasp || {};
-  const nodes = trace.nodes || [];
   const edges = trace.edges || [];
   const typology = trace.syndicate_typology || data.syndicate_typology || {};
 
@@ -111,9 +114,9 @@ export default function CaseDetailModal({
       />
 
       {/* Modal Dialog Card */}
-      <div className="relative flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in-95 zoom-in-95 duration-150">
+      <div className="relative flex max-h-[92vh] w-full max-w-[calc(100vw-1rem)] sm:max-w-4xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in-95 zoom-in-95 duration-150">
         {/* Header */}
-        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-slate-50/90 px-6 py-4">
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-slate-50/90 px-4 sm:px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
               <Scale size={20} />
@@ -177,10 +180,10 @@ export default function CaseDetailModal({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-200 bg-white px-6">
+        <div className="flex border-b border-slate-200 bg-white px-4 sm:px-6 overflow-x-auto whitespace-nowrap">
           <button
             onClick={() => setActiveTab("overview")}
-            className={`border-b-2 px-4 py-3 text-xs font-semibold transition ${
+            className={`border-b-2 px-4 py-3 text-xs font-semibold transition shrink-0 ${
               activeTab === "overview"
                 ? "border-blue-600 text-blue-600"
                 : "border-transparent text-slate-600 hover:text-slate-900"
@@ -190,7 +193,7 @@ export default function CaseDetailModal({
           </button>
           <button
             onClick={() => setActiveTab("trail")}
-            className={`border-b-2 px-4 py-3 text-xs font-semibold transition ${
+            className={`border-b-2 px-4 py-3 text-xs font-semibold transition shrink-0 ${
               activeTab === "trail"
                 ? "border-blue-600 text-blue-600"
                 : "border-transparent text-slate-600 hover:text-slate-900"
@@ -200,7 +203,7 @@ export default function CaseDetailModal({
           </button>
           <button
             onClick={() => setActiveTab("vasp")}
-            className={`border-b-2 px-4 py-3 text-xs font-semibold transition ${
+            className={`border-b-2 px-4 py-3 text-xs font-semibold transition shrink-0 ${
               activeTab === "vasp"
                 ? "border-blue-600 text-blue-600"
                 : "border-transparent text-slate-600 hover:text-slate-900"
@@ -210,7 +213,7 @@ export default function CaseDetailModal({
           </button>
           <button
             onClick={() => setActiveTab("statutory")}
-            className={`border-b-2 px-4 py-3 text-xs font-semibold transition ${
+            className={`border-b-2 px-4 py-3 text-xs font-semibold transition shrink-0 ${
               activeTab === "statutory"
                 ? "border-blue-600 text-blue-600"
                 : "border-transparent text-slate-600 hover:text-slate-900"
@@ -221,7 +224,12 @@ export default function CaseDetailModal({
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+          {error && (
+            <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
+              {error}
+            </div>
+          )}
           {loading && (
             <div className="py-8 text-center">
               <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />

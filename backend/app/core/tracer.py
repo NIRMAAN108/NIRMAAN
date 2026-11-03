@@ -88,9 +88,12 @@ class ForensicTracer:
         }.get(chain, "Multi-Chain")
 
         is_synthetic = bool(
-            req.seed_address in DEMO_FIXTURE_TRAIL
-            or req.seed_address in DEMO_BTC_TRAIL
-            or any(req.seed_address.lower() == k.lower() for k in DEMO_EVM_TRAIL)
+            os.getenv("STRICT_LIVE_NETWORK") != "1"
+            and (
+                req.seed_address in DEMO_FIXTURE_TRAIL
+                or req.seed_address in DEMO_BTC_TRAIL
+                or any(req.seed_address.lower() == k.lower() for k in DEMO_EVM_TRAIL)
+            )
         )
 
         queue = [(req.seed_address, 0, "SUSPECT")]
