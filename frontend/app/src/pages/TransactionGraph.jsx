@@ -103,7 +103,9 @@ export default function TransactionGraph({
   const [loading, setLoading] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
   const [selectedEdge, setSelectedEdge] = useState(null);
-  const [inspectorOpen, setInspectorOpen] = useState(true);
+  const [inspectorOpen, setInspectorOpen] = useState(() => {
+    return typeof window !== "undefined" ? window.innerWidth >= 1280 : false;
+  });
   const [search, setSearch] = useState("");
   const [layoutName, setLayoutName] = useState("dagre");
   const [copiedKey, setCopiedKey] = useState(null);
@@ -162,6 +164,28 @@ export default function TransactionGraph({
     });
   }, [maxTime]);
 
+  // Handle container resize to ensure Cytoscape viewport redraws cleanly
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const ro = new ResizeObserver(() => {
+      if (cyRef.current) {
+        cyRef.current.resize();
+      }
+    });
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  // Re-size Cytoscape when inspector panel is toggled
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (cyRef.current) {
+        cyRef.current.resize();
+      }
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [inspectorOpen]);
+
   // 1. Fetch case investigations from Case Vault
   useEffect(() => {
     let isMounted = true;
@@ -173,6 +197,9 @@ export default function TransactionGraph({
           if (!selectedCaseId && !traceData) {
             setSelectedCaseId(data[0].case_id);
             setActiveFir(data[0].fir_number);
+            if (data[0].trace_data) {
+              setActiveTrace(data[0].trace_data);
+            }
           }
         }
       })
@@ -185,6 +212,14 @@ export default function TransactionGraph({
   // 2. Fetch specific case details on dropdown selection
   useEffect(() => {
     if (!selectedCaseId) return;
+
+    // Fast-path: Check if already present in casesList
+    const cached = casesList.find((c) => c.case_id === selectedCaseId);
+    if (cached && cached.trace_data) {
+      setActiveTrace(cached.trace_data);
+      setActiveFir(cached.fir_number || `Case ${selectedCaseId}`);
+      return;
+    }
 
     let isMounted = true;
     queueMicrotask(() => {
@@ -208,7 +243,7 @@ export default function TransactionGraph({
     return () => {
       isMounted = false;
     };
-  }, [selectedCaseId]);
+  }, [selectedCaseId, casesList]);
 
   // 3. React to traceData prop updates
   useEffect(() => {
@@ -720,6 +755,22 @@ export default function TransactionGraph({
             <span>Reset Layout</span>
           </button>
 
+          {/* Inspector Drawer Toggle Button */}
+          <button
+            type="button"
+            data-testid="toggle-inspector-btn"
+            onClick={() => setInspectorOpen((prev) => !prev)}
+            title={inspectorOpen ? "Hide Particulars Drawer" : "Show Node & Edge Particulars"}
+            className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold shadow-2xs transition active:scale-95 cursor-pointer ${
+              inspectorOpen
+                ? "border-blue-300 bg-blue-50 text-blue-700"
+                : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:border-slate-300"
+            }`}
+          >
+            <SlidersHorizontal size={14} />
+            <span className="hidden sm:inline">Inspector</span>
+          </button>
+
           {/* Search Wallet in Canvas */}
           <form onSubmit={handleSearchSubmit} className="relative">
             <input
@@ -953,9 +1004,17 @@ export default function TransactionGraph({
           )}
         </div>
 
-        {/* Right Forensic Node & Edge Inspector (Full-width, zero truncation) */}
+        {/* Right Forensic Node & Edge Inspector */}
         {inspectorOpen && (
-          <div className="w-full sm:w-[380px] absolute sm:relative inset-y-0 right-0 z-30 sm:z-auto shrink-0 border-l border-slate-200 bg-white flex flex-col h-full shadow-2xl sm:shadow-lg overflow-hidden animate-in slide-in-from-right duration-200">
+          <>
+            {/* Mobile / Tablet Backdrop */}
+            <div
+              className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs lg:hidden"
+              onClick={() => setInspectorOpen(false)}
+            />
+
+            {/* Inspector Panel: Slide-over drawer on mobile/tablet, docked non-overlapping flex sibling on desktop */}
+            <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[380px] border-l border-slate-200 bg-white flex flex-col h-full shadow-2xl overflow-hidden animate-in slide-in-from-right duration-200 lg:static lg:z-auto lg:h-full lg:w-[380px] lg:shrink-0 lg:shadow-none">
             {/* Inspector Header */}
             <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-slate-50/80 px-5 py-4">
               <div className="flex items-center gap-2">
@@ -1148,6 +1207,7 @@ export default function TransactionGraph({
               )}
             </div>
           </div>
+          </>
         )}
 
         {/* Toggle to reopen inspector if closed */}
