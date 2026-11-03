@@ -2,33 +2,38 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import {
   Network,
   Search,
+  Download,
+  Filter,
   ZoomIn,
   ZoomOut,
   Maximize2,
   Wallet,
+  ArrowUpRight,
   ShieldCheck,
   AlertTriangle,
+  Activity,
   X,
   ExternalLink,
   Copy,
   Check,
+  RefreshCw,
+  FolderOpen,
   ChevronDown,
+  Layers,
+  Sparkles,
+  Share2,
   Camera,
   RotateCcw,
   SlidersHorizontal,
   Flame,
   Building2,
   User,
+  ShieldAlert,
   Compass,
-  Play,
-  Pause,
-  SkipBack,
-  SkipForward,
-  Clock,
 } from "lucide-react";
 import cytoscape from "cytoscape";
 import dagre from "cytoscape-dagre";
-import { fetchCases, fetchCaseById } from "../services/api";
+import { fetchCases, fetchCaseById, traceWallet } from "../services/api";
 
 // Safely register dagre layout once
 try {
@@ -103,95 +108,16 @@ export default function TransactionGraph({
   const [loading, setLoading] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
   const [selectedEdge, setSelectedEdge] = useState(null);
-  const [inspectorOpen, setInspectorOpen] = useState(() => {
-    return typeof window !== "undefined" ? window.innerWidth >= 1280 : false;
-  });
+  const [inspectorOpen, setInspectorOpen] = useState(true);
   const [search, setSearch] = useState("");
   const [layoutName, setLayoutName] = useState("dagre");
   const [copiedKey, setCopiedKey] = useState(null);
   const [exporting, setExporting] = useState(false);
 
-  // Timeline Scrubber State
-  const [scrubberTime, setScrubberTime] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-
-  // Process edges with verified chronological timestamps (pure deterministic calculation)
-  const processedEdges = useMemo(() => {
-    const rawEdges = activeTrace?.edges || [];
-    return rawEdges.reduce((acc, e, idx) => {
-      const prevTs = acc.length > 0 ? acc[acc.length - 1].parsedTimestamp : 0;
-      let rawTs = e.timestamp ? Number(e.timestamp) : 0;
-      if (!rawTs || rawTs <= 0) {
-        rawTs = 1730635200 + idx * 300;
-      }
-      if (rawTs <= prevTs) {
-        rawTs = prevTs + 60;
-      }
-      acc.push({
-        ...e,
-        parsedTimestamp: rawTs,
-      });
-      return acc;
-    }, []);
-  }, [activeTrace]);
-
-  // Derived discrete timeline checkpoints: [minTime, ts_0, ts_1, ...]
-  const { minTime, maxTime, timelinePoints } = useMemo(() => {
-    if (processedEdges.length === 0) {
-      return { minTime: 0, maxTime: 0, timelinePoints: [] };
-    }
-    const timestamps = processedEdges.map((e) => e.parsedTimestamp);
-    const earliest = timestamps[0];
-    const latest = timestamps[timestamps.length - 1];
-    const baseMin = earliest - 60; // Inception point before hop 1
-    return {
-      minTime: baseMin,
-      maxTime: latest,
-      timelinePoints: [baseMin, ...timestamps],
-    };
-  }, [processedEdges]);
-
-  // Synchronize scrubberTime when maxTime changes
-  useEffect(() => {
-    queueMicrotask(() => {
-      if (maxTime > 0) {
-        setScrubberTime(maxTime);
-        setIsPlaying(false);
-      } else {
-        setScrubberTime(null);
-        setIsPlaying(false);
-      }
-    });
-  }, [maxTime]);
-
-  // Handle container resize to ensure Cytoscape viewport redraws cleanly
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const ro = new ResizeObserver(() => {
-      if (cyRef.current) {
-        cyRef.current.resize();
-      }
-    });
-    ro.observe(containerRef.current);
-    return () => ro.disconnect();
-  }, []);
-
-  // Re-size Cytoscape when inspector panel is toggled
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (cyRef.current) {
-        cyRef.current.resize();
-      }
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [inspectorOpen]);
-
   // 1. Fetch case investigations from Case Vault
   useEffect(() => {
-    let isMounted = true;
     fetchCases()
       .then((data) => {
-        if (!isMounted) return;
         if (Array.isArray(data) && data.length > 0) {
           setCasesList(data);
           if (!selectedCaseId && !traceData) {
@@ -204,16 +130,12 @@ export default function TransactionGraph({
         }
       })
       .catch((err) => console.warn("Failed to load cases list:", err));
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedCaseId, traceData]);
+  }, [traceData]);
 
   // 2. Fetch specific case details on dropdown selection
   useEffect(() => {
     if (!selectedCaseId) return;
 
-    // Fast-path: Check if already present in casesList
     const cached = casesList.find((c) => c.case_id === selectedCaseId);
     if (cached && cached.trace_data) {
       setActiveTrace(cached.trace_data);
@@ -221,14 +143,10 @@ export default function TransactionGraph({
       return;
     }
 
-    let isMounted = true;
-    queueMicrotask(() => {
-      if (isMounted) setLoading(true);
-    });
-
+    setLoading(true);
     fetchCaseById(selectedCaseId)
       .then((res) => {
-        if (isMounted && res.trace_data) {
+        if (res.trace_data) {
           setActiveTrace(res.trace_data);
           setActiveFir(res.fir_number || `Case ${selectedCaseId}`);
         }
@@ -236,24 +154,16 @@ export default function TransactionGraph({
       .catch((err) => {
         console.warn("Failed to load case trace:", err);
       })
-      .finally(() => {
-        if (isMounted) setLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
+      .finally(() => setLoading(false));
   }, [selectedCaseId, casesList]);
 
   // 3. React to traceData prop updates
   useEffect(() => {
     if (traceData) {
-      queueMicrotask(() => {
-        setActiveTrace(traceData);
-        if (traceData.seed_address) {
-          setActiveFir(`Investigation: ${traceData.seed_address.substring(0, 10)}...`);
-        }
-      });
+      setActiveTrace(traceData);
+      if (traceData.seed_address) {
+        setActiveFir(`Investigation: ${traceData.seed_address.substring(0, 10)}...`);
+      }
     }
   }, [traceData]);
 
@@ -263,8 +173,22 @@ export default function TransactionGraph({
 
     const elements = [];
     const nodes = activeTrace?.nodes || [];
+    const edges = activeTrace?.edges || [];
 
-    if (nodes.length > 0) {
+    if (nodes.length === 0) {
+      // Clean fallback demo fixtures
+      elements.push(
+        { data: { id: "seed", label: "Suspect Origin\nTQiBwk...UmhUVC", cleanName: "Suspect Origin", address: "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC", node_type: "SUSPECT", balance_usd: 0, risk_score: 0.85, risk_tier: "CRITICAL", color: NODE_CONFIGS.SUSPECT.bg, borderColor: NODE_CONFIGS.SUSPECT.border } },
+        { data: { id: "mule1", label: "Hop 1 Mule\nTSGRsp...BRkWVA", cleanName: "Hop 1 Mule", address: "TSGRsppW4vSaWWstQUTa2d4CWJDWBRkWVA", node_type: "MULE", balance_usd: 15000, risk_score: 0.72, risk_tier: "HIGH", color: NODE_CONFIGS.MULE.bg, borderColor: NODE_CONFIGS.MULE.border } },
+        { data: { id: "dep1", label: "Binance Deposit\nTTpfou...ofBMrk", cleanName: "Binance Deposit", address: "TTpfou5hZarSNUpbaiAWHcCyC4u7ofBMrk", node_type: "VASP_DEPOSIT", balance_usd: 14950, risk_score: 0.08, risk_tier: "LOW", color: NODE_CONFIGS.VASP_DEPOSIT.bg, borderColor: NODE_CONFIGS.VASP_DEPOSIT.border } },
+        { data: { id: "hot1", label: "Binance Hot Wallet\nTMuA6Y...RB4b7N", cleanName: "Binance Hot Wallet", address: "TMuA6YqfCeX8EhbfYEg5y7S4DnxJRB4b7N", node_type: "VASP_HOT", balance_usd: 14950, risk_score: 0.08, risk_tier: "LOW", color: NODE_CONFIGS.VASP_HOT.bg, borderColor: NODE_CONFIGS.VASP_HOT.border } }
+      );
+      elements.push(
+        { data: { id: "e1", source: "seed", target: "mule1", amount: "$15,000 USDT", usd_value: 15000, tx_hash: "a1b2c3d4e5f60718293a4b5c6d7e8f90" } },
+        { data: { id: "e2", source: "mule1", target: "dep1", amount: "$14,950 USDT", usd_value: 14950, tx_hash: "b2c3d4e5f60718293a4b5c6d7e8f90a1" } },
+        { data: { id: "e3", source: "dep1", target: "hot1", amount: "$14,950 USDT (Sweep)", usd_value: 14950, tx_hash: "d4e5f60718293a4b5c6d7e8f90a1b2c3" } }
+      );
+    } else {
       nodes.forEach((n, idx) => {
         const typeInfo = NODE_CONFIGS[n.node_type] || NODE_CONFIGS.DEFAULT;
         const shortAddr = n.address ? `${n.address.substring(0, 6)}...${n.address.substring(n.address.length - 4)}` : n.id;
@@ -304,7 +228,7 @@ export default function TransactionGraph({
         });
       });
 
-      processedEdges.forEach((e, idx) => {
+      edges.forEach((e, idx) => {
         elements.push({
           group: "edges",
           data: {
@@ -314,7 +238,7 @@ export default function TransactionGraph({
             amount: `$${Number(e.usd_value || e.amount || 0).toLocaleString()} ${e.token || "USDT"}`,
             usd_value: e.usd_value || e.amount || 0,
             tx_hash: e.tx_hash || "",
-            timestamp: e.parsedTimestamp,
+            timestamp: e.timestamp || null,
           },
         });
       });
@@ -450,165 +374,12 @@ export default function TransactionGraph({
         cyRef.current = null;
       }
     };
-  }, [activeTrace, layoutName, processedEdges]);
+  }, [activeTrace, layoutName]);
 
   // Zoom controls
   const handleZoomIn = () => cyRef.current?.zoom(cyRef.current.zoom() * 1.25);
   const handleZoomOut = () => cyRef.current?.zoom(cyRef.current.zoom() * 0.8);
   const handleFit = () => cyRef.current?.fit(null, 60);
-
-  // Dedicated Reset Layout Handler (Re-runs layout and resets zoom/pan)
-  const handleResetLayout = () => {
-    if (!cyRef.current) return;
-    try {
-      const layout = cyRef.current.layout({
-        name: layoutName,
-        rankDir: "LR",
-        nodeSep: 50,
-        rankSep: 140,
-        padding: 50,
-        animate: true,
-        animationDuration: 400,
-      });
-      layout.run();
-      cyRef.current.fit(null, 60);
-    } catch (err) {
-      console.warn("Layout reset error:", err);
-    }
-  };
-
-  // 5. Dynamic Cytoscape filtering based on timeline scrubber
-  useEffect(() => {
-    if (!cyRef.current) return;
-    const cy = cyRef.current;
-
-    cy.batch(() => {
-      // If no scrubberTime or scrubberTime >= maxTime, show all elements
-      if (scrubberTime === null || scrubberTime >= maxTime) {
-        cy.elements().style("display", "element");
-        return;
-      }
-
-      const visibleNodeIds = new Set();
-
-      // Root suspect node always remains visible
-      cy.nodes().forEach((n) => {
-        if (n.data("node_type") === "SUSPECT") {
-          visibleNodeIds.add(n.id());
-        }
-      });
-
-      // Filter edges by timestamp
-      cy.edges().forEach((e) => {
-        const ts = e.data("timestamp");
-        if (ts !== null && ts !== undefined && ts <= scrubberTime) {
-          e.style("display", "element");
-          visibleNodeIds.add(e.data("source"));
-          visibleNodeIds.add(e.data("target"));
-        } else {
-          e.style("display", "none");
-        }
-      });
-
-      // Filter nodes based on visible edges
-      cy.nodes().forEach((n) => {
-        if (visibleNodeIds.has(n.id())) {
-          n.style("display", "element");
-        } else {
-          n.style("display", "none");
-        }
-      });
-    });
-  }, [scrubberTime, maxTime]);
-
-  // 6. Timeline auto-step playback loop (every ~1000ms)
-  useEffect(() => {
-    if (!isPlaying) return;
-
-    const interval = setInterval(() => {
-      setScrubberTime((curr) => {
-        if (curr === null) return maxTime;
-        const nextPoint = timelinePoints.find((t) => t > curr);
-        if (nextPoint !== undefined) {
-          return nextPoint;
-        } else {
-          setIsPlaying(false);
-          return maxTime;
-        }
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isPlaying, timelinePoints, maxTime]);
-
-  // Scrubber transport handlers
-  const handleTogglePlay = () => {
-    if (isPlaying) {
-      setIsPlaying(false);
-    } else {
-      if (scrubberTime === null || scrubberTime >= maxTime) {
-        setScrubberTime(timelinePoints[0] ?? minTime);
-      }
-      setIsPlaying(true);
-    }
-  };
-
-  const handleStepBackward = () => {
-    setIsPlaying(false);
-    const curr = scrubberTime ?? maxTime;
-    const prevPoints = timelinePoints.filter((t) => t < curr);
-    if (prevPoints.length > 0) {
-      setScrubberTime(prevPoints[prevPoints.length - 1]);
-    } else {
-      setScrubberTime(minTime);
-    }
-  };
-
-  const handleStepForward = () => {
-    setIsPlaying(false);
-    const curr = scrubberTime ?? minTime;
-    const nextPoint = timelinePoints.find((t) => t > curr);
-    if (nextPoint !== undefined) {
-      setScrubberTime(nextPoint);
-    } else {
-      setScrubberTime(maxTime);
-    }
-  };
-
-  const handleResetScrubber = () => {
-    setIsPlaying(false);
-    setScrubberTime(maxTime);
-    if (cyRef.current) {
-      cyRef.current.elements().style("display", "element");
-    }
-  };
-
-  const handleSliderChange = (e) => {
-    setIsPlaying(false);
-    setScrubberTime(Number(e.target.value));
-  };
-
-  // Current count of visible hops
-  const visibleHopsCount = useMemo(() => {
-    if (scrubberTime === null || scrubberTime >= maxTime) {
-      return processedEdges.length;
-    }
-    return processedEdges.filter((e) => e.parsedTimestamp <= scrubberTime).length;
-  }, [processedEdges, scrubberTime, maxTime]);
-
-  // Formatted readable timestamp
-  const readableTimestamp = useMemo(() => {
-    if (scrubberTime === null || scrubberTime === 0) return "—";
-    if (scrubberTime <= minTime) {
-      return "Trace Inception (T0)";
-    }
-    try {
-      const d = new Date(scrubberTime * 1000);
-      return d.toISOString().replace("T", " ").substring(0, 19) + " UTC";
-    } catch {
-      return String(scrubberTime);
-    }
-  }, [scrubberTime, minTime]);
 
   // Export Canvas Image
   const handleExportPNG = () => {
@@ -698,11 +469,7 @@ export default function TransactionGraph({
               </span>
             </div>
             <p className="text-xs text-slate-500 font-mono truncate max-w-sm mt-0.5">
-              {loading ? (
-                <span className="text-blue-600 font-semibold animate-pulse">Loading case topology...</span>
-              ) : (
-                `${activeFir} · ${traceEdges.length} Hops · ${traceNodes.length} Nodes`
-              )}
+              {activeFir} · {traceEdges.length} Hops · {traceNodes.length} Nodes
             </p>
           </div>
         </div>
@@ -714,7 +481,7 @@ export default function TransactionGraph({
               <select
                 value={selectedCaseId}
                 onChange={(e) => setSelectedCaseId(e.target.value)}
-                className="appearance-none rounded-xl border border-slate-200 bg-slate-50 py-2 pl-3 pr-8 text-xs font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-2xs max-w-[210px] sm:max-w-xs truncate"
+                className="appearance-none rounded-xl border border-slate-200 bg-slate-50 py-2 pl-3 pr-8 text-xs font-semibold text-slate-800 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-2xs"
                 title="Select Case Investigation from Vault"
               >
                 {casesList.map((c) => (
@@ -742,34 +509,6 @@ export default function TransactionGraph({
             </select>
             <ChevronDown size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
           </div>
-
-          {/* Dedicated One-Click Reset Layout Button */}
-          <button
-            type="button"
-            data-testid="reset-layout-toolbar-btn"
-            onClick={handleResetLayout}
-            title="Re-run active layout algorithm and reset camera view"
-            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:border-slate-300 shadow-2xs transition active:scale-95 cursor-pointer"
-          >
-            <RotateCcw size={14} className="text-slate-500" />
-            <span>Reset Layout</span>
-          </button>
-
-          {/* Inspector Drawer Toggle Button */}
-          <button
-            type="button"
-            data-testid="toggle-inspector-btn"
-            onClick={() => setInspectorOpen((prev) => !prev)}
-            title={inspectorOpen ? "Hide Particulars Drawer" : "Show Node & Edge Particulars"}
-            className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold shadow-2xs transition active:scale-95 cursor-pointer ${
-              inspectorOpen
-                ? "border-blue-300 bg-blue-50 text-blue-700"
-                : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:border-slate-300"
-            }`}
-          >
-            <SlidersHorizontal size={14} />
-            <span className="hidden sm:inline">Inspector</span>
-          </button>
 
           {/* Search Wallet in Canvas */}
           <form onSubmit={handleSearchSubmit} className="relative">
@@ -799,222 +538,93 @@ export default function TransactionGraph({
 
       {/* Main Forensic Canvas Area with Side Inspector */}
       <div className="relative flex flex-1 overflow-hidden">
-        {/* Canvas & Scrubber Column */}
-        <div className="relative flex flex-1 flex-col overflow-hidden">
-          {/* Cytoscape Canvas with Technical Micro-Dot Grid */}
-          <div
-            className="relative flex-1 bg-[#FAFAFA] overflow-hidden"
-            style={{
-              backgroundImage: "radial-gradient(#E2E8F0 1px, transparent 1px)",
-              backgroundSize: "18px 18px",
-            }}
-          >
-            {/* Top Breadcrumb Trail Navigation Bar */}
-            {traceNodes.length > 0 && (
-              <div className="absolute top-4 left-4 right-4 z-10 hidden md:flex items-center gap-1.5 overflow-x-auto rounded-xl border border-slate-200/90 bg-white/95 px-3 py-2 shadow-xs backdrop-blur-md">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 shrink-0 mr-1 flex items-center gap-1">
-                  <Compass size={13} className="text-blue-600" /> Trace Path:
-                </span>
-                {traceNodes.map((n, idx) => {
-                  const conf = NODE_CONFIGS[n.node_type] || NODE_CONFIGS.DEFAULT;
-                  return (
-                    <div key={n.id || idx} className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => handleCenterNode(n.id || n.address)}
-                        className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition cursor-pointer ${
-                          selectedNode?.id === (n.id || n.address)
-                            ? "bg-blue-600 text-white shadow-2xs"
-                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                        }`}
-                      >
-                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: conf.bg }} />
-                        <span>{n.vasp_name || (n.node_type === "SUSPECT" ? "Origin" : `Hop ${idx}`)}</span>
-                      </button>
-                      {idx < traceNodes.length - 1 && (
-                        <span className="text-slate-300 text-xs font-bold">→</span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Empty Graph Clean State */}
-            {traceNodes.length === 0 && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 bg-slate-50/60 backdrop-blur-xs">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-400 border border-slate-200 mb-3 shadow-sm">
-                  <Network size={28} className="text-slate-400" />
-                </div>
-                <h3 className="text-sm font-bold text-slate-800">No Graph Topology Data</h3>
-                <p className="text-xs text-slate-500 max-w-sm mt-1 leading-relaxed">
-                  Select a case investigation from the Case Vault or launch an investigation in the tracer to generate transaction topology.
-                </p>
-              </div>
-            )}
-
-            {/* Cytoscape Container */}
-            <div ref={containerRef} className="h-full w-full cursor-grab active:cursor-grabbing" />
-
-            {/* Floating Zoom & Fit Action Pills */}
-            <div className="absolute bottom-5 left-5 z-10 flex items-center gap-1 rounded-xl border border-slate-200 bg-white/95 p-1.5 shadow-md backdrop-blur-md">
-              <button
-                type="button"
-                onClick={handleZoomIn}
-                title="Zoom In"
-                className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 transition cursor-pointer"
-              >
-                <ZoomIn size={16} />
-              </button>
-              <button
-                type="button"
-                onClick={handleZoomOut}
-                title="Zoom Out"
-                className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 transition cursor-pointer"
-              >
-                <ZoomOut size={16} />
-              </button>
-              <button
-                type="button"
-                onClick={handleFit}
-                title="Fit to Screen (Reset View)"
-                className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 transition cursor-pointer"
-              >
-                <Maximize2 size={16} />
-              </button>
-              <button
-                type="button"
-                data-testid="reset-layout-pill-btn"
-                onClick={handleResetLayout}
-                title="Reset Layout & Re-center"
-                className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 transition cursor-pointer"
-              >
-                <RotateCcw size={16} />
-              </button>
-            </div>
-
-            {/* Floating Color Legend Pill */}
-            <div className="absolute bottom-5 right-5 z-10 hidden sm:flex items-center gap-3 rounded-xl border border-slate-200 bg-white/95 px-3.5 py-2 text-[11px] font-semibold text-slate-700 shadow-sm backdrop-blur-md">
-              <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-rose-200" /> Suspect Seed
+        {/* Cytoscape Canvas with Technical Micro-Dot Grid */}
+        <div className="relative flex-1 bg-[#FAFAFA] overflow-hidden" style={{
+          backgroundImage: "radial-gradient(#E2E8F0 1px, transparent 1px)",
+          backgroundSize: "18px 18px",
+        }}>
+          {/* Top Breadcrumb Trail Navigation Bar */}
+          {traceNodes.length > 0 && (
+            <div className="absolute top-4 left-4 right-4 z-10 hidden md:flex items-center gap-1.5 overflow-x-auto rounded-xl border border-slate-200/90 bg-white/95 px-3 py-2 shadow-xs backdrop-blur-md">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 shrink-0 mr-1 flex items-center gap-1">
+                <Compass size={13} className="text-blue-600" /> Trace Path:
               </span>
-              <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-amber-200" /> Mule Layer
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="flex h-2.5 w-2.5 rounded-full bg-sky-500 ring-2 ring-sky-200" /> VASP Deposit
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-200" /> Exchange Hot Wallet
-              </span>
-            </div>
-          </div>
-
-          {/* Docked Forensic Timeline Scrubber Bar */}
-          {processedEdges.length > 0 && (
-            <div data-testid="timeline-scrubber-bar" className="border-t border-slate-200 bg-white/95 px-4 py-2.5 backdrop-blur-md shadow-xs shrink-0 z-20">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                {/* Playback Transport Controls */}
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <button
-                    type="button"
-                    data-testid="timeline-play-pause-btn"
-                    onClick={handleTogglePlay}
-                    title={isPlaying ? "Pause Timeline Auto-Step" : "Play Timeline Auto-Step (1000ms)"}
-                    className={`flex h-8 w-8 items-center justify-center rounded-lg transition active:scale-95 cursor-pointer shadow-2xs ${
-                      isPlaying
-                        ? "bg-amber-600 text-white hover:bg-amber-700"
-                        : "bg-blue-600 text-white hover:bg-blue-700"
-                    }`}
-                    aria-label={isPlaying ? "Pause timeline playback" : "Play timeline playback"}
-                  >
-                    {isPlaying ? <Pause size={14} className="fill-current" /> : <Play size={14} className="fill-current ml-0.5" />}
-                  </button>
-
-                  <button
-                    type="button"
-                    data-testid="timeline-step-backward-btn"
-                    onClick={handleStepBackward}
-                    title="Step Backward (Previous Hop)"
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition active:scale-95 cursor-pointer"
-                    aria-label="Step backward to previous transaction hop"
-                  >
-                    <SkipBack size={14} />
-                  </button>
-
-                  <button
-                    type="button"
-                    data-testid="timeline-step-forward-btn"
-                    onClick={handleStepForward}
-                    title="Step Forward (Next Hop)"
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition active:scale-95 cursor-pointer"
-                    aria-label="Step forward to next transaction hop"
-                  >
-                    <SkipForward size={14} />
-                  </button>
-
-                  <button
-                    type="button"
-                    data-testid="timeline-reset-btn"
-                    onClick={handleResetScrubber}
-                    title="Reset Scrubber (Show All Hops)"
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition active:scale-95 cursor-pointer"
-                    aria-label="Reset timeline scrubber to full view"
-                  >
-                    <RotateCcw size={14} />
-                  </button>
-
-                  {/* Hop Step Counter Badge */}
-                  <span data-testid="timeline-hop-badge" className="ml-1 rounded-md bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700 border border-blue-200 font-mono">
-                    Hop {visibleHopsCount}/{processedEdges.length}
-                  </span>
-                </div>
-
-                {/* Chronological Range Slider */}
-                <div className="flex flex-1 items-center gap-3 min-w-[160px] max-w-full sm:max-w-md md:max-w-xl">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono shrink-0 hidden sm:inline">
-                    Inception
-                  </span>
-                  <input
-                    type="range"
-                    data-testid="timeline-range-slider"
-                    min={minTime}
-                    max={maxTime}
-                    step={1}
-                    value={scrubberTime ?? maxTime}
-                    onChange={handleSliderChange}
-                    className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 accent-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                    title="Drag to scrub transactions chronologically"
-                    aria-label="Chronological transaction timeline slider"
-                  />
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono shrink-0 hidden sm:inline">
-                    Latest
-                  </span>
-                </div>
-
-                {/* Readable Timestamp Readout */}
-                <div className="flex items-center gap-1.5 shrink-0 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-mono font-medium text-slate-700">
-                  <Clock size={13} className="text-blue-600 shrink-0" />
-                  <span data-testid="timeline-timestamp-readout" className="truncate max-w-[200px]" title={`Current Timeline Position: ${readableTimestamp}`}>
-                    {readableTimestamp}
-                  </span>
-                </div>
-              </div>
+              {traceNodes.map((n, idx) => {
+                const conf = NODE_CONFIGS[n.node_type] || NODE_CONFIGS.DEFAULT;
+                return (
+                  <div key={n.id || idx} className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleCenterNode(n.id || n.address)}
+                      className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+                        selectedNode?.id === (n.id || n.address)
+                          ? "bg-blue-600 text-white shadow-2xs"
+                          : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                      }`}
+                    >
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: conf.bg }} />
+                      <span>{n.vasp_name || (n.node_type === "SUSPECT" ? "Origin" : `Hop ${idx}`)}</span>
+                    </button>
+                    {idx < traceNodes.length - 1 && (
+                      <span className="text-slate-300 text-xs font-bold">→</span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
+
+          {/* Cytoscape Container */}
+          <div ref={containerRef} className="h-full w-full cursor-grab active:cursor-grabbing" />
+
+          {/* Floating Zoom & Fit Action Pills */}
+          <div className="absolute bottom-5 left-5 z-10 flex items-center gap-1 rounded-xl border border-slate-200 bg-white/95 p-1.5 shadow-md backdrop-blur-md">
+            <button
+              type="button"
+              onClick={handleZoomIn}
+              title="Zoom In"
+              className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 transition"
+            >
+              <ZoomIn size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={handleZoomOut}
+              title="Zoom Out"
+              className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 transition"
+            >
+              <ZoomOut size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={handleFit}
+              title="Fit to Screen (Reset View)"
+              className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 transition"
+            >
+              <Maximize2 size={16} />
+            </button>
+          </div>
+
+          {/* Floating Color Legend Pill */}
+          <div className="absolute bottom-5 right-5 z-10 hidden sm:flex items-center gap-3 rounded-xl border border-slate-200 bg-white/95 px-3.5 py-2 text-[11px] font-semibold text-slate-700 shadow-sm backdrop-blur-md">
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-rose-200" /> Suspect Seed
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-amber-200" /> Mule Layer
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-sky-500 ring-2 ring-sky-200" /> VASP Deposit
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-200" /> Exchange Hot Wallet
+            </span>
+          </div>
         </div>
 
-        {/* Right Forensic Node & Edge Inspector */}
+        {/* Right Forensic Node & Edge Inspector (Full-width, zero truncation) */}
         {inspectorOpen && (
-          <>
-            {/* Mobile / Tablet Backdrop */}
-            <div
-              className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs lg:hidden"
-              onClick={() => setInspectorOpen(false)}
-            />
-
-            {/* Inspector Panel: Slide-over drawer on mobile/tablet, docked non-overlapping flex sibling on desktop */}
-            <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[380px] border-l border-slate-200 bg-white flex flex-col h-full shadow-2xl overflow-hidden animate-in slide-in-from-right duration-200 lg:static lg:z-auto lg:h-full lg:w-[380px] lg:shrink-0 lg:shadow-none">
+          <div className="w-[380px] shrink-0 border-l border-slate-200 bg-white flex flex-col h-full shadow-lg overflow-hidden animate-in slide-in-from-right duration-200">
             {/* Inspector Header */}
             <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-slate-50/80 px-5 py-4">
               <div className="flex items-center gap-2">
@@ -1207,7 +817,6 @@ export default function TransactionGraph({
               )}
             </div>
           </div>
-          </>
         )}
 
         {/* Toggle to reopen inspector if closed */}

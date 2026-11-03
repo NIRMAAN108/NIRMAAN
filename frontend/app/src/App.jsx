@@ -15,23 +15,7 @@ export default function App() {
   const [activePage, setActivePage] = useState("Dashboard");
   const [pageHistory, setPageHistory] = useState([]);
   const [navParams, setNavParams] = useState({});
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    return typeof window !== "undefined" ? window.innerWidth < 1024 : false;
-  });
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (typeof window !== "undefined") {
-        if (window.innerWidth < 1024) {
-          setSidebarCollapsed(true);
-        } else {
-          setSidebarCollapsed(false);
-        }
-      }
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const navigateTo = (page, params = {}) => {
     if (typeof window !== "undefined" && window.innerWidth < 768) {
