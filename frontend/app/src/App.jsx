@@ -15,9 +15,14 @@ export default function App() {
   const [activePage, setActivePage] = useState("Dashboard");
   const [pageHistory, setPageHistory] = useState([]);
   const [navParams, setNavParams] = useState({});
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    return typeof window !== "undefined" ? window.innerWidth < 1024 : false;
+  });
 
   const navigateTo = (page, params = {}) => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setSidebarCollapsed(true);
+    }
     if (page === activePage) {
       if (Object.keys(params).length > 0) {
         setNavParams(params);
