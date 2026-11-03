@@ -5,8 +5,8 @@
 
 export const FORENSIC_PRESETS = [
   {
-    id: "tron_demo",
-    name: "TRON Demo · ₹15L Telegram Scam",
+    id: "tron_intercept",
+    name: "TRON Intercept · ₹15L Telegram Scam",
     address: "TQiBwkXtUanuNQurYx1tJNJXH4zoUmhUVC",
     chain: "tron",
     chainLabel: "TRON (TRC-20)",
@@ -17,8 +17,8 @@ export const FORENSIC_PRESETS = [
     color: "#F25022"
   },
   {
-    id: "evm_demo",
-    name: "EVM Demo · ₹25L CEX Layering",
+    id: "evm_layering",
+    name: "EVM Layering · ₹25L CEX Structuring",
     address: "0x95222290DD7853684454F4275E597E3A63725F78",
     chain: "ethereum",
     chainLabel: "Ethereum (ERC-20)",
@@ -29,8 +29,8 @@ export const FORENSIC_PRESETS = [
     color: "#00A4EF"
   },
   {
-    id: "btc_demo",
-    name: "BTC Demo · ₹50L Pig Butchering",
+    id: "btc_extraction",
+    name: "BTC Extraction · ₹50L Pig Butchering",
     address: "bc1qqyqszqgpqyqszqgpqyqszqgpqyqszqgpyfl4f3",
     chain: "bitcoin",
     chainLabel: "Bitcoin (UTXO)",

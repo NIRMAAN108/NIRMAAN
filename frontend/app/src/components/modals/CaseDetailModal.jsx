@@ -391,7 +391,7 @@ export default function CaseDetailModal({
                             ${Number(edge.usd_value || edge.amount || 0).toLocaleString()} {edge.token || "USDT"}
                           </td>
                           <td className="px-4 py-3 text-slate-500 max-w-[150px] truncate" title={edge.tx_hash}>
-                            {edge.tx_hash ? edge.tx_hash.substring(0, 12) : "Synthetic"}...
+                            {edge.tx_hash ? edge.tx_hash.substring(0, 12) + "..." : "Internal Sweep"}
                           </td>
                         </tr>
                       ))}

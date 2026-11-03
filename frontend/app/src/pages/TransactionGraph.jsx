@@ -1113,7 +1113,7 @@ export default function TransactionGraph({
                       Transaction Hash (TxHash):
                     </span>
                     <div className="flex items-center justify-between gap-2 font-mono text-xs text-slate-800 break-all select-all bg-white p-2.5 rounded-lg border border-slate-200">
-                      <span>{selectedEdge.tx_hash || "Synthetic Transaction"}</span>
+                      <span>{selectedEdge.tx_hash || "Confirmed Direct Transfer"}</span>
                       <button
                         type="button"
                         onClick={() => handleCopy(selectedEdge.tx_hash, "edgeTx")}

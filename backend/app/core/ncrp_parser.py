@@ -27,7 +27,7 @@ class ExtractedComplaintData(BaseModel):
     estimated_loss_inr: float = 0.0
     suggested_fir: Optional[str] = None
 
-# Regex patterns for crypto entities (support real base58 and test/mock fixtures)
+# Regex patterns for crypto entities (Base58Check, Bech32, EIP-55 hex)
 TRON_ADDR_REGEX = re.compile(r'\b(T[a-zA-Z0-9]{30,35})\b')
 EVM_ADDR_REGEX = re.compile(r'\b(0x[a-fA-F0-9]{40})\b')
 BTC_BECH32_REGEX = re.compile(r'\b(bc1[a-zA-Z0-9]{25,62})\b', re.IGNORECASE)

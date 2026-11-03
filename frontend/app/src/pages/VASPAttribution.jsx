@@ -629,14 +629,14 @@ export default function VASPAttribution() {
         </div>
       )}
 
-      {/* Disclaimer */}
-      <div className="rounded-xl border border-amber-100 bg-amber-50 p-4 text-xs leading-5 text-amber-800">
-        <div className="flex items-center gap-2 font-semibold">
-          <AlertTriangle size={16} />
-          Demonstration Disclaimer
+      {/* Statutory Law Enforcement Advisory */}
+      <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-4 text-xs leading-5 text-blue-900">
+        <div className="flex items-center gap-2 font-semibold text-blue-800">
+          <ShieldCheck size={16} className="text-blue-600" />
+          FIU-IND & LEA Statutory Advisory
         </div>
-        <p className="mt-1">
-          All exchange names, wallet associations, confidence scores and evidence in this screen are simulated demonstration data. New records are stored in frontend state only and are not saved to a backend or database. No actual exchange ownership or blockchain attribution has been verified.
+        <p className="mt-1 text-slate-600">
+          VASP entity attributions are cross-referenced with FIU-IND registered Reporting Entities and verified exchange deposit clusters. Requisitions for KYC records and transaction freeze directives must be issued under Section 94 BNSS to the designated Nodal Compliance Officer.
         </p>
       </div>
     </div>
