@@ -298,12 +298,12 @@ export default function VASPAttribution() {
                 }`}
               >
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
                       <Building2 size={21} />
                     </div>
-                    <div>
-                      <h3 className="font-bold text-slate-900">
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-slate-900 truncate">
                         {record.name}
                       </h3>
                       <p className="mt-1 text-xs text-slate-500">
@@ -312,7 +312,7 @@ export default function VASPAttribution() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     <span className={`rounded-full px-3 py-1 text-xs font-semibold ${riskStyle(record.risk)}`}>
                       {record.risk} Risk
                     </span>
@@ -321,20 +321,23 @@ export default function VASPAttribution() {
                 </div>
 
                 <div className="mt-4 grid grid-cols-2 gap-3 text-xs sm:grid-cols-3">
-                  <div>
-                    <p className="text-slate-400">Wallet</p>
-                    <p className="mt-1 font-semibold text-slate-700">
+                  <div className="col-span-2 min-w-0 sm:col-span-1">
+                    <p className="font-medium text-slate-400">Wallet</p>
+                    <p
+                      className="mt-1 truncate font-mono font-semibold text-slate-700"
+                      title={record.wallet}
+                    >
                       {record.wallet}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-slate-400">Confidence</p>
+                  <div className="min-w-0">
+                    <p className="font-medium text-slate-400">Confidence</p>
                     <p className="mt-1 font-semibold text-blue-700">
                       {record.confidence}%
                     </p>
                   </div>
-                  <div>
-                    <p className="text-slate-400">Status</p>
+                  <div className="min-w-0">
+                    <p className="font-medium text-slate-400">Status</p>
                     <p className="mt-1 font-semibold text-slate-700">
                       {record.status}
                     </p>
