@@ -320,27 +320,35 @@ export default function VASPAttribution() {
                   </div>
                 </div>
 
-                <div className="mt-4 grid grid-cols-2 gap-3 text-xs sm:grid-cols-3">
-                  <div className="col-span-2 min-w-0 sm:col-span-1">
-                    <p className="font-medium text-slate-400">Wallet</p>
+                <div className="mt-3.5 space-y-2 text-xs">
+                  <div className="min-w-0">
+                    <p className="font-medium text-slate-400 text-[11px]">Wallet</p>
                     <p
-                      className="mt-1 truncate font-mono font-semibold text-slate-700"
+                      className="mt-0.5 truncate font-mono font-semibold text-slate-700 text-xs select-all"
                       title={record.wallet}
                     >
                       {record.wallet}
                     </p>
                   </div>
-                  <div className="min-w-0">
-                    <p className="font-medium text-slate-400">Confidence</p>
-                    <p className="mt-1 font-semibold text-blue-700">
-                      {record.confidence}%
-                    </p>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-medium text-slate-400">Status</p>
-                    <p className="mt-1 font-semibold text-slate-700">
-                      {record.status}
-                    </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 border-t border-slate-100">
+                    <div className="min-w-0">
+                      <p className="font-medium text-slate-400 text-[11px]">Confidence</p>
+                      <p className="mt-0.5 font-semibold text-blue-700 text-xs">
+                        {record.confidence}%
+                      </p>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-slate-400 text-[11px]">Status</p>
+                      <p className="mt-0.5 font-semibold text-slate-700 text-xs">
+                        {record.status}
+                      </p>
+                    </div>
+                    <div className="hidden sm:block min-w-0">
+                      <p className="font-medium text-slate-400 text-[11px]">Network</p>
+                      <p className="mt-0.5 font-semibold text-slate-600 text-xs truncate">
+                        {record.network}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </button>

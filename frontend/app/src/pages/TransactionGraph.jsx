@@ -108,7 +108,9 @@ export default function TransactionGraph({
   const [loading, setLoading] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
   const [selectedEdge, setSelectedEdge] = useState(null);
-  const [inspectorOpen, setInspectorOpen] = useState(true);
+  const [inspectorOpen, setInspectorOpen] = useState(
+    typeof window !== "undefined" ? window.innerWidth >= 1024 : true
+  );
   const [search, setSearch] = useState("");
   const [layoutName, setLayoutName] = useState("dagre");
   const [copiedKey, setCopiedKey] = useState(null);
@@ -356,6 +358,11 @@ export default function TransactionGraph({
         }
       });
 
+      cy.on("layoutstop", () => {
+        cy.resize();
+        cy.fit(null, 50);
+      });
+
       cyRef.current = cy;
 
       // Select suspect node by default
@@ -364,6 +371,14 @@ export default function TransactionGraph({
         suspectNode[0].select();
         setSelectedNode(suspectNode[0].data());
       }
+
+      // Robust layout fit after render
+      setTimeout(() => {
+        if (cyRef.current) {
+          cyRef.current.resize();
+          cyRef.current.fit(null, 50);
+        }
+      }, 150);
     } catch (err) {
       console.warn("Cytoscape init error:", err);
     }
@@ -376,10 +391,47 @@ export default function TransactionGraph({
     };
   }, [activeTrace, layoutName]);
 
+  // Keep canvas responsive to window/container dimension shifts
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const ro = new ResizeObserver(() => {
+      if (cyRef.current) {
+        cyRef.current.resize();
+      }
+    });
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, []);
+
   // Zoom controls
   const handleZoomIn = () => cyRef.current?.zoom(cyRef.current.zoom() * 1.25);
   const handleZoomOut = () => cyRef.current?.zoom(cyRef.current.zoom() * 0.8);
   const handleFit = () => cyRef.current?.fit(null, 60);
+
+  // Reset Graph Layout
+  const handleResetLayout = () => {
+    if (!cyRef.current) return;
+    try {
+      const layout = cyRef.current.layout({
+        name: layoutName,
+        rankDir: "LR",
+        nodeSep: 50,
+        rankSep: 140,
+        padding: 50,
+        animate: true,
+        animationDuration: 250,
+      });
+      layout.run();
+      setTimeout(() => {
+        if (cyRef.current) {
+          cyRef.current.resize();
+          cyRef.current.fit(null, 50);
+        }
+      }, 300);
+    } catch (err) {
+      console.warn("Reset layout error:", err);
+    }
+  };
 
   // Export Canvas Image
   const handleExportPNG = () => {
@@ -510,6 +562,18 @@ export default function TransactionGraph({
             <ChevronDown size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
           </div>
 
+          {/* Reset Layout Button */}
+          <button
+            type="button"
+            data-testid="reset-layout-toolbar-btn"
+            onClick={handleResetLayout}
+            title="Reset Layout"
+            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-white transition shadow-2xs"
+          >
+            <RotateCcw size={14} />
+            <span className="hidden sm:inline">Reset Layout</span>
+          </button>
+
           {/* Search Wallet in Canvas */}
           <form onSubmit={handleSearchSubmit} className="relative">
             <input
@@ -622,9 +686,15 @@ export default function TransactionGraph({
           </div>
         </div>
 
-        {/* Right Forensic Node & Edge Inspector (Full-width, zero truncation) */}
+        {/* Right Forensic Node & Edge Inspector (Responsive Drawer on mobile/tablet, side panel on desktop) */}
         {inspectorOpen && (
-          <div className="w-[380px] shrink-0 border-l border-slate-200 bg-white flex flex-col h-full shadow-lg overflow-hidden animate-in slide-in-from-right duration-200">
+          <>
+            {/* Mobile / Tablet Backdrop */}
+            <div
+              onClick={() => setInspectorOpen(false)}
+              className="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-xs lg:hidden"
+            />
+            <div className="fixed inset-y-0 right-0 z-40 w-full max-w-sm sm:w-[380px] lg:relative lg:inset-auto lg:z-auto lg:w-[360px] xl:w-[380px] shrink-0 border-l border-slate-200 bg-white flex flex-col h-full shadow-2xl lg:shadow-none overflow-hidden animate-in slide-in-from-right duration-200">
             {/* Inspector Header */}
             <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-slate-50/80 px-5 py-4">
               <div className="flex items-center gap-2">
@@ -817,6 +887,7 @@ export default function TransactionGraph({
               )}
             </div>
           </div>
+          </>
         )}
 
         {/* Toggle to reopen inspector if closed */}

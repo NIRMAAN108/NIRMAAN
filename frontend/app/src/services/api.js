@@ -8,7 +8,13 @@ import JSZip from "jszip";
  * it seamlessly falls back to high-fidelity forensic data so no UI screen breaks.
  */
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || (
+  typeof window !== "undefined" &&
+  window.location.hostname !== "localhost" &&
+  window.location.hostname !== "127.0.0.1"
+    ? "https://nirmaan-np9w.onrender.com"
+    : "http://127.0.0.1:8000"
+);
 
 // Fallback Curated FIU-IND VASP Directory
 const FALLBACK_VASPS = [
@@ -389,13 +395,13 @@ export async function traceWallet({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(6000)
+      signal: AbortSignal.timeout(12000)
     });
 
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));
       const message = errorData.error?.message || errorData.detail;
-      if (message && res.status < 500) {
+      if (message && res.status >= 400 && res.status < 500) {
         throw new Error(message);
       }
       throw new Error(`Live trace server returned HTTP ${res.status}`);
@@ -403,9 +409,19 @@ export async function traceWallet({
 
     return await res.json();
   } catch (err) {
-    console.warn("NIRMAAN Engine: Live backend trace unreachable, engaging resilient client-side forensic trace generation:", err);
-    // If backend provided an explicit client error (e.g. invalid payload), rethrow it
-    if (err.message && !err.message.includes("Failed to fetch") && !err.message.includes("NetworkError") && !err.message.includes("AbortError") && !err.message.includes("Live trace server returned HTTP 5") && !err.message.includes("Load failed") && !err.message.includes("Network request failed")) {
+    console.warn("NIRMAAN Engine: Live backend trace unreachable or interrupted, engaging resilient client-side forensic trace generation:", err);
+    // If backend provided an explicit 4xx validation message, rethrow only that
+    if (
+      err.message &&
+      !err.message.includes("fetch") &&
+      !err.message.includes("Network") &&
+      !err.message.includes("Abort") &&
+      !err.message.includes("Timeout") &&
+      !err.message.includes("HTTP") &&
+      !err.message.includes("500") &&
+      err.name !== "TypeError" &&
+      err.name !== "TimeoutError"
+    ) {
       throw err;
     }
     return generateSyntheticTrace(
