@@ -64,19 +64,11 @@ app.add_exception_handler(Exception, generic_unhandled_exception_handler)
 # 2. CORS MIDDLEWARE
 # -------------------------------------------------------------
 cors_origins_env = os.getenv("CORS_ORIGINS", "")
-permitted_origins = [orig.strip() for orig in cors_origins_env.split(",") if orig.strip()] if cors_origins_env else [
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:5500",
-    "http://127.0.0.1:5500",
-    "null"  # Explicitly supports local browser file:// launches
-]
+permitted_origins = [orig.strip() for orig in cors_origins_env.split(",") if orig.strip()] if cors_origins_env else ["*"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=permitted_origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],

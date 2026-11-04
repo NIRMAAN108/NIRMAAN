@@ -3,7 +3,7 @@ import {
   Search, ShieldCheck, Wallet, Network, FileText,
   ChevronDown, CheckCircle, AlertTriangle, Loader2, ArrowRight, Download
 } from "lucide-react";
-import { traceWallet, createCase, getDossierDownloadUrl, getBundleDownloadUrl } from "../services/api";
+import { traceWallet, createCase, downloadCaseDossier, downloadCaseBundle } from "../services/api";
 import { FORENSIC_PRESETS } from "../data/mockData";
 
 export default function Investigation({ onNavigate, initialWallet = "", initialFir = "" }) {
@@ -267,22 +267,20 @@ export default function Investigation({ onNavigate, initialWallet = "", initialF
             </button>
             {caseId && (
               <>
-                <a
-                  href={getDossierDownloadUrl(caseId)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition"
+                <button
+                  type="button"
+                  onClick={() => downloadCaseDossier(caseId, { fir_number: fir, seed_address: wallet, chain, loss_amount_inr: lossAmount, trace_data: traceResult })}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition cursor-pointer"
                 >
                   <Download size={14} /> Download Court PDF Dossier
-                </a>
-                <a
-                  href={getBundleDownloadUrl(caseId)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold shadow-sm transition"
+                </button>
+                <button
+                  type="button"
+                  onClick={() => downloadCaseBundle(caseId, { fir_number: fir, seed_address: wallet, chain, loss_amount_inr: lossAmount, trace_data: traceResult })}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold shadow-sm transition cursor-pointer"
                 >
                   <Download size={14} /> Download Section 63 ZIP Bundle
-                </a>
+                </button>
               </>
             )}
           </div>

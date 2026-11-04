@@ -13,8 +13,8 @@ import {
 } from "lucide-react";
 import {
   fetchCaseById,
-  getDossierDownloadUrl,
-  getBundleDownloadUrl,
+  downloadCaseDossier,
+  downloadCaseBundle,
 } from "../../services/api";
 
 export default function CaseDetailModal({
@@ -537,24 +537,22 @@ You are hereby requested to furnish within 24 hours:
         {/* Footer Actions */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4">
           <div className="flex items-center gap-2">
-            <a
-              href={getDossierDownloadUrl(data.case_id)}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition"
+            <button
+              type="button"
+              onClick={() => downloadCaseDossier(data.case_id, data)}
+              className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition cursor-pointer"
               title="Download Section 94 BNSS Court Dossier PDF"
             >
               <Download size={14} /> Download Dossier (PDF)
-            </a>
-            <a
-              href={getBundleDownloadUrl(data.case_id)}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
+            </button>
+            <button
+              type="button"
+              onClick={() => downloadCaseBundle(data.case_id, data)}
+              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
               title="Download Section 63 BSA Evidence Bundle ZIP"
             >
               <Download size={14} /> Evidence Bundle (ZIP)
-            </a>
+            </button>
           </div>
 
           <div className="flex items-center gap-2">

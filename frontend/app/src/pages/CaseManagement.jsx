@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { ShieldCheck, Search, ExternalLink } from "lucide-react";
-import { fetchCases, getDossierDownloadUrl, getBundleDownloadUrl } from "../services/api";
+import { fetchCases, downloadCaseDossier, downloadCaseBundle } from "../services/api";
 import CaseDetailModal from "../components/modals/CaseDetailModal";
 
 export default function CaseManagement({ onNavigate, title = "Case Management Vault", initialSearch = "" }) {
@@ -137,24 +137,22 @@ export default function CaseManagement({ onNavigate, title = "Case Management Va
                           >
                             View
                           </button>
-                          <a
-                            href={getDossierDownloadUrl(c.case_id)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-xs transition"
+                          <button
+                            type="button"
+                            onClick={() => downloadCaseDossier(c.case_id, c)}
+                            className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-xs transition cursor-pointer"
                             title="Download Section 94 BNSS Court Dossier"
                           >
                             PDF
-                          </a>
-                          <a
-                            href={getBundleDownloadUrl(c.case_id)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs transition"
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => downloadCaseBundle(c.case_id, c)}
+                            className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs transition cursor-pointer"
                             title="Download Section 63 BSA Evidence ZIP"
                           >
                             ZIP
-                          </a>
+                          </button>
                         </div>
                       </td>
                     </tr>
